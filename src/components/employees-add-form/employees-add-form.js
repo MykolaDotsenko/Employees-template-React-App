@@ -45,7 +45,7 @@ class EmployeesAddForm extends Component {
           <input
             type="number"
             className="form-control new-post-label"
-            placeholder="Salary in $?"
+            placeholder="Salary in euro?"
             name='salary'
             value={salary}
             onChange={this.onValueChange}

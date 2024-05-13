@@ -5,12 +5,13 @@ const AppFilter = (props) => {
   const buttonsData = [
     { name: "all", label: "All employees" },
     { name: "promotion", label: "Up for promotion" },
-    { name: "salary", label: "Salary more than $3300" },
+    { name: "salary", label: "Salary more than 3300 euro/week" },
   ];
 
   const buttons = buttonsData.map(({ name, label }) => {
     const active = props.filter === name;
     const clazz = active ? "btn-light" : "btn-outline-light";
+   
     return (
       <button
         type="button"
@@ -20,7 +21,7 @@ const AppFilter = (props) => {
       >
         {label}
       </button>
-    )
+    );
   });
 
   return <div className="btn-group">{buttons}</div>;
