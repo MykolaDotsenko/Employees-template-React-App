@@ -1,4 +1,4 @@
-import { Component } from "react";
+import React, { Component } from "react";
 import AppInfo from "../app-info/app-info";
 import SearchPanel from "../search-panel/search-panel";
 import AppFilter from "../app-filter/app-filter";
@@ -10,22 +10,28 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      data: [
+      data: JSON.parse(localStorage.getItem("employees")) || [
         { name: "Mykola", salary: 3500, increase: false, rise: true, id: 1 },
         { name: "Dennis", salary: 3300, increase: true, rise: true, id: 2 },
         { name: "Juan", salary: 3350, increase: false, rise: true, id: 3 },
         { name: "Ping", salary: 3200, increase: false, rise: false, id: 4 },
       ],
-      term: '',
-      filter: 'all',
+      term: "",
+      filter: "all",
     };
     this.maxId = 18;
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.data !== this.state.data) {
+      localStorage.setItem("employees", JSON.stringify(this.state.data));
+    }
   }
 
   deleteItem = (id) => {
     this.setState(({ data }) => {
       return {
-        data: data.filter(item => item.id !== id),
+        data: data.filter((item) => item.id !== id),
       };
     });
   };
@@ -48,7 +54,7 @@ class App extends Component {
 
   onToggleProp = (id, prop) => {
     this.setState(({ data }) => ({
-      data: data.map(item => {
+      data: data.map((item) => {
         if (item.id === id) {
           return { ...item, [prop]: !item[prop] };
         }
@@ -61,7 +67,7 @@ class App extends Component {
     if (term.length === 0) {
       return items;
     }
-    return items.filter(item => {
+    return items.filter((item) => {
       return item.name.indexOf(term) > -1;
     });
   };
@@ -72,10 +78,10 @@ class App extends Component {
 
   filterPost = (items, filter) => {
     switch (filter) {
-      case 'promotion':
-        return items.filter(item => item.rise);
-      case 'salary':
-        return items.filter(item => item.salary > 3300);
+      case "promotion":
+        return items.filter((item) => item.rise);
+      case "salary":
+        return items.filter((item) => item.salary > 3300);
       default:
         return items;
     }
@@ -88,7 +94,7 @@ class App extends Component {
   render() {
     const { data, term, filter } = this.state;
     const employees = data.length;
-    const increased = data.filter(item => item.increase).length;
+    const increased = data.filter((item) => item.increase).length;
     const visibleData = this.filterPost(this.searchEmp(data, term), filter);
 
     return (
