@@ -8,6 +8,7 @@ import { dayDockReducer } from "../domain/daydock/reducer";
 export interface DayDockStore {
   getSnapshot: () => DayDockState;
   dispatch: (action: DayDockAction) => void;
+  replaceState: (state: DayDockState) => void;
   subscribe: (listener: () => void) => () => void;
 }
 
@@ -22,6 +23,13 @@ export function createDayDockStore(
 
     dispatch: (action) => {
       const nextState = dayDockReducer(state, action);
+      if (nextState === state) return;
+
+      state = nextState;
+      listeners.forEach((listener) => listener());
+    },
+
+    replaceState: (nextState) => {
       if (nextState === state) return;
 
       state = nextState;
