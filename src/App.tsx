@@ -1,10 +1,21 @@
-import { useMemo, useState } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import type { Task } from "./domain/daydock/model";
 import {
   selectFollowUpsDue,
   selectInboxCount,
   selectTasksByStatus,
   selectTop3,
 } from "./domain/daydock/selectors";
+import { InboxSurface } from "./features/inbox/InboxSurface";
+import { QuickCaptureDialog } from "./features/quick-capture/QuickCaptureDialog";
+import { TodaySurface } from "./features/today/TodaySurface";
 import { dayDockStore } from "./store/browserDayDockStore";
 import type { DayDockStore } from "./store/dayDockStore";
 import { useDayDockState } from "./store/useDayDockState";
@@ -37,8 +48,22 @@ function formatDay(date: Date): string {
   }).format(date);
 }
 
+function createId(): string {
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    `task-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  );
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    target.closest("input, textarea, select, [contenteditable='true']") !== null
+  );
+}
+
 function SurfaceIcon({ surface }: { surface: Surface }) {
-  const paths: Record<Surface, React.ReactNode> = {
+  const paths: Record<Surface, ReactNode> = {
     today: (
       <>
         <circle cx="12" cy="12" r="4.25" />
@@ -79,114 +104,6 @@ function SurfaceIcon({ surface }: { surface: Surface }) {
     >
       {paths[surface]}
     </svg>
-  );
-}
-
-function TodaySurface({
-  top3,
-  todayCount,
-}: {
-  top3: ReturnType<typeof selectTop3>;
-  todayCount: number;
-}) {
-  return (
-    <div className="surface-stack">
-      <section className="intro-block" aria-labelledby="today-title">
-        <p className="eyebrow">A clear start</p>
-        <h1 id="today-title">Today</h1>
-        <p className="intro-copy">
-          Keep the day small. Choose up to three outcomes worth finishing.
-        </p>
-      </section>
-
-      <section className="section-block" aria-labelledby="priorities-title">
-        <div className="section-heading">
-          <div>
-            <p className="section-kicker">Top 3</p>
-            <h2 id="priorities-title">What matters today</h2>
-          </div>
-          <span className="count-pill">{top3.length} / 3</span>
-        </div>
-
-        {top3.length > 0 ? (
-          <ol className="priority-list">
-            {top3.map((task) => (
-              <li key={task.id} className="priority-row">
-                <span className="priority-marker" aria-hidden="true" />
-                <span className="priority-title">{task.title}</span>
-                {task.estimateMinutes !== null ? (
-                  <span className="priority-meta">{task.estimateMinutes} min</span>
-                ) : null}
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <div className="empty-panel">
-            <div className="empty-symbol" aria-hidden="true">○</div>
-            <div>
-              <h3>A fresh day</h3>
-              <p>
-                Your first priorities will live here. Quick Capture arrives in the
-                next product PR.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {todayCount > top3.length ? (
-          <p className="supporting-note">
-            {todayCount - top3.length} more Today item
-            {todayCount - top3.length === 1 ? "" : "s"} waiting outside Top 3.
-          </p>
-        ) : null}
-      </section>
-
-      <section className="now-card" aria-labelledby="now-title">
-        <div>
-          <p className="section-kicker">Now</p>
-          <h2 id="now-title">One thing at a time</h2>
-          <p>
-            Focus mode will turn the selected priority into a quiet, full attention
-            workspace without losing your place.
-          </p>
-        </div>
-        <span className="now-orbit" aria-hidden="true" />
-      </section>
-    </div>
-  );
-}
-
-function InboxSurface({
-  tasks,
-}: {
-  tasks: ReturnType<typeof selectTasksByStatus>;
-}) {
-  return (
-    <div className="surface-stack">
-      <section className="intro-block">
-        <p className="eyebrow">Safe to forget</p>
-        <h1>Inbox</h1>
-        <p className="intro-copy">
-          Capture first. Decide later. Nothing here needs to compete with your focus.
-        </p>
-      </section>
-
-      {tasks.length === 0 ? (
-        <div className="empty-panel">
-          <div className="empty-symbol" aria-hidden="true">✓</div>
-          <div>
-            <h2>Inbox clear</h2>
-            <p>Nothing is asking for your attention.</p>
-          </div>
-        </div>
-      ) : (
-        <ul className="simple-list">
-          {tasks.map((task) => (
-            <li key={task.id}>{task.title}</li>
-          ))}
-        </ul>
-      )}
-    </div>
   );
 }
 
@@ -254,6 +171,7 @@ function ReviewSurface({ completedCount }: { completedCount: number }) {
 
 export function App({ store = dayDockStore }: AppProps) {
   const [surface, setSurface] = useState<Surface>("today");
+  const captureDialogRef = useRef<HTMLDialogElement>(null);
   const state = useDayDockState(store);
 
   const today = useMemo(() => new Date(), []);
@@ -264,6 +182,72 @@ export function App({ store = dayDockStore }: AppProps) {
   const completedTasks = selectTasksByStatus(state, "done");
   const duePeople = selectFollowUpsDue(state, todayKey);
   const inboxCount = selectInboxCount(state);
+
+  function showCaptureDialog() {
+    const dialog = captureDialogRef.current;
+    if (!dialog || dialog.open) return;
+
+    dialog.showModal();
+    dialog.querySelector<HTMLTextAreaElement>("[data-capture-input]")?.focus();
+  }
+
+  const openCaptureFromKeyboard = useEffectEvent(() => {
+    showCaptureDialog();
+  });
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (
+        event.key.toLocaleLowerCase() !== "n" ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        isEditableTarget(event.target)
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      openCaptureFromKeyboard();
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  function captureTask(title: string) {
+    const task: Task = {
+      id: createId(),
+      title,
+      status: "inbox",
+      estimateMinutes: null,
+      personId: null,
+      createdAt: new Date().toISOString(),
+      completedAt: null,
+    };
+
+    store.dispatch({ type: "task/captured", task });
+  }
+
+  function moveTask(taskId: string, status: "today" | "later") {
+    store.dispatch({ type: "task/moved", taskId, status });
+  }
+
+  function completeTask(taskId: string) {
+    store.dispatch({
+      type: "task/completed",
+      taskId,
+      completedAt: new Date().toISOString(),
+    });
+  }
+
+  function addToTop3(taskId: string) {
+    store.dispatch({ type: "top3/added", taskId });
+  }
+
+  function openCapture() {
+    showCaptureDialog();
+  }
 
   return (
     <div className="app-shell">
@@ -298,6 +282,7 @@ export function App({ store = dayDockStore }: AppProps) {
                   key={item.id}
                   type="button"
                   className={active ? "nav-item is-active" : "nav-item"}
+                  aria-label={item.label}
                   aria-current={active ? "page" : undefined}
                   onClick={() => setSurface(item.id)}
                 >
@@ -329,9 +314,21 @@ export function App({ store = dayDockStore }: AppProps) {
 
           <div className="surface-content">
             {surface === "today" ? (
-              <TodaySurface top3={top3} todayCount={todayTasks.length} />
+              <TodaySurface
+                top3={top3}
+                todayTasks={todayTasks}
+                onAddToTop3={addToTop3}
+                onComplete={completeTask}
+              />
             ) : null}
-            {surface === "inbox" ? <InboxSurface tasks={inboxTasks} /> : null}
+            {surface === "inbox" ? (
+              <InboxSurface
+                tasks={inboxTasks}
+                onMoveToday={(taskId) => moveTask(taskId, "today")}
+                onMoveLater={(taskId) => moveTask(taskId, "later")}
+                onComplete={completeTask}
+              />
+            ) : null}
             {surface === "people" ? <PeopleSurface duePeople={duePeople} /> : null}
             {surface === "review" ? (
               <ReviewSurface completedCount={completedTasks.length} />
@@ -339,6 +336,22 @@ export function App({ store = dayDockStore }: AppProps) {
           </div>
         </main>
       </div>
+
+      <button
+        type="button"
+        className="quick-capture-trigger"
+        aria-label="Quick capture"
+        onClick={openCapture}
+      >
+        <span className="capture-plus" aria-hidden="true">+</span>
+        <span className="capture-trigger-copy">Capture</span>
+        <kbd>N</kbd>
+      </button>
+
+      <QuickCaptureDialog
+        dialogRef={captureDialogRef}
+        onCapture={captureTask}
+      />
     </div>
   );
 }
