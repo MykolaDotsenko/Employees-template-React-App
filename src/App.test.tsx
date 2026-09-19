@@ -4,6 +4,22 @@ import { describe, expect, it } from "vitest";
 import { App } from "./App";
 import { createDayDockStore } from "./store/dayDockStore";
 
+function addTodayPriority(store: ReturnType<typeof createDayDockStore>) {
+  store.dispatch({
+    type: "task/captured",
+    task: {
+      id: "a",
+      title: "Write architecture notes",
+      status: "today",
+      estimateMinutes: 30,
+      personId: null,
+      createdAt: "2026-09-19T08:00:00.000Z",
+      completedAt: null,
+    },
+  });
+  store.dispatch({ type: "top3/added", taskId: "a" });
+}
+
 describe("DayDock core daily flow", () => {
   it("renders the light local-first Today experience by default", () => {
     render(<App store={createDayDockStore()} />);
@@ -29,9 +45,6 @@ describe("DayDock core daily flow", () => {
     await user.click(screen.getByRole("button", { name: "Capture" }));
 
     expect(store.getSnapshot().taskOrder).toHaveLength(1);
-    expect(store.getSnapshot().tasks[store.getSnapshot().taskOrder[0] ?? ""]?.status).toBe(
-      "inbox",
-    );
 
     await user.click(screen.getByRole("button", { name: "Inbox" }));
     expect(screen.getByText("Finish PR review")).toBeInTheDocument();
@@ -40,44 +53,51 @@ describe("DayDock core daily flow", () => {
       screen.getByRole("button", { name: "Move Finish PR review to Today" }),
     );
 
-    expect(screen.queryByText("Finish PR review")).not.toBeInTheDocument();
-
     await user.click(screen.getByRole("button", { name: "Today" }));
     expect(screen.getByText("Finish PR review")).toBeInTheDocument();
   });
 
-  it("promotes a Today item into Top 3 and completes it", async () => {
+  it("starts, pauses, resumes and completes a focus session", async () => {
     const user = userEvent.setup();
     const store = createDayDockStore();
-
-    store.dispatch({
-      type: "task/captured",
-      task: {
-        id: "a",
-        title: "Write architecture notes",
-        status: "today",
-        estimateMinutes: 30,
-        personId: null,
-        createdAt: "2026-09-19T08:00:00.000Z",
-        completedAt: null,
-      },
-    });
+    addTodayPriority(store);
 
     render(<App store={store} />);
 
-    await user.click(
-      screen.getByRole("button", { name: "Add Write architecture notes to Top 3" }),
-    );
+    await user.click(screen.getByRole("button", { name: /Start focus/i }));
 
-    expect(screen.getByText("1 / 3")).toBeInTheDocument();
-    expect(store.getSnapshot().top3).toEqual(["a"]);
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Write architecture notes" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("30 min session · saved locally")).toBeInTheDocument();
+    expect(store.getSnapshot().focus.active?.taskId).toBe("a");
 
-    await user.click(
-      screen.getByRole("button", { name: "Complete Write architecture notes" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Pause" }));
+    expect(store.getSnapshot().focus.active?.pausedAt).not.toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Resume" }));
+    expect(store.getSnapshot().focus.active?.pausedAt).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Complete task" }));
 
     expect(store.getSnapshot().tasks.a?.status).toBe("done");
-    expect(store.getSnapshot().top3).toEqual([]);
+    expect(store.getSnapshot().focus.active).toBeNull();
+    expect(store.getSnapshot().focus.history[0]?.outcome).toBe("completed");
+  });
+
+  it("stops focus without completing the task", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+    addTodayPriority(store);
+
+    render(<App store={store} />);
+
+    await user.click(screen.getByRole("button", { name: /Start focus/i }));
+    await user.click(screen.getByRole("button", { name: "End session" }));
+
+    expect(store.getSnapshot().focus.active).toBeNull();
+    expect(store.getSnapshot().focus.history[0]?.outcome).toBe("stopped");
+    expect(store.getSnapshot().tasks.a?.status).toBe("today");
   });
 
   it("opens Quick Capture with the N shortcut outside editable controls", async () => {

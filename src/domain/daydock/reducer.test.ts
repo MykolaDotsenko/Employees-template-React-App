@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { createInitialDayDockState, type Person, type Task } from "./model";
+import {
+  createInitialDayDockState,
+  type ActiveFocusSession,
+  type Person,
+  type Task,
+} from "./model";
 import { dayDockReducer } from "./reducer";
 import { selectFollowUpsDue, selectTop3 } from "./selectors";
 
-function task(
-  id: string,
-  status: Task["status"] = "inbox",
-): Task {
+function task(id: string, status: Task["status"] = "inbox"): Task {
   return {
     id,
     title: `Task ${id}`,
@@ -25,6 +27,17 @@ function person(id: string, nextFollowUpDate: string | null): Person {
     context: "",
     nextFollowUpDate,
     createdAt: "2026-09-19T08:00:00.000Z",
+  };
+}
+
+function focusSession(taskId: string): ActiveFocusSession {
+  return {
+    id: "focus-a",
+    taskId,
+    startedAt: "2026-09-19T10:00:00.000Z",
+    durationMinutes: 50,
+    pausedAt: null,
+    accumulatedPauseMs: 0,
   };
 }
 
@@ -145,5 +158,68 @@ describe("dayDockReducer", () => {
     expect(
       selectFollowUpsDue(state, "2026-09-19").map((entry) => entry.id),
     ).toEqual(["a", "c"]);
+  });
+
+  it("starts, pauses and resumes a focus session deterministically", () => {
+    let state = dayDockReducer(createInitialDayDockState(), {
+      type: "task/captured",
+      task: task("a", "today"),
+    });
+
+    state = dayDockReducer(state, {
+      type: "focus/started",
+      session: focusSession("a"),
+    });
+    state = dayDockReducer(state, {
+      type: "focus/paused",
+      pausedAt: "2026-09-19T10:10:00.000Z",
+    });
+    state = dayDockReducer(state, {
+      type: "focus/resumed",
+      resumedAt: "2026-09-19T10:15:00.000Z",
+    });
+
+    expect(state.focus.active?.pausedAt).toBeNull();
+    expect(state.focus.active?.accumulatedPauseMs).toBe(5 * 60_000);
+  });
+
+  it("prevents an active focus task from being moved away from Today", () => {
+    let state = dayDockReducer(createInitialDayDockState(), {
+      type: "task/captured",
+      task: task("a", "today"),
+    });
+    state = dayDockReducer(state, {
+      type: "focus/started",
+      session: focusSession("a"),
+    });
+
+    const unchanged = dayDockReducer(state, {
+      type: "task/moved",
+      taskId: "a",
+      status: "later",
+    });
+
+    expect(unchanged).toBe(state);
+  });
+
+  it("completing the focused task closes the session into history", () => {
+    let state = dayDockReducer(createInitialDayDockState(), {
+      type: "task/captured",
+      task: task("a", "today"),
+    });
+    state = dayDockReducer(state, {
+      type: "focus/started",
+      session: focusSession("a"),
+    });
+    state = dayDockReducer(state, {
+      type: "task/completed",
+      taskId: "a",
+      completedAt: "2026-09-19T10:20:00.000Z",
+    });
+
+    expect(state.focus.active).toBeNull();
+    expect(state.focus.history).toHaveLength(1);
+    expect(state.focus.history[0]?.outcome).toBe("completed");
+    expect(state.focus.history[0]?.endedAt).toBe("2026-09-19T10:20:00.000Z");
   });
 });

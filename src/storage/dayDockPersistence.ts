@@ -1,7 +1,9 @@
 import { z } from "zod";
 import {
   createInitialDayDockState,
+  type ActiveFocusSession,
   type DayDockState,
+  type FocusSessionRecord,
   type Person,
   type Task,
 } from "../domain/daydock/model";
@@ -11,7 +13,7 @@ import {
 } from "../store/dayDockStore";
 
 export const DAYDOCK_STORAGE_KEY = "daydock:workspace";
-export const DAYDOCK_SCHEMA_VERSION = 1 as const;
+export const DAYDOCK_SCHEMA_VERSION = 2 as const;
 
 export interface StorageLike {
   getItem(key: string): string | null;
@@ -62,7 +64,22 @@ const personSchema = z.object({
   createdAt: isoDateTimeSchema,
 });
 
-const dayDockStateSchema = z.object({
+const activeFocusSchema = z.object({
+  id: z.string().min(1),
+  taskId: z.string().min(1),
+  startedAt: isoDateTimeSchema,
+  durationMinutes: z.number().int().min(5).max(240),
+  pausedAt: isoDateTimeSchema.nullable(),
+  accumulatedPauseMs: z.number().int().nonnegative(),
+});
+
+const focusRecordSchema = activeFocusSchema.extend({
+  pausedAt: z.null(),
+  endedAt: isoDateTimeSchema,
+  outcome: z.enum(["completed", "stopped"]),
+});
+
+const legacyStateSchema = z.object({
   tasks: z.record(z.string(), taskSchema),
   taskOrder: z.array(z.string()),
   top3: z.array(z.string()).max(3),
@@ -70,15 +87,28 @@ const dayDockStateSchema = z.object({
   personOrder: z.array(z.string()),
 });
 
-const v1EnvelopeSchema = z.object({
+const dayDockStateSchema = legacyStateSchema.extend({
+  focus: z.object({
+    active: activeFocusSchema.nullable(),
+    history: z.array(focusRecordSchema),
+  }),
+});
+
+const v2EnvelopeSchema = z.object({
   schemaVersion: z.literal(DAYDOCK_SCHEMA_VERSION),
   updatedAt: isoDateTimeSchema,
   data: dayDockStateSchema,
 });
 
+const v1EnvelopeSchema = z.object({
+  schemaVersion: z.literal(1),
+  updatedAt: isoDateTimeSchema,
+  data: legacyStateSchema,
+});
+
 const v0EnvelopeSchema = z.object({
   schemaVersion: z.literal(0),
-  data: dayDockStateSchema,
+  data: legacyStateSchema,
 });
 
 function uniqueExistingOrder<T>(
@@ -100,6 +130,23 @@ function uniqueExistingOrder<T>(
   }
 
   return result;
+}
+
+function normalizeFocusSession(
+  session: ActiveFocusSession,
+  tasks: Record<string, Task>,
+): ActiveFocusSession | null {
+  const task = tasks[session.taskId];
+  if (!task || task.status !== "today") return null;
+
+  return session;
+}
+
+function normalizeFocusHistory(
+  history: FocusSessionRecord[],
+  tasks: Record<string, Task>,
+): FocusSessionRecord[] {
+  return history.filter((session) => Boolean(tasks[session.taskId]));
 }
 
 export function normalizeDayDockState(state: DayDockState): DayDockState {
@@ -150,6 +197,25 @@ export function normalizeDayDockState(state: DayDockState): DayDockState {
     top3,
     people,
     personOrder,
+    focus: {
+      active:
+        state.focus.active === null
+          ? null
+          : normalizeFocusSession(state.focus.active, tasks),
+      history: normalizeFocusHistory(state.focus.history, tasks),
+    },
+  };
+}
+
+function withEmptyFocus(
+  state: z.infer<typeof legacyStateSchema>,
+): DayDockState {
+  return {
+    ...state,
+    focus: {
+      active: null,
+      history: [],
+    },
   };
 }
 
@@ -209,7 +275,7 @@ export function loadDayDockWorkspace(
     };
   }
 
-  const current = v1EnvelopeSchema.safeParse(parsed);
+  const current = v2EnvelopeSchema.safeParse(parsed);
 
   if (current.success) {
     return {
@@ -218,16 +284,20 @@ export function loadDayDockWorkspace(
     };
   }
 
-  const legacy = v0EnvelopeSchema.safeParse(parsed);
+  const v1 = v1EnvelopeSchema.safeParse(parsed);
 
-  if (legacy.success) {
-    const state = normalizeDayDockState(legacy.data.data);
+  if (v1.success) {
+    const state = normalizeDayDockState(withEmptyFocus(v1.data.data));
     saveDayDockWorkspace(state, storage, now);
+    return { state, source: "migrated" };
+  }
 
-    return {
-      state,
-      source: "migrated",
-    };
+  const v0 = v0EnvelopeSchema.safeParse(parsed);
+
+  if (v0.success) {
+    const state = normalizeDayDockState(withEmptyFocus(v0.data.data));
+    saveDayDockWorkspace(state, storage, now);
+    return { state, source: "migrated" };
   }
 
   return {

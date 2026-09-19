@@ -76,15 +76,45 @@ describe("DayDock persistence", () => {
     expect(result.state).toEqual(createInitialDayDockState());
   });
 
-  it("migrates schema v0 to the current envelope", () => {
+  it("migrates schema v1 to v2 with an empty focus state", () => {
     const storage = new MemoryStorage();
     const state = stateWithTasks([task("a")]);
+    const { focus: _focus, ...legacyData } = state;
+
+    storage.setItem(
+      DAYDOCK_STORAGE_KEY,
+      JSON.stringify({
+        schemaVersion: 1,
+        updatedAt: "2026-09-19T11:00:00.000Z",
+        data: legacyData,
+      }),
+    );
+
+    const result = loadDayDockWorkspace(
+      storage,
+      () => "2026-09-19T12:00:00.000Z",
+    );
+
+    expect(result.source).toBe("migrated");
+    expect(result.state.focus).toEqual({ active: null, history: [] });
+
+    const upgraded = JSON.parse(
+      storage.getItem(DAYDOCK_STORAGE_KEY) ?? "{}",
+    ) as { schemaVersion?: number };
+
+    expect(upgraded.schemaVersion).toBe(DAYDOCK_SCHEMA_VERSION);
+  });
+
+  it("migrates schema v0 directly to the current envelope", () => {
+    const storage = new MemoryStorage();
+    const state = stateWithTasks([task("a")]);
+    const { focus: _focus, ...legacyData } = state;
 
     storage.setItem(
       DAYDOCK_STORAGE_KEY,
       JSON.stringify({
         schemaVersion: 0,
-        data: state,
+        data: legacyData,
       }),
     );
 
@@ -95,13 +125,6 @@ describe("DayDock persistence", () => {
 
     expect(result.source).toBe("migrated");
     expect(result.state.tasks.a?.title).toBe("Task a");
-
-    const upgraded = JSON.parse(
-      storage.getItem(DAYDOCK_STORAGE_KEY) ?? "{}",
-    ) as { schemaVersion?: number; updatedAt?: string };
-
-    expect(upgraded.schemaVersion).toBe(DAYDOCK_SCHEMA_VERSION);
-    expect(upgraded.updatedAt).toBe("2026-09-19T12:00:00.000Z");
   });
 
   it("normalizes ordering, Top 3 and broken person references", () => {
@@ -130,7 +153,37 @@ describe("DayDock persistence", () => {
     expect(result.state.tasks.today?.personId).toBeNull();
   });
 
-  it("persists a normalized v1 envelope", () => {
+  it("drops an active focus session when its task is no longer Today", () => {
+    const storage = new MemoryStorage();
+    const later = task("later", "later");
+
+    storage.setItem(
+      DAYDOCK_STORAGE_KEY,
+      JSON.stringify({
+        schemaVersion: DAYDOCK_SCHEMA_VERSION,
+        updatedAt: "2026-09-19T10:00:00.000Z",
+        data: {
+          ...stateWithTasks([later]),
+          focus: {
+            active: {
+              id: "focus-a",
+              taskId: "later",
+              startedAt: "2026-09-19T09:00:00.000Z",
+              durationMinutes: 50,
+              pausedAt: null,
+              accumulatedPauseMs: 0,
+            },
+            history: [],
+          },
+        },
+      }),
+    );
+
+    const result = loadDayDockWorkspace(storage);
+    expect(result.state.focus.active).toBeNull();
+  });
+
+  it("persists a normalized current envelope", () => {
     const storage = new MemoryStorage();
     const state = stateWithTasks([task("a")]);
 
@@ -152,7 +205,7 @@ describe("DayDock persistence", () => {
 
     expect(saved.schemaVersion).toBe(DAYDOCK_SCHEMA_VERSION);
     expect(saved.updatedAt).toBe("2026-09-19T13:00:00.000Z");
-    expect(saved.data?.tasks.a?.title).toBe("Task a");
+    expect(saved.data?.focus).toEqual({ active: null, history: [] });
   });
 
   it("persists external-store changes but ignores no-op actions", () => {

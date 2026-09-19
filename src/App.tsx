@@ -6,13 +6,14 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { Task } from "./domain/daydock/model";
+import type { ActiveFocusSession, Task } from "./domain/daydock/model";
 import {
   selectFollowUpsDue,
   selectInboxCount,
   selectTasksByStatus,
   selectTop3,
 } from "./domain/daydock/selectors";
+import { FocusMode } from "./features/focus/FocusMode";
 import { InboxSurface } from "./features/inbox/InboxSurface";
 import { QuickCaptureDialog } from "./features/quick-capture/QuickCaptureDialog";
 import { TodaySurface } from "./features/today/TodaySurface";
@@ -48,10 +49,10 @@ function formatDay(date: Date): string {
   }).format(date);
 }
 
-function createId(): string {
+function createId(prefix = "task"): string {
   return (
     globalThis.crypto?.randomUUID?.() ??
-    `task-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`
   );
 }
 
@@ -183,6 +184,10 @@ export function App({ store = dayDockStore }: AppProps) {
   const duePeople = selectFollowUpsDue(state, todayKey);
   const inboxCount = selectInboxCount(state);
 
+  const activeFocus = state.focus.active;
+  const focusedTask =
+    activeFocus === null ? null : state.tasks[activeFocus.taskId] ?? null;
+
   function showCaptureDialog() {
     const dialog = captureDialogRef.current;
     if (!dialog || dialog.open) return;
@@ -202,7 +207,8 @@ export function App({ store = dayDockStore }: AppProps) {
         event.altKey ||
         event.ctrlKey ||
         event.metaKey ||
-        isEditableTarget(event.target)
+        isEditableTarget(event.target) ||
+        activeFocus !== null
       ) {
         return;
       }
@@ -213,11 +219,11 @@ export function App({ store = dayDockStore }: AppProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [activeFocus]);
 
   function captureTask(title: string) {
     const task: Task = {
-      id: createId(),
+      id: createId("task"),
       title,
       status: "inbox",
       estimateMinutes: null,
@@ -245,8 +251,64 @@ export function App({ store = dayDockStore }: AppProps) {
     store.dispatch({ type: "top3/added", taskId });
   }
 
+  function startFocus(taskId: string) {
+    const task = state.tasks[taskId];
+    if (!task || task.status !== "today" || state.focus.active !== null) return;
+
+    const session: ActiveFocusSession = {
+      id: createId("focus"),
+      taskId,
+      startedAt: new Date().toISOString(),
+      durationMinutes: task.estimateMinutes ?? 50,
+      pausedAt: null,
+      accumulatedPauseMs: 0,
+    };
+
+    store.dispatch({ type: "focus/started", session });
+  }
+
+  function pauseFocus() {
+    store.dispatch({
+      type: "focus/paused",
+      pausedAt: new Date().toISOString(),
+    });
+  }
+
+  function resumeFocus() {
+    store.dispatch({
+      type: "focus/resumed",
+      resumedAt: new Date().toISOString(),
+    });
+  }
+
+  function stopFocus() {
+    store.dispatch({
+      type: "focus/finished",
+      endedAt: new Date().toISOString(),
+      outcome: "stopped",
+    });
+  }
+
+  function completeFocusedTask() {
+    if (activeFocus === null) return;
+    completeTask(activeFocus.taskId);
+  }
+
   function openCapture() {
     showCaptureDialog();
+  }
+
+  if (activeFocus !== null && focusedTask !== null) {
+    return (
+      <FocusMode
+        session={activeFocus}
+        task={focusedTask}
+        onPause={pauseFocus}
+        onResume={resumeFocus}
+        onStop={stopFocus}
+        onComplete={completeFocusedTask}
+      />
+    );
   }
 
   return (
@@ -258,9 +320,7 @@ export function App({ store = dayDockStore }: AppProps) {
       <div className="app-layout">
         <header className="brand-rail">
           <div className="brand-lockup">
-            <span className="brand-mark" aria-hidden="true">
-              D
-            </span>
+            <span className="brand-mark" aria-hidden="true">D</span>
             <div>
               <strong className="brand-name">DayDock</strong>
               <span className="brand-subtitle">Your day, clearly.</span>
@@ -319,6 +379,7 @@ export function App({ store = dayDockStore }: AppProps) {
                 todayTasks={todayTasks}
                 onAddToTop3={addToTop3}
                 onComplete={completeTask}
+                onStartFocus={startFocus}
               />
             ) : null}
             {surface === "inbox" ? (
