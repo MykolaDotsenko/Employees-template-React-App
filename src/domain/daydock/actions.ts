@@ -16,6 +16,12 @@ export type DayDockAction =
   | { type: "top3/added"; taskId: string }
   | { type: "top3/removed"; taskId: string }
   | { type: "person/added"; person: Person }
+  | {
+      type: "person/followUpChanged";
+      personId: string;
+      nextFollowUpDate: string | null;
+    }
+  | { type: "person/contextChanged"; personId: string; context: string }
   | { type: "focus/started"; session: ActiveFocusSession }
   | { type: "focus/paused"; pausedAt: string }
   | { type: "focus/resumed"; resumedAt: string }

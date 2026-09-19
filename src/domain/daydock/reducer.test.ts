@@ -160,6 +160,29 @@ describe("dayDockReducer", () => {
     ).toEqual(["a", "c"]);
   });
 
+  it("keeps person follow-up dates valid and updateable", () => {
+    let state = dayDockReducer(createInitialDayDockState(), {
+      type: "person/added",
+      person: person("a", "2026-09-20"),
+    });
+
+    state = dayDockReducer(state, {
+      type: "person/followUpChanged",
+      personId: "a",
+      nextFollowUpDate: "2026-09-21",
+    });
+
+    expect(state.people.a?.nextFollowUpDate).toBe("2026-09-21");
+
+    const unchanged = dayDockReducer(state, {
+      type: "person/followUpChanged",
+      personId: "a",
+      nextFollowUpDate: "2026-02-31",
+    });
+
+    expect(unchanged).toBe(state);
+  });
+
   it("starts, pauses and resumes a focus session deterministically", () => {
     let state = dayDockReducer(createInitialDayDockState(), {
       type: "task/captured",
