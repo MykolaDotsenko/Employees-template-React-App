@@ -15,6 +15,10 @@ import {
   selectTasksByStatus,
   selectTop3,
 } from "./domain/daydock/selectors";
+import {
+  CommandPalette,
+  type PaletteSurface,
+} from "./features/command-palette/CommandPalette";
 import { FocusMode } from "./features/focus/FocusMode";
 import { InboxSurface } from "./features/inbox/InboxSurface";
 import { PeopleSurface } from "./features/people/PeopleSurface";
@@ -24,7 +28,7 @@ import { dayDockStore } from "./store/browserDayDockStore";
 import type { DayDockStore } from "./store/dayDockStore";
 import { useDayDockState } from "./store/useDayDockState";
 
-type Surface = "today" | "inbox" | "people" | "review";
+type Surface = PaletteSurface;
 
 interface AppProps {
   store?: DayDockStore;
@@ -139,6 +143,7 @@ function ReviewSurface({ completedCount }: { completedCount: number }) {
 export function App({ store = dayDockStore }: AppProps) {
   const [surface, setSurface] = useState<Surface>("today");
   const captureDialogRef = useRef<HTMLDialogElement>(null);
+  const commandDialogRef = useRef<HTMLDialogElement>(null);
   const state = useDayDockState(store);
 
   const today = useMemo(() => new Date(), []);
@@ -156,6 +161,11 @@ export function App({ store = dayDockStore }: AppProps) {
     ]),
   );
   const inboxCount = selectInboxCount(state);
+  const allTasks = state.taskOrder.flatMap((taskId) => {
+    const task = state.tasks[taskId];
+    return task ? [task] : [];
+  });
+  const currentTask = top3[0] ?? null;
 
   const activeFocus = state.focus.active;
   const focusedTask =
@@ -169,19 +179,40 @@ export function App({ store = dayDockStore }: AppProps) {
     dialog.querySelector<HTMLTextAreaElement>("[data-capture-input]")?.focus();
   }
 
+  function showCommandPalette() {
+    const dialog = commandDialogRef.current;
+    if (!dialog || dialog.open) return;
+
+    dialog.showModal();
+    dialog.querySelector<HTMLInputElement>("[data-command-input]")?.focus();
+  }
+
   const openCaptureFromKeyboard = useEffectEvent(() => {
     showCaptureDialog();
   });
 
+  const openCommandsFromKeyboard = useEffectEvent(() => {
+    showCommandPalette();
+  });
+
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
+      if (activeFocus !== null) return;
+
+      const key = event.key.toLocaleLowerCase();
+
+      if ((event.metaKey || event.ctrlKey) && key === "k") {
+        event.preventDefault();
+        openCommandsFromKeyboard();
+        return;
+      }
+
       if (
-        event.key.toLocaleLowerCase() !== "n" ||
+        key !== "n" ||
         event.altKey ||
         event.ctrlKey ||
         event.metaKey ||
-        isEditableTarget(event.target) ||
-        activeFocus !== null
+        isEditableTarget(event.target)
       ) {
         return;
       }
@@ -312,6 +343,14 @@ export function App({ store = dayDockStore }: AppProps) {
     showCaptureDialog();
   }
 
+  function openCommands() {
+    showCommandPalette();
+  }
+
+  function navigateFromPalette(nextSurface: PaletteSurface) {
+    setSurface(nextSurface);
+  }
+
   if (activeFocus !== null && focusedTask !== null) {
     return (
       <FocusMode
@@ -383,7 +422,18 @@ export function App({ store = dayDockStore }: AppProps) {
         <main id="main-content" className="main-surface">
           <header className="surface-topbar">
             <span>{formatDay(today)}</span>
-            <span className="local-badge">Private by default</span>
+            <div className="topbar-actions">
+              <button
+                type="button"
+                className="command-trigger"
+                aria-label="Open command palette"
+                onClick={openCommands}
+              >
+                <span>Search</span>
+                <kbd>⌘K</kbd>
+              </button>
+              <span className="local-badge">Private by default</span>
+            </div>
           </header>
 
           <div className="surface-content">
@@ -435,6 +485,16 @@ export function App({ store = dayDockStore }: AppProps) {
       <QuickCaptureDialog
         dialogRef={captureDialogRef}
         onCapture={captureTask}
+      />
+
+      <CommandPalette
+        dialogRef={commandDialogRef}
+        tasks={allTasks}
+        people={people}
+        currentTask={currentTask}
+        onNavigate={navigateFromPalette}
+        onQuickCapture={showCaptureDialog}
+        onStartFocus={startFocus}
       />
     </div>
   );
