@@ -15,6 +15,7 @@ import {
   selectInboxCount,
   selectOpenTasksForPerson,
   selectPeople,
+  selectReviewSnapshot,
   selectTasksByStatus,
   selectTop3,
 } from "./domain/daydock/selectors";
@@ -26,6 +27,7 @@ import { FocusMode } from "./features/focus/FocusMode";
 import { InboxSurface } from "./features/inbox/InboxSurface";
 import { PeopleSurface } from "./features/people/PeopleSurface";
 import { QuickCaptureDialog } from "./features/quick-capture/QuickCaptureDialog";
+import { ReviewSurface } from "./features/review/ReviewSurface";
 import { TodaySurface } from "./features/today/TodaySurface";
 import { dayDockStore } from "./store/browserDayDockStore";
 import type { DayDockStore } from "./store/dayDockStore";
@@ -118,31 +120,6 @@ function SurfaceIcon({ surface }: { surface: Surface }) {
   );
 }
 
-function ReviewSurface({ completedCount }: { completedCount: number }) {
-  return (
-    <div className="surface-stack">
-      <section className="intro-block">
-        <p className="eyebrow">Close the loop</p>
-        <h1>Review</h1>
-        <p className="intro-copy">
-          End the day with closure, not a productivity score.
-        </p>
-      </section>
-
-      <div className="review-summary">
-        <div>
-          <span className="review-number">{completedCount}</span>
-          <span className="review-label">completed</span>
-        </div>
-        <p>
-          Daily wrap-up and gentle weekly patterns arrive after the core Today flow
-          is complete.
-        </p>
-      </div>
-    </div>
-  );
-}
-
 export function App({ store = dayDockStore }: AppProps) {
   const [surface, setSurface] = useState<Surface>("today");
   const captureDialogRef = useRef<HTMLDialogElement>(null);
@@ -159,7 +136,6 @@ export function App({ store = dayDockStore }: AppProps) {
   const top3 = selectTop3(state);
   const todayTasks = selectTasksByStatus(state, "today");
   const inboxTasks = selectTasksByStatus(state, "inbox");
-  const completedTasks = selectTasksByStatus(state, "done");
   const people = selectPeople(state);
   const duePeople = selectFollowUpsDue(state, todayKey);
   const tasksByPerson = Object.fromEntries(
@@ -174,6 +150,25 @@ export function App({ store = dayDockStore }: AppProps) {
     return task ? [task] : [];
   });
   const currentTask = top3[0] ?? null;
+  const reviewWindow = useMemo(() => {
+    const start = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+    );
+    const end = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate() + 1,
+    );
+
+    return {
+      startMs: start.getTime(),
+      endMs: end.getTime(),
+      todayKey,
+    };
+  }, [today, todayKey]);
+  const reviewSnapshot = selectReviewSnapshot(state, reviewWindow);
 
   const activeFocus = state.focus.active;
   const focusedTask =
@@ -509,7 +504,12 @@ export function App({ store = dayDockStore }: AppProps) {
               </Activity>
 
               <Activity mode={surface === "review" ? "visible" : "hidden"}>
-                <ReviewSurface completedCount={completedTasks.length} />
+                <ReviewSurface
+                  snapshot={reviewSnapshot}
+                  tasksById={state.tasks}
+                  onNavigate={navigateFromPalette}
+                  onParkForLater={(taskId) => moveTask(taskId, "later")}
+                />
               </Activity>
             </div>
           </ViewTransition>
