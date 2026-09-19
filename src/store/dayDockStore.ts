@@ -36,5 +36,3 @@ export function createDayDockStore(
     },
   };
 }
-
-export const dayDockStore = createDayDockStore();
