@@ -155,3 +155,54 @@ external store
 
 The sync layer intentionally does not introduce polling, a server, or a second
 canonical state.
+
+
+## Portable backup and recovery
+
+Durable browser persistence is not the same thing as portability. DayDock therefore
+has a separate backup boundary instead of exposing raw localStorage bytes.
+
+```text
+workspace state
+    |
+normalize
+    |
+portable backup envelope
+    |  format: daydock-backup
+    |  formatVersion: 1
+    |  exportedAt
+    |  appSchemaVersion
+    v
+JSON file
+
+JSON import
+    |
+backup-envelope validation
+    |
+current state-schema validation
+    |
+relational normalization
+    |
+preview counts
+    |
+explicit Restore backup
+    |
+store.replaceState
+    |
+    +--> localStorage persistence
+    +--> cross-tab BroadcastChannel sync
+```
+
+### Recovery rules
+
+- Backups use their own format version rather than mirroring localStorage.
+- Import never mutates state until the entire file validates.
+- Files larger than 5 MB are rejected before reading.
+- Users see task, person and focus-history counts before replacing the current
+  workspace.
+- Restore uses the normal external-store replacement path, so there is no
+  special persistence bypass.
+- Export is entirely client-side: the JSON file is created with Blob/Object URL
+  APIs and is never uploaded.
+- The data-safety surface uses the native HTML Popover API as progressive
+  enhancement in the app shell.
