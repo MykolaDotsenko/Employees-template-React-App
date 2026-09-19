@@ -79,7 +79,13 @@ describe("DayDock persistence", () => {
   it("migrates schema v1 to v2 with an empty focus state", () => {
     const storage = new MemoryStorage();
     const state = stateWithTasks([task("a")]);
-    const { focus: _focus, ...legacyData } = state;
+    const legacyData = {
+      tasks: state.tasks,
+      taskOrder: state.taskOrder,
+      top3: state.top3,
+      people: state.people,
+      personOrder: state.personOrder,
+    };
 
     storage.setItem(
       DAYDOCK_STORAGE_KEY,
@@ -108,7 +114,13 @@ describe("DayDock persistence", () => {
   it("migrates schema v0 directly to the current envelope", () => {
     const storage = new MemoryStorage();
     const state = stateWithTasks([task("a")]);
-    const { focus: _focus, ...legacyData } = state;
+    const legacyData = {
+      tasks: state.tasks,
+      taskOrder: state.taskOrder,
+      top3: state.top3,
+      people: state.people,
+      personOrder: state.personOrder,
+    };
 
     storage.setItem(
       DAYDOCK_STORAGE_KEY,
