@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { App } from "./App";
@@ -124,7 +124,13 @@ describe("DayDock core daily flow", () => {
       screen.getByLabelText("Context"),
       "Waiting for mobile navigation feedback",
     );
-    await user.click(screen.getByRole("button", { name: "Add person" }));
+
+    const addPersonDialog = screen.getByRole("dialog", {
+      name: "Add someone to remember",
+    });
+    await user.click(
+      within(addPersonDialog).getByRole("button", { name: "Add person" }),
+    );
 
     expect(screen.getByRole("heading", { name: "Anna" })).toBeInTheDocument();
     expect(store.getSnapshot().personOrder).toHaveLength(1);
