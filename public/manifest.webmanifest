@@ -1,0 +1,41 @@
+{
+  "id": "./",
+  "name": "DayDock — Your day, clearly",
+  "short_name": "DayDock",
+  "description": "A calm, local-first workday command center for capture, focus, follow-ups and daily closure.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f8f5ee",
+  "theme_color": "#4a69c7",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "icons/daydock-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/daydock-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/daydock.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Open DayDock",
+      "short_name": "Today",
+      "description": "Open the DayDock workspace.",
+      "url": "./"
+    }
+  ]
+}
