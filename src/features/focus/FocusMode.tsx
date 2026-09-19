@@ -1,4 +1,5 @@
 import {
+  ViewTransition,
   useEffect,
   useEffectEvent,
   useState,
@@ -86,7 +87,9 @@ export function FocusMode({
         </div>
 
         <div className="focus-copy">
-          <h1 id="focus-task-title">{task.title}</h1>
+          <ViewTransition name={`focus-task-${task.id}`}>
+            <h1 id="focus-task-title">{task.title}</h1>
+          </ViewTransition>
           <p>
             {isComplete
               ? "You made the space. Decide whether this task is done or simply stop the session."

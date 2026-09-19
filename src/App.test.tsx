@@ -153,7 +153,13 @@ describe("DayDock core daily flow", () => {
 
     expect(linkedTasks).toHaveLength(1);
     expect(linkedTasks[0]?.status).toBe("inbox");
-    expect(screen.getByText("Ask about revised mockups")).toBeInTheDocument();
+
+    const annaHeading = screen.getByRole("heading", { name: "Anna" });
+    const annaCard = annaHeading.closest("article");
+    expect(annaCard).not.toBeNull();
+    expect(
+      within(annaCard as HTMLElement).getByText("Ask about revised mockups"),
+    ).toBeInTheDocument();
   });
 
   it("opens the command palette with Ctrl+K and navigates from search", async () => {
@@ -212,6 +218,37 @@ describe("DayDock core daily flow", () => {
         name: "Write architecture notes",
       }),
     ).toBeInTheDocument();
+  });
+
+  it("preserves a People follow-up draft across Activity navigation", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+
+    store.dispatch({
+      type: "person/added",
+      person: {
+        id: "anna",
+        name: "Anna",
+        context: "Design feedback",
+        nextFollowUpDate: null,
+        createdAt: "2026-09-19T08:00:00.000Z",
+      },
+    });
+
+    render(<App store={store} />);
+
+    await user.click(screen.getByRole("button", { name: "People" }));
+    const draft = screen.getByRole("textbox", {
+      name: "Follow-up task for Anna",
+    });
+    await user.type(draft, "Check final mobile flow");
+
+    await user.click(screen.getByRole("button", { name: "Review" }));
+    await user.click(screen.getByRole("button", { name: "People" }));
+
+    expect(
+      screen.getByRole("textbox", { name: "Follow-up task for Anna" }),
+    ).toHaveValue("Check final mobile flow");
   });
 
   it("navigates between People and Review without losing primary semantics", async () => {

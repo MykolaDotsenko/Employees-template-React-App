@@ -1,3 +1,4 @@
+import { ViewTransition } from "react";
 import type { Task } from "../../domain/daydock/model";
 import { TaskRow } from "../tasks/TaskRow";
 
@@ -112,9 +113,13 @@ export function TodaySurface({
       <section className="now-card" aria-labelledby="now-title">
         <div>
           <p className="section-kicker">Now</p>
-          <h2 id="now-title">
-            {currentTask?.title ?? "One thing at a time"}
-          </h2>
+          {currentTask ? (
+            <ViewTransition name={`focus-task-${currentTask.id}`}>
+              <h2 id="now-title">{currentTask.title}</h2>
+            </ViewTransition>
+          ) : (
+            <h2 id="now-title">One thing at a time</h2>
+          )}
           <p>
             {currentTask
               ? "Your first priority is ready. Give it a protected block of attention."

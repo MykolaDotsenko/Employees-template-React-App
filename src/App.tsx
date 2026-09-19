@@ -1,4 +1,7 @@
 import {
+  Activity,
+  ViewTransition,
+  startTransition,
   useEffect,
   useEffectEvent,
   useMemo,
@@ -145,6 +148,11 @@ export function App({ store = dayDockStore }: AppProps) {
   const captureDialogRef = useRef<HTMLDialogElement>(null);
   const commandDialogRef = useRef<HTMLDialogElement>(null);
   const state = useDayDockState(store);
+  const initialFocus = state.focus.active;
+  const [presentationMode, setPresentationMode] = useState<"workspace" | "focus">(
+    () => (initialFocus === null ? "workspace" : "focus"),
+  );
+  const [focusSnapshot, setFocusSnapshot] = useState(initialFocus);
 
   const today = useMemo(() => new Date(), []);
   const todayKey = localDateKey(today);
@@ -310,6 +318,11 @@ export function App({ store = dayDockStore }: AppProps) {
     };
 
     store.dispatch({ type: "focus/started", session });
+    setFocusSnapshot(session);
+
+    startTransition(() => {
+      setPresentationMode("focus");
+    });
   }
 
   function pauseFocus() {
@@ -326,17 +339,26 @@ export function App({ store = dayDockStore }: AppProps) {
     });
   }
 
+  function returnToWorkspace() {
+    startTransition(() => {
+      setPresentationMode("workspace");
+      setFocusSnapshot(null);
+    });
+  }
+
   function stopFocus() {
     store.dispatch({
       type: "focus/finished",
       endedAt: new Date().toISOString(),
       outcome: "stopped",
     });
+    returnToWorkspace();
   }
 
   function completeFocusedTask() {
     if (activeFocus === null) return;
     completeTask(activeFocus.taskId);
+    returnToWorkspace();
   }
 
   function openCapture() {
@@ -347,20 +369,38 @@ export function App({ store = dayDockStore }: AppProps) {
     showCommandPalette();
   }
 
-  function navigateFromPalette(nextSurface: PaletteSurface) {
-    setSurface(nextSurface);
+  function navigateTo(nextSurface: Surface) {
+    startTransition(() => {
+      setSurface(nextSurface);
+    });
   }
 
-  if (activeFocus !== null && focusedTask !== null) {
+  function navigateFromPalette(nextSurface: PaletteSurface) {
+    navigateTo(nextSurface);
+  }
+
+  const presentedFocus = activeFocus ?? focusSnapshot;
+  const presentedTask =
+    presentedFocus === null
+      ? null
+      : state.tasks[presentedFocus.taskId] ?? focusedTask;
+
+  if (
+    presentationMode === "focus" &&
+    presentedFocus !== null &&
+    presentedTask !== null
+  ) {
     return (
-      <FocusMode
-        session={activeFocus}
-        task={focusedTask}
-        onPause={pauseFocus}
-        onResume={resumeFocus}
-        onStop={stopFocus}
-        onComplete={completeFocusedTask}
-      />
+      <ViewTransition>
+        <FocusMode
+          session={presentedFocus}
+          task={presentedTask}
+          onPause={pauseFocus}
+          onResume={resumeFocus}
+          onStop={stopFocus}
+          onComplete={completeFocusedTask}
+        />
+      </ViewTransition>
     );
   }
 
@@ -397,7 +437,7 @@ export function App({ store = dayDockStore }: AppProps) {
                   className={active ? "nav-item is-active" : "nav-item"}
                   aria-label={item.label}
                   aria-current={active ? "page" : undefined}
-                  onClick={() => setSurface(item.id)}
+                  onClick={() => navigateTo(item.id)}
                 >
                   <SurfaceIcon surface={item.id} />
                   <span className="nav-copy">
@@ -436,38 +476,43 @@ export function App({ store = dayDockStore }: AppProps) {
             </div>
           </header>
 
-          <div className="surface-content">
-            {surface === "today" ? (
-              <TodaySurface
-                top3={top3}
-                todayTasks={todayTasks}
-                onAddToTop3={addToTop3}
-                onComplete={completeTask}
-                onStartFocus={startFocus}
-              />
-            ) : null}
-            {surface === "inbox" ? (
-              <InboxSurface
-                tasks={inboxTasks}
-                onMoveToday={(taskId) => moveTask(taskId, "today")}
-                onMoveLater={(taskId) => moveTask(taskId, "later")}
-                onComplete={completeTask}
-              />
-            ) : null}
-            {surface === "people" ? (
-              <PeopleSurface
-                people={people}
-                tasksByPerson={tasksByPerson}
-                todayKey={todayKey}
-                onAddPerson={addPerson}
-                onSetFollowUp={setPersonFollowUp}
-                onAddFollowUpTask={addPersonFollowUpTask}
-              />
-            ) : null}
-            {surface === "review" ? (
-              <ReviewSurface completedCount={completedTasks.length} />
-            ) : null}
-          </div>
+          <ViewTransition>
+            <div className="surface-content">
+              <Activity mode={surface === "today" ? "visible" : "hidden"}>
+                <TodaySurface
+                  top3={top3}
+                  todayTasks={todayTasks}
+                  onAddToTop3={addToTop3}
+                  onComplete={completeTask}
+                  onStartFocus={startFocus}
+                />
+              </Activity>
+
+              <Activity mode={surface === "inbox" ? "visible" : "hidden"}>
+                <InboxSurface
+                  tasks={inboxTasks}
+                  onMoveToday={(taskId) => moveTask(taskId, "today")}
+                  onMoveLater={(taskId) => moveTask(taskId, "later")}
+                  onComplete={completeTask}
+                />
+              </Activity>
+
+              <Activity mode={surface === "people" ? "visible" : "hidden"}>
+                <PeopleSurface
+                  people={people}
+                  tasksByPerson={tasksByPerson}
+                  todayKey={todayKey}
+                  onAddPerson={addPerson}
+                  onSetFollowUp={setPersonFollowUp}
+                  onAddFollowUpTask={addPersonFollowUpTask}
+                />
+              </Activity>
+
+              <Activity mode={surface === "review" ? "visible" : "hidden"}>
+                <ReviewSurface completedCount={completedTasks.length} />
+              </Activity>
+            </div>
+          </ViewTransition>
         </main>
       </div>
 
