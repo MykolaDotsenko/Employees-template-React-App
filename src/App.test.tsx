@@ -244,7 +244,7 @@ describe("DayDock core daily flow", () => {
     expect(
       screen.getByRole("heading", { name: "Before you close the day" }),
     ).toBeInTheDocument();
-    expect(screen.queryByText(/productivity score/i)).toBeInTheDocument();
+    expect(screen.queryByText(/productivity score/i)).not.toBeInTheDocument();
 
     const reviewRegion = screen.getByRole("heading", {
       name: "Before you close the day",

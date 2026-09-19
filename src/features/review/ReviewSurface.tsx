@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { DayInsight } from "../../domain/daydock/insights";
 import type { Task } from "../../domain/daydock/model";
 import { TaskRow } from "../tasks/TaskRow";
@@ -136,7 +137,7 @@ export function ReviewSurface({
                 <div className="week-bar-track">
                   <span
                     className="week-bar"
-                    style={{ "--week-level": level } as React.CSSProperties}
+                    style={{ "--week-level": level } as CSSProperties}
                   />
                 </div>
                 <span className="week-day-label">{shortDay(day.dateKey)}</span>
