@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties, type ChangeEvent } from "react";
 import type { DayInsight } from "../../domain/daydock/insights";
 import type { Task } from "../../domain/daydock/model";
 import { TaskRow } from "../tasks/TaskRow";
@@ -10,6 +10,8 @@ interface ReviewSurfaceProps {
   week: DayInsight[];
   onMoveLater: (taskId: string) => void;
   onComplete: (taskId: string) => void;
+  onExportBackup: () => boolean;
+  onImportBackup: (file: File) => Promise<boolean>;
 }
 
 function shortDay(dateKey: string): string {
@@ -38,9 +40,35 @@ export function ReviewSurface({
   week,
   onMoveLater,
   onComplete,
+  onExportBackup,
+  onImportBackup,
 }: ReviewSurfaceProps) {
+  const [backupStatus, setBackupStatus] = useState<string | null>(null);
   const maxFocus = Math.max(1, ...week.map((day) => day.focusMinutes));
   const activeFocusDays = week.filter((day) => day.focusMinutes > 0).length;
+
+  async function importBackup(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+    if (!file) return;
+
+    setBackupStatus("Checking backup…");
+    const imported = await onImportBackup(file);
+    setBackupStatus(
+      imported
+        ? "Backup restored. Your local workspace is up to date."
+        : "That file is not a valid DayDock backup.",
+    );
+  }
+
+  function exportBackup() {
+    const exported = onExportBackup();
+    setBackupStatus(
+      exported
+        ? "Backup downloaded."
+        : "This browser could not create a backup file.",
+    );
+  }
 
   return (
     <div className="surface-stack">
@@ -155,6 +183,36 @@ export function ReviewSurface({
           {activeFocusDays >= 3
             ? "A pattern is forming. DayDock shows the rhythm without grading it."
             : "After a few focus sessions, useful patterns will start to emerge here."}
+        </p>
+      </section>
+
+      <section className="data-safety" aria-labelledby="data-safety-title">
+        <div>
+          <p className="section-kicker">Data & privacy</p>
+          <h2 id="data-safety-title">Your workspace stays portable</h2>
+          <p>
+            DayDock stores your workspace in this browser and syncs changes only
+            between open DayDock tabs on this device. Export a JSON backup any time.
+          </p>
+        </div>
+
+        <div className="data-actions">
+          <button type="button" onClick={exportBackup}>
+            Export backup
+          </button>
+          <label>
+            Import backup
+            <input
+              className="sr-only"
+              type="file"
+              accept="application/json,.json"
+              onChange={importBackup}
+            />
+          </label>
+        </div>
+
+        <p className="data-status" aria-live="polite">
+          {backupStatus ?? "No account · no cloud upload · no tracking"}
         </p>
       </section>
 

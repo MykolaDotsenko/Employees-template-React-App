@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { createInitialDayDockState } from "../domain/daydock/model";
 import { createDayDockStore } from "./dayDockStore";
 
 describe("createDayDockStore", () => {
@@ -34,6 +35,31 @@ describe("createDayDockStore", () => {
       title: "Write final architecture notes",
     });
 
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it("can replace a validated snapshot through the store boundary", () => {
+    const store = createDayDockStore();
+    const listener = vi.fn();
+    store.subscribe(listener);
+
+    const replacement = createInitialDayDockState();
+    replacement.people.anna = {
+      id: "anna",
+      name: "Anna",
+      context: "Design review",
+      nextFollowUpDate: null,
+      createdAt: "2026-09-19T08:00:00.000Z",
+    };
+    replacement.personOrder.push("anna");
+
+    store.replaceSnapshot(replacement);
+
+    expect(store.getSnapshot()).toBe(replacement);
+    expect(store.getSnapshot().people.anna?.name).toBe("Anna");
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    store.replaceSnapshot(replacement);
     expect(listener).toHaveBeenCalledTimes(1);
   });
 });

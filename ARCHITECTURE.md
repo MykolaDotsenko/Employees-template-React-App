@@ -107,3 +107,34 @@ external local-first store
 7. Mobile behavior is designed explicitly rather than produced by shrinking desktop UI.
 8. Domain commands are deterministic: ids and timestamps are created outside the reducer.
 9. Unknown persisted schemas fail safe rather than being silently downgraded.
+
+
+## Cross-tab sync and portable backup
+
+The local-first store has two trusted replacement paths beyond normal reducer actions:
+
+1. a validated DayDock backup file;
+2. a validated `BroadcastChannel` workspace message from another tab.
+
+Both paths use the same versioned persistence schema and normalization rules before calling `store.replaceSnapshot()`.
+
+```text
+local action
+   ↓
+pure reducer
+   ↓
+store publishes
+   ├── write versioned localStorage envelope
+   └── BroadcastChannel message
+                    ↓
+             validate envelope
+                    ↓
+             replace snapshot
+                    ↓
+          write local persistence
+          (no broadcast echo)
+```
+
+Each tab has a unique source id. Remote changes are persisted locally but are not broadcast again, preventing message loops.
+
+Backups are JSON files using the current persistence envelope. Import accepts current or supported legacy schemas, migrates/normalizes them in memory, and never replaces the current workspace if validation fails. Imported backups deliberately do not resume an old active focus timer.

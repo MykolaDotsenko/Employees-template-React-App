@@ -9,8 +9,11 @@ import {
   DAYDOCK_STORAGE_KEY,
   createPersistentDayDockStore,
   loadDayDockWorkspace,
+  parseDayDockBackup,
   saveDayDockWorkspace,
+  serializeDayDockWorkspace,
   type StorageLike,
+  type WorkspaceSyncChannel,
 } from "./dayDockPersistence";
 
 class MemoryStorage implements StorageLike {
@@ -23,6 +26,28 @@ class MemoryStorage implements StorageLike {
   setItem(key: string, value: string): void {
     this.values.set(key, value);
   }
+}
+
+class TestSyncChannel implements WorkspaceSyncChannel {
+  peer: TestSyncChannel | null = null;
+  private readonly listeners = new Set<(message: unknown) => void>();
+
+  postMessage(message: unknown): void {
+    this.peer?.listeners.forEach((listener) => listener(message));
+  }
+
+  subscribe(listener: (message: unknown) => void): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+}
+
+function syncPair(): [TestSyncChannel, TestSyncChannel] {
+  const left = new TestSyncChannel();
+  const right = new TestSyncChannel();
+  left.peer = right;
+  right.peer = left;
+  return [left, right];
 }
 
 function task(id: string, status: Task["status"] = "today"): Task {
@@ -195,6 +220,20 @@ describe("DayDock persistence", () => {
     expect(result.state.focus.active).toBeNull();
   });
 
+  it("serializes and parses a portable validated backup", () => {
+    const state = stateWithTasks([task("a", "inbox")]);
+    const raw = serializeDayDockWorkspace(
+      state,
+      () => "2026-09-19T13:00:00.000Z",
+    );
+
+    const restored = parseDayDockBackup(raw);
+
+    expect(restored?.tasks.a?.title).toBe("Task a");
+    expect(restored?.tasks.a?.status).toBe("inbox");
+    expect(parseDayDockBackup("{invalid")).toBeNull();
+  });
+
   it("persists a normalized current envelope", () => {
     const storage = new MemoryStorage();
     const state = stateWithTasks([task("a")]);
@@ -238,5 +277,39 @@ describe("DayDock persistence", () => {
     const result = loadDayDockWorkspace(storage);
     expect(result.source).toBe("stored");
     expect(result.state.tasks.a?.status).toBe("inbox");
+  });
+
+  it("syncs validated workspace changes across channels without echo loops", () => {
+    const [leftChannel, rightChannel] = syncPair();
+
+    const left = createPersistentDayDockStore({
+      storage: new MemoryStorage(),
+      syncChannel: leftChannel,
+      sourceId: "left",
+      now: () => "2026-09-19T15:00:00.000Z",
+    });
+    const right = createPersistentDayDockStore({
+      storage: new MemoryStorage(),
+      syncChannel: rightChannel,
+      sourceId: "right",
+      now: () => "2026-09-19T15:00:00.000Z",
+    });
+
+    left.dispatch({
+      type: "task/captured",
+      task: task("shared", "inbox"),
+    });
+
+    expect(right.getSnapshot().tasks.shared?.title).toBe("Task shared");
+
+    right.dispatch({
+      type: "task/renamed",
+      taskId: "shared",
+      title: "Updated in another tab",
+    });
+
+    expect(left.getSnapshot().tasks.shared?.title).toBe(
+      "Updated in another tab",
+    );
   });
 });

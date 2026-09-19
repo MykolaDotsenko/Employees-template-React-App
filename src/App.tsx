@@ -10,6 +10,11 @@ import {
   type ReactNode,
 } from "react";
 import { buildReviewInsights } from "./domain/daydock/insights";
+import { downloadJsonBackup } from "./storage/browserBackup";
+import {
+  parseDayDockBackup,
+  serializeDayDockWorkspace,
+} from "./storage/dayDockPersistence";
 import type { ActiveFocusSession, Person, Task } from "./domain/daydock/model";
 import {
   selectFollowUpsDue,
@@ -339,6 +344,42 @@ export function App({ store = dayDockStore }: AppProps) {
     returnToWorkspace();
   }
 
+  function exportBackup(): boolean {
+    return downloadJsonBackup(
+      serializeDayDockWorkspace(state),
+      `daydock-backup-${todayKey}.json`,
+    );
+  }
+
+  async function importBackup(file: File): Promise<boolean> {
+    let raw: string;
+
+    try {
+      raw = await file.text();
+    } catch {
+      return false;
+    }
+
+    const imported = parseDayDockBackup(raw);
+    if (imported === null) return false;
+
+    const safeImported = {
+      ...imported,
+      focus: {
+        ...imported.focus,
+        active: null,
+      },
+    };
+
+    store.replaceSnapshot(safeImported);
+    setFocusSnapshot(null);
+    startTransition(() => {
+      setPresentationMode("workspace");
+    });
+
+    return true;
+  }
+
   function openCapture() {
     showCaptureDialog();
   }
@@ -472,6 +513,8 @@ export function App({ store = dayDockStore }: AppProps) {
                   onMoveToday={(taskId) => moveTask(taskId, "today")}
                   onMoveLater={(taskId) => moveTask(taskId, "later")}
                   onComplete={completeTask}
+                  onExportBackup={exportBackup}
+                  onImportBackup={importBackup}
                 />
               </Activity>
 

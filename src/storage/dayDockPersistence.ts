@@ -20,6 +20,11 @@ export interface StorageLike {
   setItem(key: string, value: string): void;
 }
 
+export interface WorkspaceSyncChannel {
+  postMessage(message: unknown): void;
+  subscribe(listener: (message: unknown) => void): () => void;
+}
+
 export type WorkspaceLoadSource =
   | "empty"
   | "stored"
@@ -109,6 +114,12 @@ const v1EnvelopeSchema = z.object({
 const v0EnvelopeSchema = z.object({
   schemaVersion: z.literal(0),
   data: legacyStateSchema,
+});
+
+const syncMessageSchema = z.object({
+  type: z.literal("daydock/workspace-sync"),
+  sourceId: z.string().min(1),
+  payload: z.string().min(1),
 });
 
 function uniqueExistingOrder<T>(
@@ -223,19 +234,59 @@ function defaultNow(): string {
   return new Date().toISOString();
 }
 
+function parseWorkspacePayload(parsed: unknown): DayDockState | null {
+  const current = v2EnvelopeSchema.safeParse(parsed);
+  if (current.success) {
+    return normalizeDayDockState(current.data.data);
+  }
+
+  const v1 = v1EnvelopeSchema.safeParse(parsed);
+  if (v1.success) {
+    return normalizeDayDockState(withEmptyFocus(v1.data.data));
+  }
+
+  const v0 = v0EnvelopeSchema.safeParse(parsed);
+  if (v0.success) {
+    return normalizeDayDockState(withEmptyFocus(v0.data.data));
+  }
+
+  return null;
+}
+
+export function serializeDayDockWorkspace(
+  state: DayDockState,
+  now: () => string = defaultNow,
+): string {
+  return JSON.stringify(
+    {
+      schemaVersion: DAYDOCK_SCHEMA_VERSION,
+      updatedAt: now(),
+      data: normalizeDayDockState(state),
+    },
+    null,
+    2,
+  );
+}
+
+export function parseDayDockBackup(raw: string): DayDockState | null {
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+
+  return parseWorkspacePayload(parsed);
+}
+
 export function saveDayDockWorkspace(
   state: DayDockState,
   storage: StorageLike,
   now: () => string = defaultNow,
 ): boolean {
-  const envelope = {
-    schemaVersion: DAYDOCK_SCHEMA_VERSION,
-    updatedAt: now(),
-    data: normalizeDayDockState(state),
-  };
-
   try {
-    storage.setItem(DAYDOCK_STORAGE_KEY, JSON.stringify(envelope));
+    storage.setItem(DAYDOCK_STORAGE_KEY, serializeDayDockWorkspace(state, now));
     return true;
   } catch {
     return false;
@@ -276,7 +327,6 @@ export function loadDayDockWorkspace(
   }
 
   const current = v2EnvelopeSchema.safeParse(parsed);
-
   if (current.success) {
     return {
       state: normalizeDayDockState(current.data.data),
@@ -285,7 +335,6 @@ export function loadDayDockWorkspace(
   }
 
   const v1 = v1EnvelopeSchema.safeParse(parsed);
-
   if (v1.success) {
     const state = normalizeDayDockState(withEmptyFocus(v1.data.data));
     saveDayDockWorkspace(state, storage, now);
@@ -293,7 +342,6 @@ export function loadDayDockWorkspace(
   }
 
   const v0 = v0EnvelopeSchema.safeParse(parsed);
-
   if (v0.success) {
     const state = normalizeDayDockState(withEmptyFocus(v0.data.data));
     saveDayDockWorkspace(state, storage, now);
@@ -309,17 +357,54 @@ export function loadDayDockWorkspace(
 export interface PersistentStoreOptions {
   storage: StorageLike;
   now?: () => string;
+  syncChannel?: WorkspaceSyncChannel;
+  sourceId?: string;
 }
 
 export function createPersistentDayDockStore({
   storage,
   now = defaultNow,
+  syncChannel,
+  sourceId = "daydock-local",
 }: PersistentStoreOptions): DayDockStore {
   const loaded = loadDayDockWorkspace(storage, now);
   const store = createDayDockStore(loaded.state);
+  let applyingRemote = false;
 
   store.subscribe(() => {
-    saveDayDockWorkspace(store.getSnapshot(), storage, now);
+    const payload = serializeDayDockWorkspace(store.getSnapshot(), now);
+
+    try {
+      storage.setItem(DAYDOCK_STORAGE_KEY, payload);
+    } catch {
+      // Local persistence is best-effort. The in-memory workspace remains usable.
+    }
+
+    if (!applyingRemote && syncChannel) {
+      syncChannel.postMessage({
+        type: "daydock/workspace-sync",
+        sourceId,
+        payload,
+      });
+    }
+  });
+
+  syncChannel?.subscribe((message) => {
+    const parsedMessage = syncMessageSchema.safeParse(message);
+
+    if (!parsedMessage.success || parsedMessage.data.sourceId === sourceId) {
+      return;
+    }
+
+    const nextState = parseDayDockBackup(parsedMessage.data.payload);
+    if (nextState === null) return;
+
+    applyingRemote = true;
+    try {
+      store.replaceSnapshot(nextState);
+    } finally {
+      applyingRemote = false;
+    }
   });
 
   return store;
