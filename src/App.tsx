@@ -10,7 +10,12 @@ import {
   type ReactNode,
 } from "react";
 import { buildReviewInsights } from "./domain/daydock/insights";
-import type { ActiveFocusSession, Person, Task } from "./domain/daydock/model";
+import type {
+  ActiveFocusSession,
+  DayDockState,
+  Person,
+  Task,
+} from "./domain/daydock/model";
 import {
   selectFollowUpsDue,
   selectInboxCount,
@@ -23,6 +28,7 @@ import {
   CommandPalette,
   type PaletteSurface,
 } from "./features/command-palette/CommandPalette";
+import { DataSafetyPopover } from "./features/data-safety/DataSafetyPopover";
 import { FocusMode } from "./features/focus/FocusMode";
 import { InboxSurface } from "./features/inbox/InboxSurface";
 import { PeopleSurface } from "./features/people/PeopleSurface";
@@ -339,6 +345,27 @@ export function App({ store = dayDockStore }: AppProps) {
     returnToWorkspace();
   }
 
+  function restoreWorkspace(restoredState: DayDockState) {
+    store.replaceState(restoredState);
+
+    if (restoredState.focus.active !== null) {
+      setFocusSnapshot(restoredState.focus.active);
+
+      startTransition(() => {
+        setPresentationMode("focus");
+      });
+
+      return;
+    }
+
+    setFocusSnapshot(null);
+
+    startTransition(() => {
+      setPresentationMode("workspace");
+      setSurface("today");
+    });
+  }
+
   function openCapture() {
     showCaptureDialog();
   }
@@ -450,7 +477,10 @@ export function App({ store = dayDockStore }: AppProps) {
                 <span>Search</span>
                 <kbd>⌘K</kbd>
               </button>
-              <span className="local-badge">Private by default</span>
+              <DataSafetyPopover
+                state={state}
+                onRestore={restoreWorkspace}
+              />
             </div>
           </header>
 
