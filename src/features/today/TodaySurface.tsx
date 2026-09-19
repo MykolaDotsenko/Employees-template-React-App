@@ -6,6 +6,7 @@ interface TodaySurfaceProps {
   todayTasks: Task[];
   onAddToTop3: (taskId: string) => void;
   onComplete: (taskId: string) => void;
+  onStartFocus: (taskId: string) => void;
 }
 
 export function TodaySurface({
@@ -13,6 +14,7 @@ export function TodaySurface({
   todayTasks,
   onAddToTop3,
   onComplete,
+  onStartFocus,
 }: TodaySurfaceProps) {
   const top3Ids = new Set(top3.map((task) => task.id));
   const remaining = todayTasks.filter((task) => !top3Ids.has(task.id));
@@ -115,9 +117,21 @@ export function TodaySurface({
           </h2>
           <p>
             {currentTask
-              ? "Your first priority is ready. Focus mode is the next product layer."
+              ? "Your first priority is ready. Give it a protected block of attention."
               : "Choose a Top 3 priority and DayDock will make the next action obvious."}
           </p>
+          {currentTask ? (
+            <button
+              type="button"
+              className="start-focus-button"
+              onClick={() => onStartFocus(currentTask.id)}
+            >
+              Start focus
+              <span aria-hidden="true">
+                {currentTask.estimateMinutes ?? 50} min
+              </span>
+            </button>
+          ) : null}
         </div>
         <span className="now-orbit" aria-hidden="true" />
       </section>

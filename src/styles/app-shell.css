@@ -842,3 +842,198 @@
     }
   }
 }
+
+
+@layer components {
+  .start-focus-button {
+    min-height: 2.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+    padding: 0.6rem 0.72rem 0.6rem 1rem;
+    border-radius: 999px;
+    color: white;
+    background: var(--color-accent-strong);
+    box-shadow: 0 10px 25px oklch(45% 0.12 250 / 0.16);
+    font-weight: 740;
+  }
+
+  .start-focus-button > span {
+    padding: 0.28rem 0.48rem;
+    border-radius: 999px;
+    color: var(--color-accent-strong);
+    background: white;
+    font-size: 0.68rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .focus-shell {
+    min-height: 100dvh;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    background:
+      radial-gradient(
+        circle at 50% 18%,
+        oklch(95% 0.05 247 / 0.9),
+        transparent 28rem
+      ),
+      radial-gradient(
+        circle at 82% 82%,
+        oklch(96% 0.04 75 / 0.72),
+        transparent 24rem
+      ),
+      var(--color-canvas);
+  }
+
+  .focus-topbar {
+    min-height: 4.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-3) clamp(1rem, 4vw, 3rem);
+  }
+
+  .compact-brand .brand-mark {
+    width: 2.15rem;
+    height: 2.15rem;
+    border-radius: 0.76rem;
+  }
+
+  .focus-exit {
+    min-height: 2.5rem;
+    padding: 0.48rem 0.72rem;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    color: var(--color-text-soft);
+    background: color-mix(in oklch, var(--color-surface) 76%, transparent);
+    font-size: 0.76rem;
+    font-weight: 700;
+  }
+
+  .focus-stage {
+    width: min(100% - 2rem, 52rem);
+    min-height: calc(100dvh - 6rem);
+    margin-inline: auto;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: clamp(1.25rem, 4vh, 2.5rem);
+    padding: 2rem 0 4rem;
+    text-align: center;
+  }
+
+  .focus-kicker {
+    color: var(--color-accent-strong);
+    font-size: 0.72rem;
+    font-weight: 780;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .focus-progress-ring {
+    --focus-progress: 0;
+    position: relative;
+    width: clamp(15rem, 42vw, 22rem);
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, var(--color-surface) 62%, transparent 63%),
+      conic-gradient(
+        var(--color-accent) calc(var(--focus-progress) * 1turn),
+        color-mix(in oklch, var(--color-accent) 10%, var(--color-surface))
+          0
+      );
+    box-shadow:
+      0 30px 80px oklch(45% 0.07 245 / 0.12),
+      inset 0 0 0 1px color-mix(in oklch, var(--color-accent) 12%, transparent);
+  }
+
+  .focus-clock {
+    color: var(--color-text);
+    font-size: clamp(3.7rem, 12vw, 7rem);
+    line-height: 0.9;
+    letter-spacing: -0.075em;
+    font-weight: 680;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .focus-copy {
+    max-width: 42rem;
+  }
+
+  .focus-copy h1 {
+    font-size: clamp(1.8rem, 5vw, 3.5rem);
+    line-height: 1.05;
+    letter-spacing: -0.055em;
+    overflow-wrap: anywhere;
+  }
+
+  .focus-copy p {
+    margin-top: var(--space-3);
+    color: var(--color-text-soft);
+    line-height: 1.55;
+  }
+
+  .focus-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .focus-primary,
+  .focus-secondary {
+    min-height: 3rem;
+    padding: 0.68rem 1.1rem;
+    border-radius: 999px;
+    font-weight: 760;
+  }
+
+  .focus-primary {
+    color: white;
+    background: var(--color-accent-strong);
+    box-shadow: 0 12px 28px oklch(45% 0.12 250 / 0.16);
+  }
+
+  .focus-secondary {
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    background: var(--color-surface);
+  }
+
+  .focus-footnote {
+    color: var(--color-text-faint);
+    font-size: 0.74rem;
+  }
+
+  @container (max-width: 760px) {
+    .focus-topbar {
+      min-height: 4rem;
+      padding-inline: var(--space-4);
+    }
+
+    .focus-stage {
+      width: min(100% - 2rem, 34rem);
+      min-height: calc(100dvh - 5rem);
+      gap: 1.4rem;
+      padding-bottom: calc(2.5rem + env(safe-area-inset-bottom));
+    }
+
+    .focus-progress-ring {
+      width: min(72vw, 18rem);
+    }
+
+    .focus-actions {
+      width: 100%;
+    }
+
+    .focus-primary,
+    .focus-secondary {
+      flex: 1 1 9rem;
+    }
+  }
+}
