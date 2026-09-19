@@ -8,6 +8,49 @@ Capture → Decide → Focus → Follow up → Close the day
 
 The product is not another unlimited todo list. Its primary job is to reduce repeated decisions during a fragmented workday.
 
+## Current implemented flow
+
+### Capture
+
+- desktop: click **Capture** or press **N**
+- mobile: thumb-friendly floating **+**
+- one required field: the thought itself
+- default destination: Inbox
+- no classification required at capture time
+
+The user returns to the previous context immediately after capture.
+
+### Decide in Inbox
+
+Each Inbox item currently has three high-signal outcomes:
+
+- **Today**
+- **Later**
+- **Done**
+
+Person attachment and richer scheduling are later layers.
+
+### Today
+
+Today can contain more than three tasks, but only three can enter **Top 3**.
+
+This separation matters:
+
+- Today = plausible work for the day
+- Top 3 = the outcomes that define success
+
+Top 3 is enforced by the domain reducer rather than only by disabled UI.
+
+### Complete
+
+Completion:
+
+- stamps the completion time outside the reducer
+- moves the task to Done
+- automatically removes it from Top 3
+
+Undo/reopen exists in the domain model and will surface with review/recovery UI.
+
 ## Primary surfaces
 
 ### Today
@@ -18,25 +61,17 @@ Answers:
 - What should I do now?
 - What is next?
 
-Top 3 is intentionally capped at three outcomes.
-
 ### Inbox
 
 A temporary holding area for thoughts and interruptions.
-
-The user should be able to capture something in seconds and return to their work without classifying it first.
 
 ### People
 
 A lightweight follow-up surface, not a CRM.
 
-The original repository's employee concept evolves into people-linked tasks and waiting-for context.
-
 ### Review
 
 Provides closure without grading the user.
-
-No productivity score, broken streak, or failure language. Unfinished items will be given a new home instead.
 
 ## Emotional language
 
@@ -53,7 +88,6 @@ Avoid:
 - Failed
 - Productivity score
 - Broken streak
-- Overdue! (unless time-critical semantics genuinely require it)
 - motivational hype
 
 ## Mobile jobs

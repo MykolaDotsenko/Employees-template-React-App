@@ -15,6 +15,18 @@
     transform: translateY(0);
   }
 
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
   .app-shell {
     min-height: 100vh;
     container-type: inline-size;
@@ -213,7 +225,7 @@
   .surface-content {
     width: min(100%, var(--content-max));
     margin-inline: auto;
-    padding: clamp(2rem, 5vw, 5rem) clamp(1.25rem, 5vw, 4.5rem) 6rem;
+    padding: clamp(2rem, 5vw, 5rem) clamp(1.25rem, 5vw, 4.5rem) 7rem;
   }
 
   .surface-stack {
@@ -287,18 +299,18 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .priority-list,
+  .task-list,
   .simple-list {
     list-style: none;
     padding: 0;
   }
 
-  .priority-list {
+  .task-list {
     border-top: 1px solid var(--color-border);
   }
 
-  .priority-row {
-    min-height: 4rem;
+  .task-row {
+    min-height: 4.35rem;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
@@ -307,21 +319,89 @@
     border-bottom: 1px solid var(--color-border);
   }
 
-  .priority-marker {
-    width: 0.8rem;
-    height: 0.8rem;
-    border: 2px solid var(--color-accent);
+  .task-leading {
+    width: 1.6rem;
+    display: grid;
+    place-items: center;
+  }
+
+  .task-dot {
+    width: 0.72rem;
+    height: 0.72rem;
+    border: 2px solid var(--color-border-strong);
     border-radius: 50%;
   }
 
-  .priority-title {
+  .priority-index {
+    width: 1.55rem;
+    height: 1.55rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--color-accent-strong);
+    background: var(--color-accent-soft);
+    font-size: 0.7rem;
+    font-weight: 780;
+  }
+
+  .task-copy {
     min-width: 0;
+  }
+
+  .task-copy > strong,
+  .task-copy > span {
+    display: block;
+  }
+
+  .task-copy > strong {
+    overflow-wrap: anywhere;
+    font-size: 0.94rem;
     font-weight: 680;
   }
 
-  .priority-meta {
+  .task-copy > span {
+    margin-top: 0.16rem;
     color: var(--color-text-faint);
-    font-size: 0.78rem;
+    font-size: 0.72rem;
+  }
+
+  .task-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-2);
+  }
+
+  .text-action {
+    min-height: 2.3rem;
+    padding: 0.38rem 0.62rem;
+    border-radius: 999px;
+    color: var(--color-accent-strong);
+    background: var(--color-accent-soft);
+    font-size: 0.72rem;
+    font-weight: 720;
+  }
+
+  .text-action:hover {
+    background: color-mix(in oklch, var(--color-accent) 18%, var(--color-surface));
+  }
+
+  .text-action:disabled {
+    cursor: not-allowed;
+    color: var(--color-text-faint);
+    background: var(--color-surface);
+    opacity: 0.68;
+  }
+
+  .positive-action {
+    color: oklch(43% 0.1 145);
+    background: var(--color-positive-soft);
+  }
+
+  .today-pool {
+    display: grid;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
   }
 
   .empty-panel {
@@ -348,16 +428,11 @@
   }
 
   .empty-panel p,
-  .supporting-note,
   .now-card p,
   .review-summary p {
     margin-top: var(--space-2);
     color: var(--color-text-soft);
     line-height: 1.58;
-  }
-
-  .supporting-note {
-    font-size: 0.82rem;
   }
 
   .now-card {
@@ -448,6 +523,171 @@
     font-size: 0.78rem;
   }
 
+  .quick-capture-trigger {
+    position: fixed;
+    z-index: 30;
+    right: clamp(1rem, 3vw, 2rem);
+    bottom: clamp(1rem, 3vw, 2rem);
+    min-height: 3rem;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0.65rem 0.75rem 0.65rem 0.62rem;
+    border: 1px solid color-mix(in oklch, var(--color-accent) 24%, var(--color-border));
+    border-radius: 999px;
+    color: white;
+    background: var(--color-accent-strong);
+    box-shadow: var(--shadow-raised);
+    font-size: 0.8rem;
+    font-weight: 720;
+    transition:
+      transform var(--motion-fast) ease,
+      box-shadow var(--motion-fast) ease;
+  }
+
+  .quick-capture-trigger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 38px oklch(35% 0.08 250 / 0.18);
+  }
+
+  .capture-plus {
+    width: 1.7rem;
+    height: 1.7rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--color-accent-strong);
+    background: white;
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  .quick-capture-trigger kbd {
+    min-width: 1.55rem;
+    padding: 0.18rem 0.35rem;
+    border: 1px solid oklch(100% 0 0 / 0.35);
+    border-radius: 0.4rem;
+    background: oklch(100% 0 0 / 0.12);
+    font: inherit;
+    font-size: 0.66rem;
+    text-align: center;
+  }
+
+  .quick-capture-dialog {
+    width: min(92vw, 38rem);
+    max-width: none;
+    margin: auto;
+    padding: 0;
+    border: 1px solid color-mix(in oklch, var(--color-accent) 20%, var(--color-border));
+    border-radius: var(--radius-xl);
+    color: var(--color-text);
+    background: var(--color-surface-raised);
+    box-shadow: 0 30px 90px oklch(30% 0.03 85 / 0.22);
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition:
+      opacity var(--motion-normal) ease,
+      transform var(--motion-normal) ease,
+      overlay var(--motion-normal) allow-discrete,
+      display var(--motion-normal) allow-discrete;
+  }
+
+  .quick-capture-dialog::backdrop {
+    background: oklch(36% 0.02 80 / 0.2);
+    backdrop-filter: blur(7px);
+    transition:
+      background var(--motion-normal) ease,
+      backdrop-filter var(--motion-normal) ease,
+      overlay var(--motion-normal) allow-discrete,
+      display var(--motion-normal) allow-discrete;
+  }
+
+  @starting-style {
+    .quick-capture-dialog[open] {
+      opacity: 0;
+      transform: translateY(0.6rem) scale(0.985);
+    }
+
+    .quick-capture-dialog[open]::backdrop {
+      background: transparent;
+      backdrop-filter: blur(0);
+    }
+  }
+
+  .quick-capture-form {
+    display: grid;
+    gap: var(--space-5);
+    padding: clamp(1.2rem, 4vw, 1.8rem);
+  }
+
+  .capture-heading,
+  .capture-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .capture-heading h2 {
+    margin-top: var(--space-1);
+    font-size: clamp(1.35rem, 4vw, 1.8rem);
+    letter-spacing: -0.04em;
+  }
+
+  .icon-button {
+    width: 2.4rem;
+    height: 2.4rem;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    color: var(--color-text-soft);
+    background: var(--color-canvas);
+    font-size: 1.35rem;
+  }
+
+  .capture-field textarea {
+    width: 100%;
+    min-height: 4.5rem;
+    max-height: 12rem;
+    field-sizing: content;
+    resize: none;
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text);
+    background: var(--color-surface);
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .capture-field textarea::placeholder {
+    color: var(--color-text-faint);
+  }
+
+  .capture-footer {
+    color: var(--color-text-faint);
+    font-size: 0.74rem;
+  }
+
+  .capture-submit {
+    min-height: 2.65rem;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0.55rem 0.85rem;
+    border-radius: 999px;
+    color: white;
+    background: var(--color-accent-strong);
+    font-weight: 720;
+  }
+
+  .capture-submit:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
   @scope (.app-shell) {
     .brand-name {
       color: var(--color-text);
@@ -531,7 +771,7 @@
     .surface-content {
       padding:
         clamp(1.8rem, 8vw, 3rem) var(--space-4)
-        calc(7rem + env(safe-area-inset-bottom));
+        calc(8rem + env(safe-area-inset-bottom));
     }
 
     .surface-stack {
@@ -544,6 +784,17 @@
 
     .section-heading {
       align-items: center;
+    }
+
+    .task-row {
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: var(--space-3);
+    }
+
+    .task-actions {
+      grid-column: 2;
+      justify-content: flex-start;
+      flex-wrap: wrap;
     }
 
     .empty-panel {
@@ -565,6 +816,29 @@
     .review-summary {
       grid-template-columns: 1fr;
       gap: var(--space-4);
+    }
+
+    .quick-capture-trigger {
+      right: var(--space-4);
+      bottom: calc(5.35rem + env(safe-area-inset-bottom));
+      width: 3.25rem;
+      height: 3.25rem;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .quick-capture-trigger .capture-trigger-copy,
+    .quick-capture-trigger kbd {
+      display: none;
+    }
+
+    .capture-plus {
+      width: 1.9rem;
+      height: 1.9rem;
+    }
+
+    .capture-footer {
+      align-items: flex-end;
     }
   }
 }
