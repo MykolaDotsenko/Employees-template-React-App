@@ -1,7 +1,10 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { createInitialDayDockState } from "../../domain/daydock/model";
+import {
+  createInitialDayDockState,
+  type DayDockState,
+} from "../../domain/daydock/model";
 import { serializeDayDockBackup } from "../../storage/dayDockBackup";
 import { DataSafetyPopover } from "./DataSafetyPopover";
 
@@ -21,7 +24,11 @@ describe("DataSafetyPopover", () => {
     };
     restored.taskOrder.push("a");
 
-    const onRestore = vi.fn();
+    const restoredStates: DayDockState[] = [];
+    const onRestore = (state: DayDockState) => {
+      restoredStates.push(state);
+    };
+
     render(
       <DataSafetyPopover
         state={createInitialDayDockState()}
@@ -47,8 +54,8 @@ describe("DataSafetyPopover", () => {
 
     await user.click(screen.getByRole("button", { name: "Restore backup" }));
 
-    expect(onRestore).toHaveBeenCalledTimes(1);
-    expect(onRestore.mock.calls[0]?.[0].tasks.a?.title).toBe("Restored task");
+    expect(restoredStates).toHaveLength(1);
+    expect(restoredStates[0]?.tasks.a?.title).toBe("Restored task");
     expect(
       screen.getByText("Workspace restored. Open tabs will receive the new state."),
     ).toBeInTheDocument();
