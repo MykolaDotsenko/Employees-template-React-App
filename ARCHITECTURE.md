@@ -36,6 +36,44 @@ pure domain reducer
 
 The reducer does **not** create ids, read the clock, access storage, or call browser APIs. Commands carry those values into the reducer so state transitions stay deterministic and easy to verify.
 
+## PR3: local-first persistence boundary
+
+The browser store is hydrated through a versioned persistence adapter.
+
+```text
+browser localStorage
+        |
+        v
+versioned envelope
+        |
+        v
+Zod validation
+        |
+        +--> current schema → normalize
+        +--> v0 schema → migrate → write v1
+        +--> corrupt/future → safe recovery
+        |
+        v
+DayDock external store
+        |
+        v
+pure reducer
+```
+
+Persistence is deliberately outside the reducer. Stored data is untrusted input and must pass schema validation before it becomes application state.
+
+### Current storage contract
+
+```text
+{
+  schemaVersion: 1,
+  updatedAt: ISO date-time,
+  data: DayDockState
+}
+```
+
+Relational normalization repairs ordering and removes broken references after structural validation. Unknown future schemas fail safe rather than being silently downgraded.
+
 ## Target local-first boundary
 
 ```text
@@ -68,3 +106,4 @@ external local-first store
 6. Motion is progressive enhancement and respects reduced-motion preferences.
 7. Mobile behavior is designed explicitly rather than produced by shrinking desktop UI.
 8. Domain commands are deterministic: ids and timestamps are created outside the reducer.
+9. Unknown persisted schemas fail safe rather than being silently downgraded.
