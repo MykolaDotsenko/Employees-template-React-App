@@ -153,7 +153,13 @@ describe("DayDock core daily flow", () => {
 
     expect(linkedTasks).toHaveLength(1);
     expect(linkedTasks[0]?.status).toBe("inbox");
-    expect(screen.getByText("Ask about revised mockups")).toBeInTheDocument();
+
+    const annaHeading = screen.getByRole("heading", { name: "Anna" });
+    const annaCard = annaHeading.closest("article");
+    expect(annaCard).not.toBeNull();
+    expect(
+      within(annaCard as HTMLElement).getByText("Ask about revised mockups"),
+    ).toBeInTheDocument();
   });
 
   it("opens the command palette with Ctrl+K and navigates from search", async () => {
