@@ -183,10 +183,16 @@ export function App({ store = dayDockStore }: AppProps) {
   const duePeople = selectFollowUpsDue(state, todayKey);
   const inboxCount = selectInboxCount(state);
 
+  function showCaptureDialog() {
+    const dialog = captureDialogRef.current;
+    if (!dialog || dialog.open) return;
+
+    dialog.showModal();
+    dialog.querySelector<HTMLTextAreaElement>("[data-capture-input]")?.focus();
+  }
+
   const openCaptureFromKeyboard = useEffectEvent(() => {
-    if (!captureDialogRef.current?.open) {
-      captureDialogRef.current?.showModal();
-    }
+    showCaptureDialog();
   });
 
   useEffect(() => {
@@ -240,7 +246,7 @@ export function App({ store = dayDockStore }: AppProps) {
   }
 
   function openCapture() {
-    captureDialogRef.current?.showModal();
+    showCaptureDialog();
   }
 
   return (

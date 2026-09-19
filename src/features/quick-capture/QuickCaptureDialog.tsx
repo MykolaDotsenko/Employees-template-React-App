@@ -58,7 +58,7 @@ export function QuickCaptureDialog({
         <label className="capture-field">
           <span className="sr-only">Capture item</span>
           <textarea
-            autoFocus
+            data-capture-input
             rows={1}
             value={title}
             onChange={(event) => setTitle(event.currentTarget.value)}
