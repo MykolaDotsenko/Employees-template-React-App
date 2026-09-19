@@ -133,3 +133,20 @@ The palette searches locally across:
 Search input stays urgent while result filtering uses React `useDeferredValue`, so larger local workspaces do not make typing feel sticky.
 
 The palette never becomes the only way to use a feature. Every command remains available through visible mouse/touch UI; the palette is an acceleration layer for power users.
+
+
+## Daily Review
+
+Review is a derived view, not another store of analytics.
+
+It computes the current local day from canonical task and focus-session history, then surfaces:
+
+- tasks completed today
+- actual focused time after pauses
+- open Today loops
+- Inbox count
+- due people follow-ups
+
+The UI deliberately avoids productivity scores, streaks and red failure states. Open Today tasks get a concrete **Park for later** action so the user can close the day by making a decision rather than by dismissing a warning.
+
+This also demonstrates an architectural rule: analytics-like views should be derived from source-of-truth events/state when possible instead of maintaining duplicate counters.
