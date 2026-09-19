@@ -1513,3 +1513,200 @@
     }
   }
 }
+
+
+@layer components {
+  .review-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-block: 1px solid var(--color-border);
+  }
+
+  .review-metric {
+    min-width: 0;
+    padding: clamp(1.1rem, 3vw, 1.7rem) clamp(0.7rem, 2vw, 1.25rem);
+  }
+
+  .review-metric + .review-metric {
+    border-left: 1px solid var(--color-border);
+  }
+
+  .review-metric strong,
+  .review-metric span {
+    display: block;
+  }
+
+  .review-metric strong {
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    line-height: 1;
+    letter-spacing: -0.06em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .review-metric span {
+    margin-top: var(--space-2);
+    color: var(--color-text-faint);
+    font-size: 0.72rem;
+  }
+
+  .review-closure {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    padding: clamp(1.2rem, 3vw, 1.8rem);
+    border: 1px solid color-mix(in oklch, var(--color-positive) 26%, var(--color-border));
+    border-radius: var(--radius-lg);
+    background: var(--color-positive-soft);
+  }
+
+  .review-closure-mark {
+    width: 3rem;
+    height: 3rem;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 1rem;
+    color: oklch(42% 0.11 145);
+    background: color-mix(in oklch, white 75%, var(--color-positive-soft));
+    font-size: 1.1rem;
+    font-weight: 800;
+  }
+
+  .review-closure h2 {
+    font-size: 1.15rem;
+    letter-spacing: -0.03em;
+  }
+
+  .review-closure p {
+    margin-top: var(--space-2);
+    color: var(--color-text-soft);
+    line-height: 1.55;
+  }
+
+  .week-insights {
+    display: grid;
+    gap: var(--space-5);
+    padding: clamp(1.2rem, 3vw, 1.8rem);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    background: color-mix(in oklch, var(--color-surface) 86%, transparent);
+  }
+
+  .week-bars {
+    min-height: 10rem;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: clamp(0.35rem, 2vw, 0.8rem);
+    align-items: end;
+  }
+
+  .week-day {
+    min-width: 0;
+    display: grid;
+    gap: 0.38rem;
+    justify-items: center;
+  }
+
+  .week-bar-track {
+    width: min(100%, 2.2rem);
+    height: 7rem;
+    display: flex;
+    align-items: end;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--color-canvas);
+  }
+
+  .week-bar {
+    --week-level: 0;
+    width: 100%;
+    min-height: 0.28rem;
+    height: max(0.28rem, calc(var(--week-level) * 100%));
+    border-radius: inherit;
+    background:
+      linear-gradient(
+        to top,
+        var(--color-accent),
+        color-mix(in oklch, var(--color-accent) 50%, var(--color-positive))
+      );
+    transform-origin: bottom;
+  }
+
+  .week-day-label {
+    color: var(--color-text-soft);
+    font-size: 0.68rem;
+    font-weight: 700;
+  }
+
+  .week-day small {
+    min-height: 1em;
+    color: var(--color-text-faint);
+    font-size: 0.62rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .week-note {
+    color: var(--color-text-soft);
+    font-size: 0.8rem;
+    line-height: 1.55;
+  }
+
+  .completed-today {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .completed-today ul {
+    list-style: none;
+    display: grid;
+    gap: var(--space-2);
+    padding: 0;
+    margin: 0;
+  }
+
+  .completed-today li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0.72rem 0;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-soft);
+    font-size: 0.84rem;
+  }
+
+  .completed-today li > span {
+    width: 1.5rem;
+    height: 1.5rem;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    color: oklch(42% 0.11 145);
+    background: var(--color-positive-soft);
+    font-size: 0.7rem;
+    font-weight: 800;
+  }
+
+  @container (max-width: 620px) {
+    .review-metrics {
+      grid-template-columns: 1fr;
+    }
+
+    .review-metric + .review-metric {
+      border-top: 1px solid var(--color-border);
+      border-left: 0;
+    }
+
+    .review-closure {
+      align-items: flex-start;
+    }
+
+    .week-bars {
+      gap: 0.3rem;
+    }
+
+    .week-day small {
+      display: none;
+    }
+  }
+}

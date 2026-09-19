@@ -220,6 +220,49 @@ describe("DayDock core daily flow", () => {
     ).toBeInTheDocument();
   });
 
+  it("lets Review resolve unfinished Today work without a productivity score", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+
+    store.dispatch({
+      type: "task/captured",
+      task: {
+        id: "review-task",
+        title: "Resolve review notes",
+        status: "today",
+        estimateMinutes: 20,
+        personId: null,
+        createdAt: new Date().toISOString(),
+        completedAt: null,
+      },
+    });
+
+    render(<App store={store} />);
+
+    await user.click(screen.getByRole("button", { name: "Review" }));
+
+    expect(
+      screen.getByRole("heading", { name: "Before you close the day" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/productivity score/i)).toBeInTheDocument();
+
+    const reviewRegion = screen.getByRole("heading", {
+      name: "Before you close the day",
+    }).closest("section");
+    expect(reviewRegion).not.toBeNull();
+
+    await user.click(
+      within(reviewRegion as HTMLElement).getByRole("button", {
+        name: "Move Resolve review notes to Later",
+      }),
+    );
+
+    expect(store.getSnapshot().tasks["review-task"]?.status).toBe("later");
+    expect(
+      screen.getByRole("heading", { name: "Everything has a home" }),
+    ).toBeInTheDocument();
+  });
+
   it("preserves a People follow-up draft across Activity navigation", async () => {
     const user = userEvent.setup();
     const store = createDayDockStore();
