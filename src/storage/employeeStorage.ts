@@ -2,7 +2,15 @@ import { DEFAULT_EMPLOYEES, type Employee } from "../domain/employee";
 
 const LEGACY_STORAGE_KEY = "employees";
 
-function isEmployee(value: unknown): value is Employee {
+interface LegacyEmployeeInput {
+  id: string | number;
+  name: string;
+  salary: string | number;
+  increase: boolean;
+  rise: boolean;
+}
+
+function isLegacyEmployeeInput(value: unknown): value is LegacyEmployeeInput {
   if (!value || typeof value !== "object") return false;
 
   const candidate = value as Record<string, unknown>;
@@ -17,7 +25,7 @@ function isEmployee(value: unknown): value is Employee {
   );
 }
 
-function normalizeEmployee(employee: Employee | (Omit<Employee, "id" | "salary"> & { id: number; salary: string })): Employee | null {
+function normalizeEmployee(employee: LegacyEmployeeInput): Employee | null {
   const salary =
     typeof employee.salary === "number" ? employee.salary : Number.parseFloat(employee.salary);
 
@@ -32,24 +40,26 @@ function normalizeEmployee(employee: Employee | (Omit<Employee, "id" | "salary">
   };
 }
 
+function defaults(): Employee[] {
+  return DEFAULT_EMPLOYEES.map((employee) => ({ ...employee }));
+}
+
 export function loadEmployees(storage: Storage = window.localStorage): Employee[] {
   try {
     const raw = storage.getItem(LEGACY_STORAGE_KEY);
-    if (!raw) return DEFAULT_EMPLOYEES.map((employee) => ({ ...employee }));
+    if (!raw) return defaults();
 
     const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return DEFAULT_EMPLOYEES.map((employee) => ({ ...employee }));
+    if (!Array.isArray(parsed)) return defaults();
 
     const employees = parsed
-      .filter(isEmployee)
-      .map((employee) => normalizeEmployee(employee))
+      .filter(isLegacyEmployeeInput)
+      .map(normalizeEmployee)
       .filter((employee): employee is Employee => employee !== null);
 
-    return employees.length > 0
-      ? employees
-      : DEFAULT_EMPLOYEES.map((employee) => ({ ...employee }));
+    return employees.length > 0 ? employees : defaults();
   } catch {
-    return DEFAULT_EMPLOYEES.map((employee) => ({ ...employee }));
+    return defaults();
   }
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   matchesFilter,
   matchesSearch,
@@ -14,7 +14,10 @@ const FILTERS: readonly { value: EmployeeFilter; label: string }[] = [
 ];
 
 function createId(): string {
-  return globalThis.crypto?.randomUUID?.() ?? `employee-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    `employee-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  );
 }
 
 export function LegacyEmployeesApp() {
@@ -50,7 +53,7 @@ export function LegacyEmployeesApp() {
     setEmployees((current) => current.filter((employee) => employee.id !== id));
   }
 
-  function addEmployee(event: React.FormEvent<HTMLFormElement>) {
+  function addEmployee(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const parsedSalary = Number.parseFloat(salary);
