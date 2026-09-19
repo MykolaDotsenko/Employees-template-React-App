@@ -54,7 +54,14 @@ describe("DayDock core daily flow", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Today" }));
-    expect(screen.getByText("Finish PR review")).toBeInTheDocument();
+
+    const todaySection = screen
+      .getByRole("heading", { name: "What matters today" })
+      .closest("section");
+    expect(todaySection).not.toBeNull();
+    expect(
+      within(todaySection as HTMLElement).getByText("Finish PR review"),
+    ).toBeInTheDocument();
   });
 
   it("starts, pauses, resumes and completes a focus session", async () => {
