@@ -156,6 +156,64 @@ describe("DayDock core daily flow", () => {
     expect(screen.getByText("Ask about revised mockups")).toBeInTheDocument();
   });
 
+  it("opens the command palette with Ctrl+K and navigates from search", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+
+    store.dispatch({
+      type: "person/added",
+      person: {
+        id: "anna",
+        name: "Anna",
+        context: "Design feedback",
+        nextFollowUpDate: null,
+        createdAt: "2026-09-19T08:00:00.000Z",
+      },
+    });
+
+    render(<App store={store} />);
+
+    await user.keyboard("{Control>}k{/Control}");
+
+    const palette = screen.getByRole("dialog", { name: "Command palette" });
+    const search = within(palette).getByRole("textbox", {
+      name: "Search commands, tasks and people",
+    });
+
+    await user.type(search, "Anna");
+    await user.click(within(palette).getByRole("button", { name: /Anna/ }));
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: "People" }),
+    ).toBeInTheDocument();
+  });
+
+  it("starts focus from the contextual command palette", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+    addTodayPriority(store);
+    render(<App store={store} />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Open command palette" }),
+    );
+
+    const palette = screen.getByRole("dialog", { name: "Command palette" });
+    await user.click(
+      within(palette).getByRole("button", {
+        name: /Focus: Write architecture notes/,
+      }),
+    );
+
+    expect(store.getSnapshot().focus.active?.taskId).toBe("a");
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: "Write architecture notes",
+      }),
+    ).toBeInTheDocument();
+  });
+
   it("navigates between People and Review without losing primary semantics", async () => {
     const user = userEvent.setup();
     render(<App store={createDayDockStore()} />);

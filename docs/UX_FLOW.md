@@ -117,3 +117,19 @@ A person stores only:
 Creating a follow-up task produces a normal DayDock task with a `personId`. The same canonical task can therefore appear in Inbox/Today and inside the person's context without duplicated state.
 
 Past follow-up dates are described as **Needs a new plan**, not as failure. Clearing a follow-up means there is currently no date to remember; it does not delete the person or their linked work.
+
+
+## Command palette
+
+`Ctrl/Cmd + K` opens a keyboard-first command layer.
+
+The palette searches locally across:
+
+- product destinations
+- high-value actions
+- tasks
+- people
+
+Search input stays urgent while result filtering uses React `useDeferredValue`, so larger local workspaces do not make typing feel sticky.
+
+The palette never becomes the only way to use a feature. Every command remains available through visible mouse/touch UI; the palette is an acceleration layer for power users.
