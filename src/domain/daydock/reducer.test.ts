@@ -61,7 +61,7 @@ describe("dayDockReducer", () => {
   });
 
   it("only lets today tasks enter Top 3", () => {
-    let state = dayDockReducer(createInitialDayDockState(), {
+    const state = dayDockReducer(createInitialDayDockState(), {
       type: "task/captured",
       task: task("a", "inbox"),
     });
