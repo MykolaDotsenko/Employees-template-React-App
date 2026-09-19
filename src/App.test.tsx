@@ -214,6 +214,37 @@ describe("DayDock core daily flow", () => {
     ).toBeInTheDocument();
   });
 
+  it("preserves a People follow-up draft across Activity navigation", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+
+    store.dispatch({
+      type: "person/added",
+      person: {
+        id: "anna",
+        name: "Anna",
+        context: "Design feedback",
+        nextFollowUpDate: null,
+        createdAt: "2026-09-19T08:00:00.000Z",
+      },
+    });
+
+    render(<App store={store} />);
+
+    await user.click(screen.getByRole("button", { name: "People" }));
+    const draft = screen.getByRole("textbox", {
+      name: "Follow-up task for Anna",
+    });
+    await user.type(draft, "Check final mobile flow");
+
+    await user.click(screen.getByRole("button", { name: "Review" }));
+    await user.click(screen.getByRole("button", { name: "People" }));
+
+    expect(
+      screen.getByRole("textbox", { name: "Follow-up task for Anna" }),
+    ).toHaveValue("Check final mobile flow");
+  });
+
   it("navigates between People and Review without losing primary semantics", async () => {
     const user = userEvent.setup();
     render(<App store={createDayDockStore()} />);

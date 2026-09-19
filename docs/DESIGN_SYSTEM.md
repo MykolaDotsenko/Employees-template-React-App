@@ -49,13 +49,14 @@ The responsive breakpoint is a **container query**, not a viewport media query, 
 
 ## Motion
 
-Motion will be added only when it communicates spatial continuity.
+Motion is used only when it communicates spatial continuity.
 
-Future priority:
+Implemented interaction rules:
 
-1. task → Focus shared View Transition
-2. Inbox → Today task movement
-3. contextual popovers / command palette
-4. subtle completion feedback
+1. **Today → Focus** uses a shared React 19.3 `ViewTransition` name for the active task title.
+2. Primary navigation updates run inside `startTransition`, allowing React to coordinate surface transitions without an animation library.
+3. `Activity` keeps Today / Inbox / People / Review mounted while hidden, preserving local draft state and restoring it when the user returns.
+4. Hidden Activity surfaces stop active effects, so state preservation does not mean keeping background behavior running.
+5. Quick Capture and Command Palette use native dialog transitions with `@starting-style`.
 
-`prefers-reduced-motion` always removes non-essential motion.
+The motion curve is deliberately short and quiet. `prefers-reduced-motion` collapses non-essential transition duration to effectively zero.
