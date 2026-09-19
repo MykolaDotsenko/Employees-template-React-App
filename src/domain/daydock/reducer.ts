@@ -4,6 +4,7 @@ import type {
   DayDockState,
   FocusOutcome,
   FocusSessionRecord,
+  Person,
   Task,
 } from "./model";
 
@@ -11,9 +12,45 @@ function removeId(ids: readonly string[], id: string): string[] {
   return ids.filter((candidate) => candidate !== id);
 }
 
+function isDateKey(value: string | null): boolean {
+  if (value === null) return true;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return false;
+
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
 function parseTime(value: string): number {
   const parsed = Date.parse(value);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function updatePerson(
+  state: DayDockState,
+  personId: string,
+  update: (person: Person) => Person,
+): DayDockState {
+  const current = state.people[personId];
+  if (!current) return state;
+
+  const nextPerson = update(current);
+  if (nextPerson === current) return state;
+
+  return {
+    ...state,
+    people: {
+      ...state.people,
+      [personId]: nextPerson,
+    },
+  };
 }
 
 function updateTask(
@@ -191,7 +228,17 @@ export function dayDockReducer(
 
     case "person/added": {
       const name = action.person.name.trim();
-      if (!name || state.people[action.person.id]) return state;
+      const context = action.person.context.trim();
+
+      if (
+        !name ||
+        name.length > 120 ||
+        context.length > 2_000 ||
+        !isDateKey(action.person.nextFollowUpDate) ||
+        state.people[action.person.id]
+      ) {
+        return state;
+      }
 
       return {
         ...state,
@@ -200,11 +247,30 @@ export function dayDockReducer(
           [action.person.id]: {
             ...action.person,
             name,
-            context: action.person.context.trim(),
+            context,
           },
         },
         personOrder: [...state.personOrder, action.person.id],
       };
+    }
+
+    case "person/followUpChanged": {
+      if (!isDateKey(action.nextFollowUpDate)) return state;
+
+      return updatePerson(state, action.personId, (person) =>
+        person.nextFollowUpDate === action.nextFollowUpDate
+          ? person
+          : { ...person, nextFollowUpDate: action.nextFollowUpDate },
+      );
+    }
+
+    case "person/contextChanged": {
+      const context = action.context.trim();
+      if (context.length > 2_000) return state;
+
+      return updatePerson(state, action.personId, (person) =>
+        person.context === context ? person : { ...person, context },
+      );
     }
 
     case "focus/started": {

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { App } from "./App";
@@ -109,6 +109,51 @@ describe("DayDock core daily flow", () => {
     expect(
       screen.getByRole("dialog", { name: "What’s on your mind?" }),
     ).toHaveAttribute("open");
+  });
+
+  it("adds a person and creates a linked follow-up task", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+    render(<App store={store} />);
+
+    await user.click(screen.getByRole("button", { name: "People" }));
+    await user.click(screen.getByRole("button", { name: "Add person" }));
+
+    await user.type(screen.getByLabelText("Name"), "Anna");
+    await user.type(
+      screen.getByLabelText("Context"),
+      "Waiting for mobile navigation feedback",
+    );
+
+    const addPersonDialog = screen.getByRole("dialog", {
+      name: "Add someone to remember",
+    });
+    await user.click(
+      within(addPersonDialog).getByRole("button", { name: "Add person" }),
+    );
+
+    expect(screen.getByRole("heading", { name: "Anna" })).toBeInTheDocument();
+    expect(store.getSnapshot().personOrder).toHaveLength(1);
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Follow-up task for Anna" }),
+      "Ask about revised mockups",
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Add" }),
+    );
+
+    const personId = store.getSnapshot().personOrder[0];
+    expect(personId).toBeDefined();
+
+    const linkedTasks = store
+      .getSnapshot()
+      .taskOrder.map((taskId) => store.getSnapshot().tasks[taskId])
+      .filter((task) => task?.personId === personId);
+
+    expect(linkedTasks).toHaveLength(1);
+    expect(linkedTasks[0]?.status).toBe("inbox");
+    expect(screen.getByText("Ask about revised mockups")).toBeInTheDocument();
   });
 
   it("navigates between People and Review without losing primary semantics", async () => {

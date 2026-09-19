@@ -6,15 +6,18 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { ActiveFocusSession, Task } from "./domain/daydock/model";
+import type { ActiveFocusSession, Person, Task } from "./domain/daydock/model";
 import {
   selectFollowUpsDue,
   selectInboxCount,
+  selectOpenTasksForPerson,
+  selectPeople,
   selectTasksByStatus,
   selectTop3,
 } from "./domain/daydock/selectors";
 import { FocusMode } from "./features/focus/FocusMode";
 import { InboxSurface } from "./features/inbox/InboxSurface";
+import { PeopleSurface } from "./features/people/PeopleSurface";
 import { QuickCaptureDialog } from "./features/quick-capture/QuickCaptureDialog";
 import { TodaySurface } from "./features/today/TodaySurface";
 import { dayDockStore } from "./store/browserDayDockStore";
@@ -108,43 +111,6 @@ function SurfaceIcon({ surface }: { surface: Surface }) {
   );
 }
 
-function PeopleSurface({
-  duePeople,
-}: {
-  duePeople: ReturnType<typeof selectFollowUpsDue>;
-}) {
-  return (
-    <div className="surface-stack">
-      <section className="intro-block">
-        <p className="eyebrow">Things involving other people</p>
-        <h1>People</h1>
-        <p className="intro-copy">
-          Follow-ups stay visible without turning your workday into a CRM.
-        </p>
-      </section>
-
-      {duePeople.length === 0 ? (
-        <div className="empty-panel">
-          <div className="empty-symbol" aria-hidden="true">↗</div>
-          <div>
-            <h2>No follow-ups waiting</h2>
-            <p>You are all caught up for today.</p>
-          </div>
-        </div>
-      ) : (
-        <ul className="simple-list">
-          {duePeople.map((person) => (
-            <li key={person.id}>
-              <strong>{person.name}</strong>
-              {person.context ? <span>{person.context}</span> : null}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
 function ReviewSurface({ completedCount }: { completedCount: number }) {
   return (
     <div className="surface-stack">
@@ -181,7 +147,14 @@ export function App({ store = dayDockStore }: AppProps) {
   const todayTasks = selectTasksByStatus(state, "today");
   const inboxTasks = selectTasksByStatus(state, "inbox");
   const completedTasks = selectTasksByStatus(state, "done");
+  const people = selectPeople(state);
   const duePeople = selectFollowUpsDue(state, todayKey);
+  const tasksByPerson = Object.fromEntries(
+    people.map((person) => [
+      person.id,
+      selectOpenTasksForPerson(state, person.id),
+    ]),
+  );
   const inboxCount = selectInboxCount(state);
 
   const activeFocus = state.focus.active;
@@ -249,6 +222,47 @@ export function App({ store = dayDockStore }: AppProps) {
 
   function addToTop3(taskId: string) {
     store.dispatch({ type: "top3/added", taskId });
+  }
+
+  function addPerson(
+    name: string,
+    context: string,
+    nextFollowUpDate: string | null,
+  ) {
+    const person: Person = {
+      id: createId("person"),
+      name,
+      context,
+      nextFollowUpDate,
+      createdAt: new Date().toISOString(),
+    };
+
+    store.dispatch({ type: "person/added", person });
+  }
+
+  function setPersonFollowUp(
+    personId: string,
+    nextFollowUpDate: string | null,
+  ) {
+    store.dispatch({
+      type: "person/followUpChanged",
+      personId,
+      nextFollowUpDate,
+    });
+  }
+
+  function addPersonFollowUpTask(personId: string, title: string) {
+    const task: Task = {
+      id: createId("task"),
+      title,
+      status: "inbox",
+      estimateMinutes: null,
+      personId,
+      createdAt: new Date().toISOString(),
+      completedAt: null,
+    };
+
+    store.dispatch({ type: "task/captured", task });
   }
 
   function startFocus(taskId: string) {
@@ -390,7 +404,16 @@ export function App({ store = dayDockStore }: AppProps) {
                 onComplete={completeTask}
               />
             ) : null}
-            {surface === "people" ? <PeopleSurface duePeople={duePeople} /> : null}
+            {surface === "people" ? (
+              <PeopleSurface
+                people={people}
+                tasksByPerson={tasksByPerson}
+                todayKey={todayKey}
+                onAddPerson={addPerson}
+                onSetFollowUp={setPersonFollowUp}
+                onAddFollowUpTask={addPersonFollowUpTask}
+              />
+            ) : null}
             {surface === "review" ? (
               <ReviewSurface completedCount={completedTasks.length} />
             ) : null}

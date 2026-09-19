@@ -101,3 +101,19 @@ The mobile product prioritizes:
 5. focus timer controls
 
 Complex planning and historical analysis remain secondary.
+
+
+## People and follow-ups
+
+People is intentionally a relationship context layer, not a CRM.
+
+A person stores only:
+
+- name
+- lightweight context
+- next follow-up date
+- linked open tasks
+
+Creating a follow-up task produces a normal DayDock task with a `personId`. The same canonical task can therefore appear in Inbox/Today and inside the person's context without duplicated state.
+
+Past follow-up dates are described as **Needs a new plan**, not as failure. Clearing a follow-up means there is currently no date to remember; it does not delete the person or their linked work.
