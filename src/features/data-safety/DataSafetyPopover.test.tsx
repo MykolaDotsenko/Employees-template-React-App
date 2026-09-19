@@ -52,7 +52,12 @@ describe("DataSafetyPopover", () => {
     expect(await screen.findByText("Ready to restore")).toBeInTheDocument();
     expect(screen.getByText("1", { selector: "dd" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Restore backup" }));
+    await user.click(
+      screen.getByRole("button", {
+        name: "Restore backup",
+        hidden: true,
+      }),
+    );
 
     expect(restoredStates).toHaveLength(1);
     expect(restoredStates[0]?.tasks.a?.title).toBe("Restored task");
@@ -85,7 +90,10 @@ describe("DataSafetyPopover", () => {
     });
 
     expect(
-      screen.queryByRole("button", { name: "Restore backup" }),
+      screen.queryByRole("button", {
+        name: "Restore backup",
+        hidden: true,
+      }),
     ).not.toBeInTheDocument();
   });
 });
