@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">DayDock</title>
+  <rect width="512" height="512" rx="112" fill="#f8f5ee"/>
+  <rect x="82" y="82" width="348" height="348" rx="92" fill="#4a69c7"/>
+  <rect x="100" y="100" width="312" height="312" rx="76" fill="none" stroke="#ffffff" stroke-opacity=".14" stroke-width="6"/>
+  <path fill="#ffffff" d="M167 146h99c91 0 151 42 151 110s-60 110-151 110h-99V146zm61 51v118h38c55 0 88-22 88-59s-33-59-88-59h-38z"/>
+</svg>
