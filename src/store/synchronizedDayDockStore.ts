@@ -1,4 +1,3 @@
-import type { DayDockState } from "../domain/daydock/model";
 import {
   loadDayDockWorkspace,
   parseDayDockState,
