@@ -54,7 +54,14 @@ describe("DayDock core daily flow", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Today" }));
-    expect(screen.getByText("Finish PR review")).toBeInTheDocument();
+
+    const todaySection = screen
+      .getByRole("heading", { name: "What matters today" })
+      .closest("section");
+    expect(todaySection).not.toBeNull();
+    expect(
+      within(todaySection as HTMLElement).getByText("Finish PR review"),
+    ).toBeInTheDocument();
   });
 
   it("starts, pauses, resumes and completes a focus session", async () => {
@@ -217,6 +224,49 @@ describe("DayDock core daily flow", () => {
         level: 1,
         name: "Write architecture notes",
       }),
+    ).toBeInTheDocument();
+  });
+
+  it("lets Review resolve unfinished Today work without a productivity score", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+
+    store.dispatch({
+      type: "task/captured",
+      task: {
+        id: "review-task",
+        title: "Resolve review notes",
+        status: "today",
+        estimateMinutes: 20,
+        personId: null,
+        createdAt: new Date().toISOString(),
+        completedAt: null,
+      },
+    });
+
+    render(<App store={store} />);
+
+    await user.click(screen.getByRole("button", { name: "Review" }));
+
+    expect(
+      screen.getByRole("heading", { name: "Before you close the day" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/productivity score/i)).not.toBeInTheDocument();
+
+    const reviewRegion = screen.getByRole("heading", {
+      name: "Before you close the day",
+    }).closest("section");
+    expect(reviewRegion).not.toBeNull();
+
+    await user.click(
+      within(reviewRegion as HTMLElement).getByRole("button", {
+        name: "Move Resolve review notes to Later",
+      }),
+    );
+
+    expect(store.getSnapshot().tasks["review-task"]?.status).toBe("later");
+    expect(
+      screen.getByRole("heading", { name: "Everything has a home" }),
     ).toBeInTheDocument();
   });
 

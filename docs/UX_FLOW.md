@@ -133,3 +133,19 @@ The palette searches locally across:
 Search input stays urgent while result filtering uses React `useDeferredValue`, so larger local workspaces do not make typing feel sticky.
 
 The palette never becomes the only way to use a feature. Every command remains available through visible mouse/touch UI; the palette is an acceleration layer for power users.
+
+
+## Review and seven-day rhythm
+
+Review is a closure surface, not a scorecard.
+
+It answers four questions:
+
+1. What did I complete today?
+2. How much protected focus time did I create?
+3. Which Today items still need a home?
+4. What has my recent focus rhythm looked like?
+
+Unfinished Today tasks can be moved to Later or completed directly from Review. When none remain, DayDock explicitly says that everything has a home.
+
+The seven-day chart is derived from completed focus-session history. It shows data, not a grade, target, streak, or comparison against other people. Session duration is attributed to the calendar day on which the session ended; this keeps the calculation deterministic and appropriate for short work sessions.
