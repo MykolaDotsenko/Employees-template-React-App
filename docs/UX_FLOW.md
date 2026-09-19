@@ -149,3 +149,16 @@ It answers four questions:
 Unfinished Today tasks can be moved to Later or completed directly from Review. When none remain, DayDock explicitly says that everything has a home.
 
 The seven-day chart is derived from completed focus-session history. It shows data, not a grade, target, streak, or comparison against other people. Session duration is attributed to the calendar day on which the session ended; this keeps the calculation deterministic and appropriate for short work sessions.
+
+
+## Review context layer
+
+The seven-day Review stays intentionally aggregate, but today's review also exposes enough context to act:
+
+- individual focus sessions for the current calendar day
+- the task each session belonged to
+- completed vs stopped outcome
+- Inbox items still waiting
+- People follow-ups still due
+
+These are additive views over existing state. No second analytics model is introduced, and navigation from Review goes back to the canonical Inbox/People surfaces instead of duplicating their workflows.
