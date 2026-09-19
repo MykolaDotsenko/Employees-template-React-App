@@ -73,5 +73,8 @@ describe("review insights", () => {
     });
     expect(insights.completedToday.map((task) => task.id)).toEqual(["a"]);
     expect(insights.focusMinutesToday).toBe(30);
+    expect(insights.focusSessionsToday.map((session) => session.id)).toEqual([
+      "focus-a",
+    ]);
   });
 });

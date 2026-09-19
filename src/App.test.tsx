@@ -270,6 +270,85 @@ describe("DayDock core daily flow", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows focus-session detail and routes next attention from Review", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+    const now = new Date();
+
+    store.dispatch({
+      type: "task/captured",
+      task: {
+        id: "focus-detail",
+        title: "Review API contract",
+        status: "today",
+        estimateMinutes: 25,
+        personId: null,
+        createdAt: now.toISOString(),
+        completedAt: null,
+      },
+    });
+    store.dispatch({
+      type: "task/captured",
+      task: {
+        id: "inbox-detail",
+        title: "Triage release note",
+        status: "inbox",
+        estimateMinutes: null,
+        personId: null,
+        createdAt: now.toISOString(),
+        completedAt: null,
+      },
+    });
+    store.dispatch({
+      type: "focus/started",
+      session: {
+        id: "focus-review-detail",
+        taskId: "focus-detail",
+        startedAt: new Date(now.getTime() - 10 * 60_000).toISOString(),
+        durationMinutes: 25,
+        pausedAt: null,
+        accumulatedPauseMs: 0,
+      },
+    });
+    store.dispatch({
+      type: "focus/finished",
+      endedAt: now.toISOString(),
+      outcome: "stopped",
+    });
+
+    render(<App store={store} />);
+    await user.click(screen.getByRole("button", { name: "Review" }));
+
+    const focusSection = screen
+      .getByRole("heading", { name: "Focus blocks" })
+      .closest("section");
+    expect(focusSection).not.toBeNull();
+    expect(
+      within(focusSection as HTMLElement).getByText("Review API contract"),
+    ).toBeInTheDocument();
+    expect(
+      within(focusSection as HTMLElement).getByText("Stopped"),
+    ).toBeInTheDocument();
+
+    const nextAttention = screen
+      .getByRole("heading", { name: "Anything still waiting?" })
+      .closest("section");
+    expect(nextAttention).not.toBeNull();
+    expect(
+      within(nextAttention as HTMLElement).getByText("1 item waiting"),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(nextAttention as HTMLElement).getByRole("button", {
+        name: /Inbox/,
+      }),
+    );
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Inbox" }),
+    ).toBeInTheDocument();
+  });
+
   it("preserves a People follow-up draft across Activity navigation", async () => {
     const user = userEvent.setup();
     const store = createDayDockStore();

@@ -13,6 +13,7 @@ export interface DayInsight {
 export interface ReviewInsights {
   completedToday: Task[];
   focusMinutesToday: number;
+  focusSessionsToday: FocusSessionRecord[];
   week: DayInsight[];
 }
 
@@ -102,6 +103,7 @@ export function buildReviewInsights(
 
   const byDate = new Map(week.map((day) => [day.dateKey, day]));
   const completedToday: Task[] = [];
+  const focusSessionsToday: FocusSessionRecord[] = [];
 
   for (const taskId of state.taskOrder) {
     const task = state.tasks[taskId];
@@ -118,6 +120,11 @@ export function buildReviewInsights(
   for (const session of state.focus.history) {
     const dateKey = timestampToDateKey(session.endedAt, timeZone);
     const bucket = byDate.get(dateKey);
+
+    if (dateKey === todayKey) {
+      focusSessionsToday.push(session);
+    }
+
     if (!bucket) continue;
 
     bucket.focusMinutes += Math.round(getRecordedFocusMs(session) / 60_000);
@@ -127,6 +134,7 @@ export function buildReviewInsights(
     completedToday,
     focusMinutesToday:
       byDate.get(todayKey)?.focusMinutes ?? 0,
+    focusSessionsToday,
     week,
   };
 }

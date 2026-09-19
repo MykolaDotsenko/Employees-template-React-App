@@ -491,9 +491,14 @@ export function App({ store = dayDockStore }: AppProps) {
                   completedToday={reviewInsights.completedToday}
                   openToday={todayTasks}
                   focusMinutesToday={reviewInsights.focusMinutesToday}
+                  focusSessionsToday={reviewInsights.focusSessionsToday}
                   week={reviewInsights.week}
+                  tasksById={state.tasks}
+                  inboxCount={inboxCount}
+                  dueFollowUpsCount={duePeople.length}
                   onMoveLater={(taskId) => moveTask(taskId, "later")}
                   onComplete={completeTask}
+                  onNavigate={navigateFromPalette}
                 />
               </Activity>
             </div>
