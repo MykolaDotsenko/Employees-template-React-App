@@ -2,7 +2,6 @@ import {
   useId,
   useRef,
   useState,
-  type ChangeEvent,
 } from "react";
 import type { DayDockState } from "../../domain/daydock/model";
 import {
@@ -89,8 +88,7 @@ export function DataSafetyPopover({
     }
   }
 
-  async function handleBackupFile(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.currentTarget.files?.[0];
+  async function handleBackupFile(file: File | undefined) {
     setCandidate(null);
     setMessage(null);
     setHasError(false);
@@ -182,7 +180,9 @@ export function DataSafetyPopover({
             className="sr-only"
             type="file"
             accept=".json,application/json"
-            onChange={handleBackupFile}
+            onChange={(event) => {
+              void handleBackupFile(event.currentTarget.files?.[0]);
+            }}
           />
         </div>
 
