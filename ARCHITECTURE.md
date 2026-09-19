@@ -107,3 +107,51 @@ external local-first store
 7. Mobile behavior is designed explicitly rather than produced by shrinking desktop UI.
 8. Domain commands are deterministic: ids and timestamps are created outside the reducer.
 9. Unknown persisted schemas fail safe rather than being silently downgraded.
+
+
+## Cross-tab local-first synchronization
+
+DayDock keeps `localStorage` as the durable local source of truth and uses
+`BroadcastChannel` only as a live transport between open tabs.
+
+```text
+local action
+    |
+    v
+pure reducer
+    |
+    v
+external store
+    |
+    +--> persist normalized v2 workspace to localStorage
+    |
+    +--> revisioned BroadcastChannel snapshot
+              |
+              v
+        another open tab
+              |
+        validate with Zod
+              |
+        compare revision
+              |
+        replace store snapshot
+              |
+        persist locally
+        (no rebroadcast echo)
+```
+
+### Ordering and safety
+
+- Each tab has a unique source id.
+- Revisions order first by timestamp and then by source id for deterministic
+  ties.
+- A local mutation always advances beyond the latest revision observed by that
+  tab, even if the clock does not move.
+- Incoming snapshots are treated as untrusted data and must pass the same Zod
+  validation and relational normalization used by persistence.
+- Applying a remote snapshot suppresses rebroadcast, preventing echo loops.
+- If `BroadcastChannel` is unavailable or live transport fails,
+  `localStorage` persistence continues to work independently.
+
+The sync layer intentionally does not introduce polling, a server, or a second
+canonical state.
