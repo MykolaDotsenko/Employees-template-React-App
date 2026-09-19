@@ -251,6 +251,77 @@ describe("DayDock core daily flow", () => {
     ).toHaveValue("Check final mobile flow");
   });
 
+  it("reviews today's completed work, focus time and open loops", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+    const now = new Date();
+
+    store.dispatch({
+      type: "task/captured",
+      task: {
+        id: "done-today",
+        title: "Ship navigation polish",
+        status: "today",
+        estimateMinutes: 25,
+        personId: null,
+        createdAt: now.toISOString(),
+        completedAt: null,
+      },
+    });
+    store.dispatch({
+      type: "task/completed",
+      taskId: "done-today",
+      completedAt: now.toISOString(),
+    });
+
+    store.dispatch({
+      type: "task/captured",
+      task: {
+        id: "open-loop",
+        title: "Prepare tomorrow brief",
+        status: "today",
+        estimateMinutes: null,
+        personId: null,
+        createdAt: now.toISOString(),
+        completedAt: null,
+      },
+    });
+
+    store.dispatch({
+      type: "focus/started",
+      session: {
+        id: "focus-review",
+        taskId: "open-loop",
+        startedAt: new Date(now.getTime() - 10 * 60_000).toISOString(),
+        durationMinutes: 50,
+        pausedAt: null,
+        accumulatedPauseMs: 0,
+      },
+    });
+    store.dispatch({
+      type: "focus/finished",
+      endedAt: now.toISOString(),
+      outcome: "stopped",
+    });
+
+    render(<App store={store} />);
+
+    await user.click(screen.getByRole("button", { name: "Review" }));
+
+    expect(screen.getAllByText("1", { selector: ".review-metric-value" }).length).toBeGreaterThan(0);
+    expect(screen.getByText("10 min")).toBeInTheDocument();
+    expect(screen.getByText("Ship navigation polish")).toBeInTheDocument();
+    expect(screen.getByText("Prepare tomorrow brief")).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Park Prepare tomorrow brief for later",
+      }),
+    );
+
+    expect(store.getSnapshot().tasks["open-loop"]?.status).toBe("later");
+  });
+
   it("navigates between People and Review without losing primary semantics", async () => {
     const user = userEvent.setup();
     render(<App store={createDayDockStore()} />);
