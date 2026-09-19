@@ -207,6 +207,11 @@ export function normalizeDayDockState(state: DayDockState): DayDockState {
   };
 }
 
+export function parseDayDockState(value: unknown): DayDockState | null {
+  const parsed = dayDockStateSchema.safeParse(value);
+  return parsed.success ? normalizeDayDockState(parsed.data) : null;
+}
+
 function withEmptyFocus(
   state: z.infer<typeof legacyStateSchema>,
 ): DayDockState {
