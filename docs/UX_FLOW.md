@@ -200,3 +200,10 @@ Today uses that snapshot to show:
 - a realistic suggested Focus Room for Start Day
 
 DayDock does not edit calendar events and does not pretend a local snapshot is live sync. The UI labels the source and import time and asks the user to refresh the file when the external calendar changes.
+
+
+## Capture from other apps
+
+When the installed PWA is selected from a system share sheet, DayDock launches Quick Capture with the shared title, text, and URL prefilled. Shared data is not saved automatically: the user must confirm **Capture**.
+
+The one-time share parameters are removed from the URL immediately after launch so reload/back navigation cannot accidentally reopen or duplicate the capture. An installed-app shortcut can also open an empty Quick Capture directly.
