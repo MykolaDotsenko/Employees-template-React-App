@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
-import { fileURLToPath } from "node:url";
+import process from "node:process";
+import { fileURLToPath, URL } from "node:url";
 
 const DIST = fileURLToPath(new URL("../dist/", import.meta.url));
 const SW = join(DIST, "sw.js");
@@ -53,6 +54,6 @@ source = source
 
 await writeFile(SW, source);
 
-console.log(
-  `Finalized DayDock service worker with ${precache.length} precached resources (${fingerprint}).`,
+process.stdout.write(
+  `Finalized DayDock service worker with ${precache.length} precached resources (${fingerprint}).\n`,
 );
