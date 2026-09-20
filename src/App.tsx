@@ -16,6 +16,7 @@ import type {
   DayDockState,
   Person,
   Task,
+  TaskRecurrence,
 } from "./domain/daydock/model";
 import {
   selectFollowUpsDue,
@@ -25,6 +26,7 @@ import {
   selectTasksByStatus,
   selectTop3,
 } from "./domain/daydock/selectors";
+import { nextRecurrenceDateAfter } from "./domain/daydock/scheduling";
 import {
   CommandPalette,
   type PaletteSurface,
@@ -158,6 +160,11 @@ export function App({ store = dayDockStore }: AppProps) {
   }, []);
 
   const todayKey = localDateKey(today);
+
+  useEffect(() => {
+    store.dispatch({ type: "task/resurfaceDue", dateKey: todayKey });
+  }, [store, todayKey]);
+
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const reviewInsights = buildReviewInsights(state, todayKey, timeZone);
   const top3 = selectTop3(state);
@@ -260,6 +267,8 @@ export function App({ store = dayDockStore }: AppProps) {
       status: "inbox",
       estimateMinutes: null,
       personId: null,
+      deferUntil: null,
+      recurrence: null,
       createdAt: new Date().toISOString(),
       completedAt: null,
     };
@@ -272,10 +281,56 @@ export function App({ store = dayDockStore }: AppProps) {
   }
 
   function completeTask(taskId: string) {
+    const task = state.tasks[taskId];
+    if (!task || task.status === "done") return;
+
+    const completedAtDate = new Date();
+    const completedAt = completedAtDate.toISOString();
+
+    if (task.recurrence !== null) {
+      const nextDate = nextRecurrenceDateAfter(
+        task.recurrence,
+        localDateKey(completedAtDate),
+      );
+      const nextTask: Task = {
+        ...task,
+        id: createId("task"),
+        status: "later",
+        deferUntil: nextDate,
+        recurrence: {
+          kind: task.recurrence.kind,
+          anchorDate: nextDate,
+        },
+        createdAt: completedAt,
+        completedAt: null,
+      };
+
+      store.dispatch({
+        type: "task/completedWithNext",
+        taskId,
+        completedAt,
+        nextTask,
+      });
+      return;
+    }
+
     store.dispatch({
       type: "task/completed",
       taskId,
-      completedAt: new Date().toISOString(),
+      completedAt,
+    });
+  }
+
+  function scheduleTask(
+    taskId: string,
+    deferUntil: string | null,
+    recurrence: TaskRecurrence | null,
+  ) {
+    store.dispatch({
+      type: "task/deferred",
+      taskId,
+      deferUntil,
+      recurrence,
     });
   }
 
@@ -345,6 +400,8 @@ export function App({ store = dayDockStore }: AppProps) {
       status: "inbox",
       estimateMinutes: null,
       personId,
+      deferUntil: null,
+      recurrence: null,
       createdAt: new Date().toISOString(),
       completedAt: null,
     };
@@ -620,9 +677,10 @@ export function App({ store = dayDockStore }: AppProps) {
                 <InboxSurface
                   inboxTasks={inboxTasks}
                   laterTasks={laterTasks}
+                  todayKey={todayKey}
                   onMoveInbox={(taskId) => moveTask(taskId, "inbox")}
                   onMoveToday={(taskId) => moveTask(taskId, "today")}
-                  onMoveLater={(taskId) => moveTask(taskId, "later")}
+                  onSchedule={scheduleTask}
                   onComplete={completeTask}
                   onRename={renameTask}
                   onRemove={removeTask}
@@ -653,7 +711,8 @@ export function App({ store = dayDockStore }: AppProps) {
                   tasksById={state.tasks}
                   inboxCount={inboxCount}
                   dueFollowUpsCount={duePeople.length}
-                  onMoveLater={(taskId) => moveTask(taskId, "later")}
+                  todayKey={todayKey}
+                  onSchedule={scheduleTask}
                   onComplete={completeTask}
                   onReopen={reopenTask}
                   onNavigate={navigateFromPalette}
