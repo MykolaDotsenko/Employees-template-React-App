@@ -399,4 +399,136 @@ describe("DayDock core daily flow", () => {
       "#main-content",
     );
   });
+  it("keeps deferred work visible and lets it return to Today", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+
+    store.dispatch({
+      type: "task/captured",
+      task: {
+        id: "deferred",
+        title: "Revisit onboarding copy",
+        status: "inbox",
+        estimateMinutes: null,
+        personId: null,
+        createdAt: new Date().toISOString(),
+        completedAt: null,
+      },
+    });
+
+    render(<App store={store} />);
+
+    await user.click(screen.getByRole("button", { name: "Inbox" }));
+    await user.click(
+      screen.getByRole("button", {
+        name: "Move Revisit onboarding copy to Later",
+      }),
+    );
+
+    const laterSection = screen
+      .getByRole("heading", { name: "Later" })
+      .closest("section");
+    expect(laterSection).not.toBeNull();
+    expect(
+      within(laterSection as HTMLElement).getByText("Revisit onboarding copy"),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(laterSection as HTMLElement).getByRole("button", {
+        name: "Move Revisit onboarding copy to Today",
+      }),
+    );
+
+    expect(store.getSnapshot().tasks.deferred?.status).toBe("today");
+
+    await user.click(screen.getByRole("button", { name: "Today" }));
+
+    const todaySection = screen
+      .getByRole("heading", { name: "What matters today" })
+      .closest("section");
+    expect(todaySection).not.toBeNull();
+    expect(
+      within(todaySection as HTMLElement).getByText("Revisit onboarding copy"),
+    ).toBeInTheDocument();
+  });
+
+  it("routes deferred task search to Inbox where Later is visible", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+
+    store.dispatch({
+      type: "task/captured",
+      task: {
+        id: "later-search",
+        title: "Investigate offline analytics",
+        status: "later",
+        estimateMinutes: null,
+        personId: null,
+        createdAt: new Date().toISOString(),
+        completedAt: null,
+      },
+    });
+
+    render(<App store={store} />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Open command palette" }),
+    );
+    const palette = screen.getByRole("dialog", { name: "Command palette" });
+    await user.type(
+      within(palette).getByRole("textbox", {
+        name: "Search commands, tasks and people",
+      }),
+      "offline analytics",
+    );
+    await user.click(
+      within(palette).getByRole("button", {
+        name: /Investigate offline analytics/,
+      }),
+    );
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Inbox" }),
+    ).toBeInTheDocument();
+    const laterSection = screen
+      .getByRole("heading", { name: "Later" })
+      .closest("section");
+    expect(laterSection).not.toBeNull();
+    expect(
+      within(laterSection as HTMLElement).getByText(
+        "Investigate offline analytics",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("lets a user unpin a Top 3 item without losing it from Today", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+    addTodayPriority(store);
+
+    render(<App store={store} />);
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Remove Write architecture notes from Top 3",
+      }),
+    );
+
+    expect(store.getSnapshot().top3).toHaveLength(0);
+    expect(store.getSnapshot().tasks.a?.status).toBe("today");
+
+    const todaySection = screen
+      .getByRole("heading", { name: "What matters today" })
+      .closest("section");
+    expect(todaySection).not.toBeNull();
+    expect(
+      within(todaySection as HTMLElement).getByText("Write architecture notes"),
+    ).toBeInTheDocument();
+    expect(
+      within(todaySection as HTMLElement).getByRole("button", {
+        name: "Add Write architecture notes to Top 3",
+      }),
+    ).toBeInTheDocument();
+  });
+
 });

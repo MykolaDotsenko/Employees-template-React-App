@@ -155,6 +155,7 @@ export function App({ store = dayDockStore }: AppProps) {
   const top3 = selectTop3(state);
   const todayTasks = selectTasksByStatus(state, "today");
   const inboxTasks = selectTasksByStatus(state, "inbox");
+  const laterTasks = selectTasksByStatus(state, "later");
   const people = selectPeople(state);
   const duePeople = selectFollowUpsDue(state, todayKey);
   const tasksByPerson = Object.fromEntries(
@@ -242,7 +243,7 @@ export function App({ store = dayDockStore }: AppProps) {
     store.dispatch({ type: "task/captured", task });
   }
 
-  function moveTask(taskId: string, status: "today" | "later") {
+  function moveTask(taskId: string, status: "inbox" | "today" | "later") {
     store.dispatch({ type: "task/moved", taskId, status });
   }
 
@@ -256,6 +257,10 @@ export function App({ store = dayDockStore }: AppProps) {
 
   function addToTop3(taskId: string) {
     store.dispatch({ type: "top3/added", taskId });
+  }
+
+  function removeFromTop3(taskId: string) {
+    store.dispatch({ type: "top3/removed", taskId });
   }
 
   function addPerson(
@@ -511,6 +516,7 @@ export function App({ store = dayDockStore }: AppProps) {
                   top3={top3}
                   todayTasks={todayTasks}
                   onAddToTop3={addToTop3}
+                  onRemoveFromTop3={removeFromTop3}
                   onComplete={completeTask}
                   onStartFocus={startFocus}
                 />
@@ -518,7 +524,9 @@ export function App({ store = dayDockStore }: AppProps) {
 
               <Activity mode={surface === "inbox" ? "visible" : "hidden"}>
                 <InboxSurface
-                  tasks={inboxTasks}
+                  inboxTasks={inboxTasks}
+                  laterTasks={laterTasks}
+                  onMoveInbox={(taskId) => moveTask(taskId, "inbox")}
                   onMoveToday={(taskId) => moveTask(taskId, "today")}
                   onMoveLater={(taskId) => moveTask(taskId, "later")}
                   onComplete={completeTask}
