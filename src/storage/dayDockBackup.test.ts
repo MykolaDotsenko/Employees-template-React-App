@@ -131,6 +131,27 @@ describe("DayDock portable backups", () => {
     });
   });
 
+  it("restores a v5 backup with notifications disabled by default", () => {
+    const current = workspace();
+    const { notifications, ...v5Data } = current;
+    void notifications;
+
+    const backup = parseDayDockBackup(
+      JSON.stringify({
+        format: DAYDOCK_BACKUP_FORMAT,
+        formatVersion: DAYDOCK_BACKUP_FORMAT_VERSION,
+        exportedAt: "2026-09-20T12:00:00.000Z",
+        appSchemaVersion: 5,
+        data: v5Data,
+      }),
+    );
+
+    expect(backup?.state.notifications).toEqual({
+      readyAgain: false,
+      lastReadyAgainNotifiedDate: null,
+    });
+  });
+
   it("summarizes backup contents without duplicating analytics", () => {
     expect(summarizeDayDockBackup(workspace())).toEqual({
       taskCount: 1,

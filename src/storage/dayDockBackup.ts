@@ -78,6 +78,16 @@ function upgradeBackupData(data: unknown, schemaVersion: number): unknown {
     };
   }
 
+  if (schemaVersion <= 5 && !("notifications" in upgraded)) {
+    upgraded = {
+      ...upgraded,
+      notifications: {
+        readyAgain: false,
+        lastReadyAgainNotifiedDate: null,
+      },
+    };
+  }
+
   return upgraded;
 }
 

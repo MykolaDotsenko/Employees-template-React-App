@@ -33,6 +33,12 @@ import {
 } from "./domain/daydock/selectors";
 import { nextRecurrenceDateAfter } from "./domain/daydock/scheduling";
 import {
+  getReadyAgainNotificationPermission,
+  requestReadyAgainNotificationPermission,
+  showReadyAgainNotification,
+  type ReadyAgainNotificationResult,
+} from "./platform/readyAgainNotifications";
+import {
   CommandPalette,
   type PaletteSurface,
 } from "./features/command-palette/CommandPalette";
@@ -149,6 +155,9 @@ export function App({ store = dayDockStore }: AppProps) {
   const commandDialogRef = useRef<HTMLDialogElement>(null);
   const captureLaunchHandledRef = useRef(false);
   const [capturePrefill, setCapturePrefill] = useState<string | null>(null);
+  const [notificationPermission, setNotificationPermission] = useState(() =>
+    getReadyAgainNotificationPermission(),
+  );
   const [initialCaptureLaunch] = useState(() =>
     parseCaptureLaunch(window.location.search),
   );
@@ -193,6 +202,52 @@ export function App({ store = dayDockStore }: AppProps) {
   const readyAgainCount = inboxTasks.filter(
     (task) => task.deferUntil !== null && task.deferUntil <= todayKey,
   ).length;
+  useEffect(() => {
+    let cancelled = false;
+
+    async function maybeNotifyReadyAgain() {
+      if (
+        !state.notifications.readyAgain ||
+        readyAgainCount === 0 ||
+        state.notifications.lastReadyAgainNotifiedDate === todayKey ||
+        getReadyAgainNotificationPermission() !== "granted"
+      ) {
+        return;
+      }
+
+      const shown = await showReadyAgainNotification(readyAgainCount);
+
+      if (!cancelled && shown) {
+        store.dispatch({
+          type: "notifications/readyAgainNotified",
+          dateKey: todayKey,
+        });
+      }
+    }
+
+    function handleVisibilityChange() {
+      setNotificationPermission(getReadyAgainNotificationPermission());
+
+      if (document.visibilityState === "visible") {
+        void maybeNotifyReadyAgain();
+      }
+    }
+
+    void maybeNotifyReadyAgain();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [
+    readyAgainCount,
+    state.notifications.lastReadyAgainNotifiedDate,
+    state.notifications.readyAgain,
+    store,
+    todayKey,
+  ]);
+
   const people = selectPeople(state);
   const duePeople = selectFollowUpsDue(state, todayKey);
   const tasksByPerson = Object.fromEntries(
@@ -557,6 +612,43 @@ export function App({ store = dayDockStore }: AppProps) {
     returnToWorkspace();
   }
 
+  async function changeReadyAgainNotifications(
+    enabled: boolean,
+  ): Promise<ReadyAgainNotificationResult> {
+    if (!enabled) {
+      store.dispatch({
+        type: "notifications/readyAgainChanged",
+        enabled: false,
+      });
+      return { status: "disabled" };
+    }
+
+    const permission = await requestReadyAgainNotificationPermission();
+    setNotificationPermission(permission);
+
+    if (permission === "unsupported") {
+      store.dispatch({
+        type: "notifications/readyAgainChanged",
+        enabled: false,
+      });
+      return { status: "unsupported" };
+    }
+
+    if (permission !== "granted") {
+      store.dispatch({
+        type: "notifications/readyAgainChanged",
+        enabled: false,
+      });
+      return { status: "denied" };
+    }
+
+    store.dispatch({
+      type: "notifications/readyAgainChanged",
+      enabled: true,
+    });
+    return { status: "enabled" };
+  }
+
   function restoreWorkspace(restoredState: DayDockState) {
     store.replaceState(restoredState);
 
@@ -739,6 +831,8 @@ export function App({ store = dayDockStore }: AppProps) {
               <DataSafetyPopover
                 state={state}
                 persistenceStatus={persistenceStatus}
+                notificationPermission={notificationPermission}
+                onReadyAgainNotificationsChange={changeReadyAgainNotifications}
                 onRestore={restoreWorkspace}
               />
             </div>

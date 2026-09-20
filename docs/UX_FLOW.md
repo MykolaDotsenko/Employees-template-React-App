@@ -207,3 +207,15 @@ DayDock does not edit calendar events and does not pretend a local snapshot is l
 When the installed PWA is selected from a system share sheet, DayDock launches Quick Capture with the shared title, text, and URL prefilled. Shared data is not saved automatically: the user must confirm **Capture**.
 
 The one-time share parameters are removed from the URL immediately after launch so reload/back navigation cannot accidentally reopen or duplicate the capture. An installed-app shortcut can also open an empty Quick Capture directly.
+
+
+## Ready again alerts
+
+Ready again notifications are optional and off by default.
+
+- Permission is requested only after the user presses **Enable** in Data controls.
+- DayDock uses the active service worker for persistent/mobile-compatible notifications.
+- Alerts are shown only when parked work has resurfaced into Inbox.
+- A successful alert records the local date in workspace state, so tabs and reloads share once-per-day deduplication.
+- If the app is fully closed, DayDock does not claim background scheduling without a push service; the alert is checked when the app is running or returns to the foreground.
+- Opening a system notification focuses an existing DayDock window when possible, otherwise opens the installed app.

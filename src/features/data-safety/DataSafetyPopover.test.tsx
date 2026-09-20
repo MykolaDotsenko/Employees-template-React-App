@@ -35,6 +35,10 @@ describe("DataSafetyPopover", () => {
       <DataSafetyPopover
         state={createInitialDayDockState()}
         persistenceStatus="durable"
+        notificationPermission="default"
+        onReadyAgainNotificationsChange={() =>
+          Promise.resolve({ status: "disabled" })
+        }
         onRestore={onRestore}
       />,
     );
@@ -76,6 +80,10 @@ describe("DataSafetyPopover", () => {
       <DataSafetyPopover
         state={createInitialDayDockState()}
         persistenceStatus="durable"
+        notificationPermission="default"
+        onReadyAgainNotificationsChange={() =>
+          Promise.resolve({ status: "disabled" })
+        }
         onRestore={vi.fn()}
       />,
     );
@@ -106,6 +114,10 @@ describe("DataSafetyPopover", () => {
       <DataSafetyPopover
         state={createInitialDayDockState()}
         persistenceStatus="memory"
+        notificationPermission="default"
+        onReadyAgainNotificationsChange={() =>
+          Promise.resolve({ status: "disabled" })
+        }
         onRestore={vi.fn()}
       />,
     );
@@ -113,6 +125,35 @@ describe("DataSafetyPopover", () => {
     expect(screen.getByText("Storage warning")).toBeInTheDocument();
     expect(
       screen.getByText(/running in memory only/i),
+    ).toBeInTheDocument();
+  });
+
+  it("enables Ready again alerts only through the explicit control", async () => {
+    const user = userEvent.setup();
+    const changes: boolean[] = [];
+
+    render(
+      <DataSafetyPopover
+        state={createInitialDayDockState()}
+        persistenceStatus="durable"
+        notificationPermission="default"
+        onReadyAgainNotificationsChange={(enabled) => {
+          changes.push(enabled);
+          return Promise.resolve({ status: "enabled" });
+        }}
+        onRestore={vi.fn()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Enable", hidden: true }),
+    );
+
+    expect(changes).toEqual([true]);
+    expect(
+      await screen.findByText(
+        "Ready again alerts are enabled for this browser.",
+      ),
     ).toBeInTheDocument();
   });
 

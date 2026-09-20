@@ -16,7 +16,7 @@ import {
 } from "../store/dayDockStore";
 
 export const DAYDOCK_STORAGE_KEY = "daydock:workspace";
-export const DAYDOCK_SCHEMA_VERSION = 5 as const;
+export const DAYDOCK_SCHEMA_VERSION = 6 as const;
 
 export interface StorageLike {
   getItem(key: string): string | null;
@@ -92,6 +92,11 @@ const calendarStateSchema = z.object({
   sourceLabel: z.string().trim().min(1).max(180).nullable(),
 });
 
+const notificationPreferencesSchema = z.object({
+  readyAgain: z.boolean(),
+  lastReadyAgainNotifiedDate: isoDateSchema.nullable(),
+});
+
 const personSchema = z.object({
   id: z.string().min(1),
   name: z.string().trim().min(1).max(120),
@@ -134,14 +139,24 @@ const v4StateSchema = v3StateSchema.extend({
   dayPlan: dayPlanSchema.nullable().default(null),
 });
 
-const dayDockStateSchema = v4StateSchema.extend({
+const v5StateSchema = v4StateSchema.extend({
   calendar: calendarStateSchema,
 });
 
-const v5EnvelopeSchema = z.object({
+const dayDockStateSchema = v5StateSchema.extend({
+  notifications: notificationPreferencesSchema,
+});
+
+const v6EnvelopeSchema = z.object({
   schemaVersion: z.literal(DAYDOCK_SCHEMA_VERSION),
   updatedAt: isoDateTimeSchema,
   data: dayDockStateSchema,
+});
+
+const v5EnvelopeSchema = z.object({
+  schemaVersion: z.literal(5),
+  updatedAt: isoDateTimeSchema,
+  data: v5StateSchema,
 });
 
 const v4EnvelopeSchema = z.object({
@@ -306,12 +321,29 @@ export function normalizeDayDockState(state: DayDockState): DayDockState {
     },
     dayPlan,
     calendar,
+    notifications: {
+      readyAgain: state.notifications.readyAgain,
+      lastReadyAgainNotifiedDate:
+        state.notifications.lastReadyAgainNotifiedDate,
+    },
   };
 }
 
 export function parseDayDockState(value: unknown): DayDockState | null {
   const parsed = dayDockStateSchema.safeParse(value);
   return parsed.success ? normalizeDayDockState(parsed.data) : null;
+}
+
+function withDefaultNotifications(
+  state: z.infer<typeof v5StateSchema>,
+): DayDockState {
+  return {
+    ...state,
+    notifications: {
+      readyAgain: false,
+      lastReadyAgainNotifiedDate: null,
+    },
+  };
 }
 
 function withEmptyCalendar(
@@ -323,6 +355,10 @@ function withEmptyCalendar(
       events: [],
       importedAt: null,
       sourceLabel: null,
+    },
+    notifications: {
+      readyAgain: false,
+      lastReadyAgainNotifiedDate: null,
     },
   };
 }
@@ -337,6 +373,10 @@ function withEmptyDayPlan(
       events: [],
       importedAt: null,
       sourceLabel: null,
+    },
+    notifications: {
+      readyAgain: false,
+      lastReadyAgainNotifiedDate: null,
     },
   };
 }
@@ -355,6 +395,10 @@ function withEmptyFocus(
       events: [],
       importedAt: null,
       sourceLabel: null,
+    },
+    notifications: {
+      readyAgain: false,
+      lastReadyAgainNotifiedDate: null,
     },
   };
 }
@@ -415,13 +459,21 @@ export function loadDayDockWorkspace(
     };
   }
 
-  const current = v5EnvelopeSchema.safeParse(parsed);
+  const current = v6EnvelopeSchema.safeParse(parsed);
 
   if (current.success) {
     return {
       state: normalizeDayDockState(current.data.data),
       source: "stored",
     };
+  }
+
+  const v5 = v5EnvelopeSchema.safeParse(parsed);
+
+  if (v5.success) {
+    const state = normalizeDayDockState(withDefaultNotifications(v5.data.data));
+    saveDayDockWorkspace(state, storage, now);
+    return { state, source: "migrated" };
   }
 
   const v4 = v4EnvelopeSchema.safeParse(parsed);

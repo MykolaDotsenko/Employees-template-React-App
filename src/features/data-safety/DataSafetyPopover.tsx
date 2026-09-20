@@ -4,6 +4,10 @@ import {
   useState,
 } from "react";
 import type { DayDockState } from "../../domain/daydock/model";
+import type {
+  ReadyAgainNotificationPermission,
+  ReadyAgainNotificationResult,
+} from "../../platform/readyAgainNotifications";
 import type { PersistenceStatus } from "../../store/dayDockStore";
 import {
   DAYDOCK_BACKUP_MAX_BYTES,
@@ -18,6 +22,10 @@ const POPOVER_ID = "daydock-data-safety";
 interface DataSafetyPopoverProps {
   state: DayDockState;
   persistenceStatus: PersistenceStatus;
+  notificationPermission: ReadyAgainNotificationPermission;
+  onReadyAgainNotificationsChange: (
+    enabled: boolean,
+  ) => Promise<ReadyAgainNotificationResult>;
   onRestore: (state: DayDockState) => void;
 }
 
@@ -70,6 +78,8 @@ function downloadBackup(state: DayDockState): void {
 export function DataSafetyPopover({
   state,
   persistenceStatus,
+  notificationPermission,
+  onReadyAgainNotificationsChange,
   onRestore,
 }: DataSafetyPopoverProps) {
   const inputId = useId();
@@ -77,6 +87,10 @@ export function DataSafetyPopover({
   const [candidate, setCandidate] = useState<DayDockBackup | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [hasError, setHasError] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState<string | null>(
+    null,
+  );
+  const [notificationBusy, setNotificationBusy] = useState(false);
 
   const summary =
     candidate === null ? null : summarizeDayDockBackup(candidate.state);
@@ -118,6 +132,30 @@ export function DataSafetyPopover({
     } catch {
       setHasError(true);
       setMessage("DayDock could not read this backup file.");
+    }
+  }
+
+  async function changeReadyAgainNotifications(enabled: boolean) {
+    setNotificationBusy(true);
+    setNotificationMessage(null);
+
+    try {
+      const result = await onReadyAgainNotificationsChange(enabled);
+
+      const nextMessage =
+        result.status === "enabled"
+          ? "Ready again alerts are enabled for this browser."
+          : result.status === "disabled"
+            ? "Ready again alerts are off."
+            : result.status === "denied"
+              ? "Notifications are blocked in this browser. You can change that in site settings."
+              : result.status === "unsupported"
+                ? "This browser does not support DayDock notifications."
+                : "DayDock could not update notification permission.";
+
+      setNotificationMessage(nextMessage);
+    } finally {
+      setNotificationBusy(false);
     }
   }
 
@@ -190,6 +228,49 @@ export function DataSafetyPopover({
             {persistenceStatus === "memory"
               ? "Browser storage is unavailable. This workspace is running in memory only, so export a backup before reloading or closing this tab."
               : "DayDock could not save the latest change. Keep this tab open and export a backup now while your workspace is still available."}
+          </p>
+        ) : null}
+
+        <section
+          className="data-safety-notifications"
+          aria-labelledby="ready-again-alerts-title"
+        >
+          <div>
+            <strong id="ready-again-alerts-title">Ready again alerts</strong>
+            <span>
+              Optional system notification when parked work is ready to return.
+              DayDock checks while the app is running or when you come back.
+            </span>
+          </div>
+
+          <button
+            type="button"
+            className={
+              state.notifications.readyAgain
+                ? "notification-toggle is-on"
+                : "notification-toggle"
+            }
+            disabled={
+              notificationBusy || notificationPermission === "unsupported"
+            }
+            aria-pressed={state.notifications.readyAgain}
+            onClick={() => {
+              void changeReadyAgainNotifications(
+                !state.notifications.readyAgain,
+              );
+            }}
+          >
+            {notificationBusy
+              ? "Updating…"
+              : state.notifications.readyAgain
+                ? "Turn off"
+                : "Enable"}
+          </button>
+        </section>
+
+        {notificationMessage ? (
+          <p className="notification-status" role="status" aria-live="polite">
+            {notificationMessage}
           </p>
         ) : null}
 
