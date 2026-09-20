@@ -78,7 +78,7 @@ describe("DayDock persistence", () => {
     expect(result.state).toEqual(createInitialDayDockState());
   });
 
-  it("migrates schema v1 to v2 with an empty focus state", () => {
+  it("migrates schema v1 to the current schema with an empty focus state", () => {
     const storage = new MemoryStorage();
     const state = stateWithTasks([task("a")]);
     const legacyData = {
@@ -273,6 +273,57 @@ describe("DayDock persistence", () => {
 
     expect(store.getPersistenceStatus()).toBe("durable");
     expect(stored).toContain("Task quota recovered");
+  });
+
+
+  it("migrates schema v2 tasks without scheduling fields into v3", () => {
+    const storage = new MemoryStorage();
+
+    storage.setItem(
+      DAYDOCK_STORAGE_KEY,
+      JSON.stringify({
+        schemaVersion: 2,
+        updatedAt: "2026-09-20T08:00:00.000Z",
+        data: {
+          tasks: {
+            legacy: {
+              id: "legacy",
+              title: "Legacy deferred thought",
+              status: "later",
+              estimateMinutes: null,
+              personId: null,
+              createdAt: "2026-09-19T08:00:00.000Z",
+              completedAt: null,
+            },
+          },
+          taskOrder: ["legacy"],
+          top3: [],
+          people: {},
+          personOrder: [],
+          focus: {
+            active: null,
+            history: [],
+          },
+        },
+      }),
+    );
+
+    const result = loadDayDockWorkspace(
+      storage,
+      () => "2026-09-20T09:00:00.000Z",
+    );
+
+    expect(result.source).toBe("migrated");
+    expect(result.state.tasks.legacy).toMatchObject({
+      deferUntil: null,
+      recurrence: null,
+    });
+
+    const upgraded = JSON.parse(
+      storage.getItem(DAYDOCK_STORAGE_KEY) ?? "{}",
+    ) as { schemaVersion?: number };
+
+    expect(upgraded.schemaVersion).toBe(DAYDOCK_SCHEMA_VERSION);
   });
 
 });
