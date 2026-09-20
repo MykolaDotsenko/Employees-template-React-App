@@ -248,7 +248,7 @@ jobs:
             --disable-sync
             --metrics-recording-only
             --no-first-run
-            --disable-features=OptimizationHints,MediaRouter,Translate,AutofillServerCommunication
+            --disable-features=OptimizationHints,MediaRouter,Translate,AutofillServerCommunication,PushMessaging
             --hide-scrollbars
             --run-all-compositor-stages-before-draw
             --virtual-time-budget=2500
@@ -259,54 +259,45 @@ jobs:
             local size="$2"
             local output="$3"
             local url="$4"
+            local attempt=1
             local status=0
 
             rm -f "${output}"
 
-            if timeout 12s "${browser}" "${common_flags[@]}" \
-              --user-data-dir="${profile}" \
-              --window-size="${size}" \
-              --screenshot="${output}" \
-              "${url}"; then
-              status=0
-            else
-              status=$?
-            fi
-
-            if [ -s "${output}" ]; then
-              if [ "${status}" -eq 124 ]; then
-                echo "::notice::Chromium stayed alive after writing ${output}; accepting the rendered screenshot."
+            while [ "${attempt}" -le 3 ]; do
+              if [ "${attempt}" -gt 1 ]; then
+                echo "::notice::Retrying screenshot ${attempt}/3 for ${url} with a clean Chromium profile."
+                rm -rf "${profile}"
               fi
-              return 0
-            fi
 
-            echo "::notice::Retrying screenshot for ${url} with a clean Chromium profile."
-            rm -rf "${profile}"
-            status=0
-
-            if timeout 15s "${browser}" "${common_flags[@]}" \
-              --user-data-dir="${profile}" \
-              --window-size="${size}" \
-              --screenshot="${output}" \
-              "${url}"; then
               status=0
-            else
-              status=$?
-            fi
 
-            if [ "${status}" -ne 0 ] && [ "${status}" -ne 124 ]; then
-              echo "::error::Chromium screenshot failed for ${url} with status ${status}."
-              return "${status}"
-            fi
+              if timeout 20s "${browser}" "${common_flags[@]}" \
+                --user-data-dir="${profile}" \
+                --window-size="${size}" \
+                --screenshot="${output}" \
+                "${url}"; then
+                status=0
+              else
+                status=$?
+              fi
 
-            if [ ! -s "${output}" ]; then
-              echo "::error::Chromium produced no screenshot for ${url} after retry."
-              return 1
-            fi
+              if [ -s "${output}" ]; then
+                if [ "${status}" -eq 124 ]; then
+                  echo "::notice::Chromium stayed alive after writing ${output}; accepting the rendered screenshot."
+                fi
+                return 0
+              fi
 
-            if [ "${status}" -eq 124 ]; then
-              echo "::notice::Chromium stayed alive after writing ${output}; accepting the rendered screenshot."
-            fi
+              if [ "${status}" -ne 0 ] && [ "${status}" -ne 124 ]; then
+                echo "::notice::Chromium screenshot attempt ${attempt} exited with status ${status}."
+              fi
+
+              attempt=$((attempt + 1))
+            done
+
+            echo "::error::Chromium produced no screenshot for ${url} after 3 attempts."
+            return 1
           }
 
           dump_dom() {
