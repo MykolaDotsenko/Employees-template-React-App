@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import {
   getRecordedFocusMs,
   type DayInsight,
@@ -10,6 +10,7 @@ import { TaskRow } from "../tasks/TaskRow";
 
 interface ReviewSurfaceProps {
   completedToday: Task[];
+  completionHistory: ReviewInsights["completionHistory"];
   openToday: Task[];
   focusMinutesToday: number;
   focusSessionsToday: ReviewInsights["focusSessionsToday"];
@@ -33,6 +34,18 @@ function shortDay(dateKey: string): string {
   }).format(date);
 }
 
+function formatHistoryDate(dateKey: string): string {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const date = new Date(Date.UTC(year ?? 0, (month ?? 1) - 1, day ?? 1));
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+}
+
 function formatFocusMinutes(minutes: number): string {
   if (minutes < 60) return `${minutes}m`;
 
@@ -44,6 +57,7 @@ function formatFocusMinutes(minutes: number): string {
 
 export function ReviewSurface({
   completedToday,
+  completionHistory,
   openToday,
   focusMinutesToday,
   focusSessionsToday,
@@ -58,6 +72,9 @@ export function ReviewSurface({
 }: ReviewSurfaceProps) {
   const maxFocus = Math.max(1, ...week.map((day) => day.focusMinutes));
   const activeFocusDays = week.filter((day) => day.focusMinutes > 0).length;
+  const [historyLimit, setHistoryLimit] = useState(6);
+  const visibleHistory = completionHistory.slice(0, historyLimit);
+  const hiddenHistoryCount = Math.max(0, completionHistory.length - historyLimit);
 
   return (
     <div className="surface-stack">
@@ -253,6 +270,53 @@ export function ReviewSurface({
           </button>
         </div>
       </section>
+
+      {completionHistory.length > 0 ? (
+        <section
+          className="completion-history"
+          aria-labelledby="completion-history-title"
+        >
+          <div className="section-heading">
+            <div>
+              <p className="section-kicker">Recent history</p>
+              <h2 id="completion-history-title">Completed before today</h2>
+            </div>
+            <span className="count-pill">{completionHistory.length}</span>
+          </div>
+
+          <ul>
+            {visibleHistory.map(({ task, dateKey }) => (
+              <li key={task.id} className="completion-history-row">
+                <div className="completion-history-copy">
+                  <span aria-hidden="true">✓</span>
+                  <span>
+                    <strong>{task.title}</strong>
+                    <small>Completed {formatHistoryDate(dateKey)}</small>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="text-action"
+                  aria-label={`Reopen ${task.title} to Today`}
+                  onClick={() => onReopen(task.id)}
+                >
+                  Reopen
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          {hiddenHistoryCount > 0 ? (
+            <button
+              type="button"
+              className="completion-history-more"
+              onClick={() => setHistoryLimit((current) => current + 12)}
+            >
+              Show {Math.min(12, hiddenHistoryCount)} more
+            </button>
+          ) : null}
+        </section>
+      ) : null}
 
       {completedToday.length > 0 ? (
         <section className="completed-today" aria-labelledby="completed-title">
