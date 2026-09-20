@@ -531,4 +531,32 @@ describe("DayDock core daily flow", () => {
     ).toBeInTheDocument();
   });
 
+  it("clamps oversized imported estimates before entering Focus Mode", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+
+    store.dispatch({
+      type: "task/captured",
+      task: {
+        id: "oversized-focus",
+        title: "Deep architecture review",
+        status: "today",
+        estimateMinutes: 1_440,
+        personId: null,
+        createdAt: "2026-09-20T09:00:00.000Z",
+        completedAt: null,
+      },
+    });
+    store.dispatch({ type: "top3/added", taskId: "oversized-focus" });
+
+    render(<App store={store} />);
+
+    await user.click(screen.getByRole("button", { name: /Start focus/i }));
+
+    expect(store.getSnapshot().focus.active?.durationMinutes).toBe(240);
+    expect(
+      screen.getByText("240 min session · saved locally"),
+    ).toBeInTheDocument();
+  });
+
 });
