@@ -443,7 +443,13 @@ export function App({ store = dayDockStore }: AppProps) {
   }
 
   return (
-    <div className="app-shell">
+    <div
+      className={
+        gettingStartedStage === null
+          ? "app-shell"
+          : "app-shell is-getting-started"
+      }
+    >
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
