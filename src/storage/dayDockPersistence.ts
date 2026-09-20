@@ -10,6 +10,7 @@ import {
 import {
   createDayDockStore,
   type DayDockStore,
+  type PersistenceStatus,
 } from "../store/dayDockStore";
 
 export const DAYDOCK_STORAGE_KEY = "daydock:workspace";
@@ -321,10 +322,15 @@ export function createPersistentDayDockStore({
   now = defaultNow,
 }: PersistentStoreOptions): DayDockStore {
   const loaded = loadDayDockWorkspace(storage, now);
-  const store = createDayDockStore(loaded.state);
+  let persistenceStatus: PersistenceStatus = "durable";
+  const store = createDayDockStore(loaded.state, {
+    getPersistenceStatus: () => persistenceStatus,
+  });
 
   store.subscribe(() => {
-    saveDayDockWorkspace(store.getSnapshot(), storage, now);
+    persistenceStatus = saveDayDockWorkspace(store.getSnapshot(), storage, now)
+      ? "durable"
+      : "degraded";
   });
 
   return store;
