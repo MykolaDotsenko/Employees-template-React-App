@@ -71,7 +71,11 @@ describe("DayDock core daily flow", () => {
       screen.getByRole("textbox", { name: "Capture item" }),
       "Prepare release checklist",
     );
-    await user.click(screen.getByRole("button", { name: "Capture" }));
+    await user.click(
+      within(
+        screen.getByRole("dialog", { name: "What’s on your mind?" }),
+      ).getByRole("button", { name: "Capture" }),
+    );
 
     expect(
       screen.getByRole("heading", { name: "Your first item is safe" }),
@@ -139,7 +143,11 @@ describe("DayDock core daily flow", () => {
       screen.getByRole("textbox", { name: "Capture item" }),
       "Finish PR review",
     );
-    await user.click(screen.getByRole("button", { name: "Capture" }));
+    await user.click(
+      within(
+        screen.getByRole("dialog", { name: "What’s on your mind?" }),
+      ).getByRole("button", { name: "Capture" }),
+    );
 
     expect(store.getSnapshot().taskOrder).toHaveLength(1);
 
@@ -837,7 +845,11 @@ describe("DayDock core daily flow", () => {
       screen.getByRole("textbox", { name: "Capture item" }),
       "Protect this unsaved thought",
     );
-    await user.click(screen.getByRole("button", { name: "Capture" }));
+    await user.click(
+      within(
+        screen.getByRole("dialog", { name: "What’s on your mind?" }),
+      ).getByRole("button", { name: "Capture" }),
+    );
 
     expect(screen.getByText("Storage warning")).toBeInTheDocument();
     expect(screen.getByText("Save problem")).toBeInTheDocument();
