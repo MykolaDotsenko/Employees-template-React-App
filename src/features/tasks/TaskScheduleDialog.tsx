@@ -52,6 +52,7 @@ export function TaskScheduleDialog({
   const titleId = useId();
   const [date, setDate] = useState("");
   const [recurrence, setRecurrence] = useState<RecurrenceChoice>("none");
+  const [isOpen, setIsOpen] = useState(false);
   const tomorrow = addCalendarDays(todayKey, 1);
   const nextWeek = nextMonday(todayKey);
 
@@ -66,10 +67,12 @@ export function TaskScheduleDialog({
 
     setDate(existingDate);
     setRecurrence(task.recurrence?.kind ?? "none");
+    setIsOpen(true);
     dialog.showModal();
   }
 
   function closeDialog() {
+    setIsOpen(false);
     dialogRef.current?.close();
   }
 
@@ -115,7 +118,10 @@ export function TaskScheduleDialog({
         ref={dialogRef}
         className="task-schedule-dialog"
         aria-labelledby={titleId}
+        onClose={() => setIsOpen(false)}
+        onCancel={() => setIsOpen(false)}
       >
+        {isOpen ? (
         <form className="task-schedule-form" onSubmit={submit}>
           <div className="task-schedule-heading">
             <div>
@@ -219,6 +225,7 @@ export function TaskScheduleDialog({
             </button>
           </div>
         </form>
+        ) : null}
       </dialog>
     </>
   );
