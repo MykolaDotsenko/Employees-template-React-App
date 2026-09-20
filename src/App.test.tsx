@@ -1005,4 +1005,112 @@ describe("DayDock core daily flow", () => {
     expect(screen.getByText("Keep the linked task")).toBeInTheDocument();
   });
 
+
+  it("automatically brings due Later work back as Ready again and lets it snooze", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+    const now = new Date();
+    const todayKey = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, "0"),
+      String(now.getDate()).padStart(2, "0"),
+    ].join("-");
+
+    store.dispatch({
+      type: "task/captured",
+      task: {
+        id: "returning-task",
+        title: "Recheck launch metrics",
+        status: "later",
+        estimateMinutes: null,
+        personId: null,
+        deferUntil: todayKey,
+        recurrence: null,
+        createdAt: now.toISOString(),
+        completedAt: null,
+      },
+    });
+
+    render(<App store={store} />);
+
+    await user.click(screen.getByRole("button", { name: "Inbox" }));
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "You asked DayDock to bring this back",
+      }),
+    ).toBeInTheDocument();
+    expect(store.getSnapshot().tasks["returning-task"]?.status).toBe("inbox");
+    expect(screen.getByText("Ready again")).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Choose when Recheck launch metrics should return",
+      }),
+    );
+    const dialog = screen.getByRole("dialog", {
+      name: "When should this come back?",
+    });
+    await user.click(within(dialog).getByRole("button", { name: /Tomorrow/ }));
+    await user.click(within(dialog).getByRole("button", { name: "Park task" }));
+
+    expect(store.getSnapshot().tasks["returning-task"]?.status).toBe("later");
+    expect(store.getSnapshot().tasks["returning-task"]?.deferUntil).toBeTruthy();
+  });
+
+  it("keeps recurring completion history and schedules a fresh next occurrence", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+    const now = new Date();
+    const todayKey = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, "0"),
+      String(now.getDate()).padStart(2, "0"),
+    ].join("-");
+
+    store.dispatch({
+      type: "task/captured",
+      task: {
+        id: "weekly-review",
+        title: "Weekly product review",
+        status: "today",
+        estimateMinutes: 25,
+        personId: null,
+        deferUntil: null,
+        recurrence: {
+          kind: "weekly",
+          anchorDate: todayKey,
+        },
+        createdAt: now.toISOString(),
+        completedAt: null,
+      },
+    });
+
+    render(<App store={store} />);
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Complete Weekly product review",
+      }),
+    );
+
+    const snapshot = store.getSnapshot();
+    const nextId = snapshot.taskOrder.find((taskId) => taskId !== "weekly-review");
+
+    expect(snapshot.tasks["weekly-review"]).toMatchObject({
+      status: "done",
+      recurrence: null,
+      deferUntil: null,
+    });
+    expect(nextId).toBeTruthy();
+    expect(snapshot.tasks[nextId ?? ""]).toMatchObject({
+      title: "Weekly product review",
+      status: "later",
+      recurrence: {
+        kind: "weekly",
+      },
+    });
+    expect(snapshot.tasks[nextId ?? ""]?.deferUntil).not.toBeNull();
+  });
+
 });
