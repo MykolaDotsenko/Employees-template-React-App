@@ -529,4 +529,51 @@ describe("dayDockReducer", () => {
     });
   });
 
+
+  it("rejects a parked recurring task that has no return date", () => {
+    const state = createInitialDayDockState();
+
+    const unchanged = dayDockReducer(state, {
+      type: "task/captured",
+      task: {
+        ...task("invalid-repeat", "later"),
+        recurrence: {
+          kind: "weekly",
+          anchorDate: "2026-09-21",
+        },
+      },
+    });
+
+    expect(unchanged).toBe(state);
+  });
+
+  it("rejects a next occurrence that mutates the recurrence series", () => {
+    let state = dayDockReducer(createInitialDayDockState(), {
+      type: "task/captured",
+      task: {
+        ...task("series", "today"),
+        recurrence: {
+          kind: "weekly",
+          anchorDate: "2026-09-21",
+        },
+      },
+    });
+
+    const unchanged = dayDockReducer(state, {
+      type: "task/completedWithNext",
+      taskId: "series",
+      completedAt: "2026-09-21T10:00:00.000Z",
+      nextTask: {
+        ...task("series-next", "later"),
+        deferUntil: "2026-09-22",
+        recurrence: {
+          kind: "daily",
+          anchorDate: "2026-09-22",
+        },
+      },
+    });
+
+    expect(unchanged).toBe(state);
+  });
+
 });
