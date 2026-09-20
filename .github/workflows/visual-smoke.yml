@@ -1,0 +1,110 @@
+name: Visual Smoke
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build production app
+        run: npm run build
+
+      - name: Render desktop and mobile smoke screenshots
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p visual-smoke
+          npm run preview -- --host 127.0.0.1 --port 4173 > visual-smoke/preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "${preview_pid}" 2>/dev/null || true' EXIT
+
+          ready=false
+          for attempt in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/ > /dev/null; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+
+          if [ "${ready}" != "true" ]; then
+            cat visual-smoke/preview.log
+            echo "::error::Vite preview did not become ready."
+            exit 1
+          fi
+
+          browser="$(
+            command -v google-chrome ||
+            command -v google-chrome-stable ||
+            command -v chromium ||
+            command -v chromium-browser ||
+            true
+          )"
+
+          if [ -z "${browser}" ]; then
+            echo "::error::No Chromium-compatible browser is available on the runner."
+            exit 1
+          fi
+
+          common_flags=(
+            --headless=new
+            --no-sandbox
+            --disable-dev-shm-usage
+            --hide-scrollbars
+            --run-all-compositor-stages-before-draw
+            --virtual-time-budget=2500
+          )
+
+          "${browser}" "${common_flags[@]}" \
+            --user-data-dir=/tmp/daydock-desktop \
+            --window-size=1440,1100 \
+            --screenshot="$GITHUB_WORKSPACE/visual-smoke/desktop.png" \
+            http://127.0.0.1:4173/
+
+          "${browser}" "${common_flags[@]}" \
+            --user-data-dir=/tmp/daydock-mobile \
+            --window-size=390,844 \
+            --screenshot="$GITHUB_WORKSPACE/visual-smoke/mobile.png" \
+            http://127.0.0.1:4173/
+
+          "${browser}" "${common_flags[@]}" \
+            --user-data-dir=/tmp/daydock-dom \
+            --dump-dom \
+            http://127.0.0.1:4173/ > visual-smoke/dom.html
+
+          grep -q "DayDock" visual-smoke/dom.html
+          grep -q "Capture your first item" visual-smoke/dom.html
+          grep -q "DayDock getting started" visual-smoke/dom.html
+
+          test -s visual-smoke/desktop.png
+          test -s visual-smoke/mobile.png
+
+      - name: Upload visual smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daydock-visual-smoke
+          path: visual-smoke/
+          if-no-files-found: warn
+          retention-days: 14
