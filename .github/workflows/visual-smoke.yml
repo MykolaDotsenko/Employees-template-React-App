@@ -133,7 +133,7 @@ jobs:
                         taskId: "release",
                         startedAt: iso(-8),
                         durationMinutes: 50,
-                        pausedAt: null,
+                        pausedAt: iso(-1),
                         accumulatedPauseMs: 0,
                       }
                     : null,
