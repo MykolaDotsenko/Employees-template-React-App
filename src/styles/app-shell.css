@@ -3137,12 +3137,16 @@
       display: none;
     }
 
-    .data-safety-label-desktop {
+    .data-safety-trigger > .data-safety-label-desktop {
       display: none;
     }
 
-    .data-safety-label-mobile {
+    .data-safety-trigger > .data-safety-label-mobile {
       display: inline;
+    }
+
+    .nav-item.is-active::before {
+      display: none;
     }
 
     .data-safety-trigger {
@@ -3221,6 +3225,14 @@
     .focus-topbar {
       min-height: calc(4rem + env(safe-area-inset-top));
       padding-top: env(safe-area-inset-top);
+    }
+
+    .focus-stage {
+      min-height: calc(100dvh - 4rem - env(safe-area-inset-top));
+    }
+
+    .first-run-action {
+      min-height: 2.75rem;
     }
   }
 
