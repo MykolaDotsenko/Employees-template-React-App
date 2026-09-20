@@ -110,7 +110,7 @@ const v3StateSchema = legacyStateSchema.extend({
 });
 
 const dayDockStateSchema = v3StateSchema.extend({
-  dayPlan: dayPlanSchema.nullable(),
+  dayPlan: dayPlanSchema.nullable().default(null),
 });
 
 const v4EnvelopeSchema = z.object({
