@@ -3393,3 +3393,39 @@
     }
   }
 }
+
+
+@layer components {
+  @container (max-width: 760px) {
+    .app-shell {
+      height: 100dvh;
+      min-height: 100dvh;
+      overflow: hidden;
+    }
+
+    .app-layout {
+      height: 100dvh;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .main-surface {
+      min-height: 0;
+      height: auto;
+      flex: 1 1 auto;
+      overflow-y: auto;
+      overscroll-behavior-y: contain;
+      scrollbar-gutter: stable;
+    }
+
+    .brand-rail {
+      position: relative;
+      inset: auto;
+      flex: 0 0 auto;
+    }
+
+    .surface-content {
+      padding-bottom: 1.75rem;
+    }
+  }
+}
