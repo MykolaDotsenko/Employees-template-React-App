@@ -265,10 +265,10 @@ export function ReviewSurface({
           <ul>
             {completedToday.map((task) => (
               <li key={task.id} className="completed-task-row">
-                <span className="completed-task-copy">
+                <div className="completed-task-copy">
                   <span aria-hidden="true">✓</span>
                   <span>{task.title}</span>
-                </span>
+                </div>
                 <button
                   type="button"
                   className="text-action"
