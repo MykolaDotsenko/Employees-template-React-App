@@ -42,14 +42,15 @@ export function createBrowserDayDockStore({
     return createDayDockStore();
   }
 
-  let channel: BroadcastChannelLike | null = null;
+  let channel: BroadcastChannelLike | null;
 
   try {
     channel =
-      createChannel?.() ??
-      (typeof BroadcastChannel === "undefined"
-        ? null
-        : createBrowserBroadcastChannel());
+      createChannel !== undefined
+        ? createChannel()
+        : typeof BroadcastChannel === "undefined"
+          ? null
+          : createBrowserBroadcastChannel();
   } catch {
     channel = null;
   }
