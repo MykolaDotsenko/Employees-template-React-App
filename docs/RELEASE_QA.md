@@ -13,6 +13,16 @@
 - reduced-motion and forced-colors paths are preserved
 - calendar-day context refreshes across midnight
 
+## One-time GitHub Pages setup
+
+The repository owner must enable the Pages site once before the first publication:
+
+1. Open **Settings → Pages**.
+2. Under **Build and deployment**, set **Source** to **GitHub Actions**.
+3. Rerun the **Deploy Pages** workflow.
+
+The workflow deliberately does not try to create the Pages site with `GITHUB_TOKEN`: GitHub does not grant that token the repository-administration permission required for first-time Pages enablement. Until the one-time setting is enabled, the workflow still verifies the Pages build and exits successfully with an explicit warning instead of leaving `main` red.
+
 ## Production smoke test
 
 After each release deployment, verify:

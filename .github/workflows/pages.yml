@@ -23,18 +23,61 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
+
       - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: npm
+
       - run: npm ci --no-audit --no-fund
       - run: npm run verify
       - run: npm run build:pages
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - uses: actions/upload-pages-artifact@v4
+
+      - name: Check GitHub Pages availability
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          status="$(curl -sS -o /tmp/pages.json -w '%{http_code}' \
+            -H 'Accept: application/vnd.github+json' \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "https://api.github.com/repos/${GH_REPOSITORY}/pages")"
+
+          if [ "${status}" = "200" ]; then
+            echo "enabled=true" >> "${GITHUB_OUTPUT}"
+            echo "GitHub Pages is enabled for this repository." >> "${GITHUB_STEP_SUMMARY}"
+          elif [ "${status}" = "404" ]; then
+            echo "enabled=false" >> "${GITHUB_OUTPUT}"
+            echo "::warning::GitHub Pages is not enabled yet. In Settings → Pages, set Source to GitHub Actions once, then rerun this workflow."
+            {
+              echo "## GitHub Pages setup required"
+              echo
+              echo "The Pages-specific build passed, but publishing is intentionally skipped because the repository does not have a Pages site yet."
+              echo
+              echo "One-time admin step: **Settings → Pages → Build and deployment → Source → GitHub Actions**."
+              echo "Then rerun **Deploy Pages**."
+            } >> "${GITHUB_STEP_SUMMARY}"
+          else
+            cat /tmp/pages.json
+            echo "::error::Unable to determine GitHub Pages status (HTTP ${status})."
+            exit 1
+          fi
+
+      - name: Configure Pages
+        if: steps.pages.outputs.enabled == 'true'
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        if: steps.pages.outputs.enabled == 'true'
+        uses: actions/upload-pages-artifact@v4
         with:
           path: ./dist
-      - id: deployment
+
+      - name: Deploy Pages
+        if: steps.pages.outputs.enabled == 'true'
+        id: deployment
         uses: actions/deploy-pages@v4
