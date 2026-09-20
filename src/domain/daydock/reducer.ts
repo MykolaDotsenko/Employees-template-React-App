@@ -127,7 +127,12 @@ export function dayDockReducer(
       if (
         !isDateKey(action.task.deferUntil) ||
         (action.task.recurrence !== null &&
-          !isDateKey(action.task.recurrence.anchorDate))
+          !isDateKey(action.task.recurrence.anchorDate)) ||
+        (action.task.status === "later" &&
+          action.task.recurrence !== null &&
+          action.task.deferUntil === null) ||
+        (action.task.status === "done" &&
+          (action.task.deferUntil !== null || action.task.recurrence !== null))
       ) {
         return state;
       }
@@ -303,8 +308,11 @@ export function dayDockReducer(
         nextTask.completedAt !== null ||
         nextTask.deferUntil === null ||
         nextTask.recurrence === null ||
+        !nextTask.title.trim() ||
         !isDateKey(nextTask.deferUntil) ||
         !isDateKey(nextTask.recurrence.anchorDate) ||
+        nextTask.recurrence.kind !== current.recurrence.kind ||
+        nextTask.recurrence.anchorDate !== current.recurrence.anchorDate ||
         (nextTask.personId !== null && !state.people[nextTask.personId])
       ) {
         return state;
