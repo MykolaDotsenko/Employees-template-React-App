@@ -19,6 +19,7 @@ interface TaskScheduleDialogProps {
   task: Task;
   todayKey: string;
   triggerLabel?: string;
+  preserveCadence?: boolean;
   onSchedule: (
     taskId: string,
     deferUntil: string | null,
@@ -44,6 +45,7 @@ export function TaskScheduleDialog({
   task,
   todayKey,
   triggerLabel = "Later",
+  preserveCadence = false,
   onSchedule,
 }: TaskScheduleDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -88,7 +90,7 @@ export function TaskScheduleDialog({
         ? {
             kind: recurrence,
             anchorDate:
-              task.recurrence?.kind === recurrence
+              preserveCadence && task.recurrence?.kind === recurrence
                 ? task.recurrence.anchorDate
                 : date,
           }
@@ -195,7 +197,8 @@ export function TaskScheduleDialog({
 
           <p className="task-schedule-note">
             {date
-              ? task.recurrence !== null &&
+              ? preserveCadence &&
+                task.recurrence !== null &&
                 recurrence === task.recurrence.kind &&
                 date !== task.recurrence.anchorDate
                 ? `Snoozed until ${formatCalendarDate(date)}. The ${recurrenceLabel(task.recurrence.kind).toLocaleLowerCase()} rhythm stays anchored to its original schedule.`
