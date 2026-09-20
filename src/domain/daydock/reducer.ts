@@ -3,6 +3,7 @@ import {
   MAX_FOCUS_DURATION_MINUTES,
   MIN_FOCUS_DURATION_MINUTES,
 } from "./focus";
+import { isDateKey } from "./scheduling";
 import type {
   ActiveFocusSession,
   DayDockState,
@@ -14,22 +15,6 @@ import type {
 
 function removeId(ids: readonly string[], id: string): string[] {
   return ids.filter((candidate) => candidate !== id);
-}
-
-function isDateKey(value: string | null): boolean {
-  if (value === null) return true;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-
-  const [year, month, day] = value.split("-").map(Number);
-  if (!year || !month || !day) return false;
-
-  const date = new Date(Date.UTC(year, month - 1, day));
-
-  return (
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day
-  );
 }
 
 function parseTime(value: string): number {
@@ -96,6 +81,40 @@ function finishFocusSession(
   };
 }
 
+function completeTaskState(
+  state: DayDockState,
+  taskId: string,
+  completedAt: string,
+): DayDockState {
+  const current = state.tasks[taskId];
+  if (!current || current.status === "done") return state;
+
+  const nextState = updateTask(state, taskId, (task) => ({
+    ...task,
+    status: "done",
+    deferUntil: null,
+    recurrence: null,
+    completedAt,
+  }));
+
+  const activeFocus = nextState.focus.active;
+  const shouldFinishFocus = activeFocus?.taskId === taskId;
+
+  return {
+    ...nextState,
+    top3: removeId(nextState.top3, taskId),
+    focus: shouldFinishFocus
+      ? {
+          active: null,
+          history: [
+            ...nextState.focus.history,
+            finishFocusSession(activeFocus, completedAt, "completed"),
+          ],
+        }
+      : nextState.focus,
+  };
+}
+
 export function dayDockReducer(
   state: DayDockState,
   action: DayDockAction,
@@ -104,6 +123,14 @@ export function dayDockReducer(
     case "task/captured": {
       const title = action.task.title.trim();
       if (!title || state.tasks[action.task.id]) return state;
+
+      if (
+        !isDateKey(action.task.deferUntil) ||
+        (action.task.recurrence !== null &&
+          !isDateKey(action.task.recurrence.anchorDate))
+      ) {
+        return state;
+      }
 
       const task: Task = {
         ...action.task,
@@ -166,9 +193,25 @@ export function dayDockReducer(
         return state;
       }
 
-      const nextState = updateTask(state, action.taskId, (task) =>
-        task.status === action.status ? task : { ...task, status: action.status },
-      );
+      const nextState = updateTask(state, action.taskId, (task) => {
+        const nextRecurrence =
+          action.status === "later" ? null : task.recurrence;
+
+        if (
+          task.status === action.status &&
+          task.deferUntil === null &&
+          task.recurrence === nextRecurrence
+        ) {
+          return task;
+        }
+
+        return {
+          ...task,
+          status: action.status,
+          deferUntil: null,
+          recurrence: nextRecurrence,
+        };
+      });
 
       if (nextState === state || action.status === "today") return nextState;
 
@@ -178,31 +221,113 @@ export function dayDockReducer(
       };
     }
 
-    case "task/completed": {
+    case "task/deferred": {
       const current = state.tasks[action.taskId];
-      if (!current || current.status === "done") return state;
+
+      if (
+        !current ||
+        current.status === "done" ||
+        state.focus.active?.taskId === action.taskId ||
+        !isDateKey(action.deferUntil) ||
+        (action.recurrence !== null &&
+          (action.deferUntil === null ||
+            !isDateKey(action.recurrence.anchorDate) ||
+            action.recurrence.anchorDate !== action.deferUntil))
+      ) {
+        return state;
+      }
 
       const nextState = updateTask(state, action.taskId, (task) => ({
         ...task,
-        status: "done",
-        completedAt: action.completedAt,
+        status: "later",
+        deferUntil: action.deferUntil,
+        recurrence: action.recurrence,
       }));
-
-      const activeFocus = nextState.focus.active;
-      const shouldFinishFocus = activeFocus?.taskId === action.taskId;
 
       return {
         ...nextState,
         top3: removeId(nextState.top3, action.taskId),
-        focus: shouldFinishFocus
-          ? {
-              active: null,
-              history: [
-                ...nextState.focus.history,
-                finishFocusSession(activeFocus, action.completedAt, "completed"),
-              ],
-            }
-          : nextState.focus,
+      };
+    }
+
+    case "task/resurfaceDue": {
+      if (!isDateKey(action.dateKey)) return state;
+
+      let tasks = state.tasks;
+      let changed = false;
+
+      for (const taskId of state.taskOrder) {
+        const task = tasks[taskId];
+
+        if (
+          !task ||
+          task.status !== "later" ||
+          task.deferUntil === null ||
+          task.deferUntil > action.dateKey
+        ) {
+          continue;
+        }
+
+        if (!changed) {
+          tasks = { ...state.tasks };
+          changed = true;
+        }
+
+        tasks[taskId] = {
+          ...task,
+          status: "inbox",
+        };
+      }
+
+      return changed ? { ...state, tasks } : state;
+    }
+
+    case "task/completed": {
+      const current = state.tasks[action.taskId];
+      if (!current || current.status === "done" || current.recurrence !== null) {
+        return state;
+      }
+
+      return completeTaskState(state, action.taskId, action.completedAt);
+    }
+
+    case "task/completedWithNext": {
+      const current = state.tasks[action.taskId];
+      const nextTask = action.nextTask;
+
+      if (
+        !current ||
+        current.status === "done" ||
+        current.recurrence === null ||
+        state.tasks[nextTask.id] ||
+        nextTask.status !== "later" ||
+        nextTask.completedAt !== null ||
+        nextTask.deferUntil === null ||
+        nextTask.recurrence === null ||
+        !isDateKey(nextTask.deferUntil) ||
+        !isDateKey(nextTask.recurrence.anchorDate) ||
+        nextTask.recurrence.anchorDate !== nextTask.deferUntil ||
+        (nextTask.personId !== null && !state.people[nextTask.personId])
+      ) {
+        return state;
+      }
+
+      const completedState = completeTaskState(
+        state,
+        action.taskId,
+        action.completedAt,
+      );
+
+      return {
+        ...completedState,
+        tasks: {
+          ...completedState.tasks,
+          [nextTask.id]: {
+            ...nextTask,
+            title: nextTask.title.trim(),
+          },
+        },
+        taskOrder: [...completedState.taskOrder, nextTask.id],
       };
     }
 
@@ -213,6 +338,8 @@ export function dayDockReducer(
       return updateTask(state, action.taskId, (task) => ({
         ...task,
         status: action.status,
+        deferUntil: null,
+        recurrence: null,
         completedAt: null,
       }));
     }
