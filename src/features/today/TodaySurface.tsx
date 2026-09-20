@@ -14,6 +14,8 @@ interface TodaySurfaceProps {
   onAddToTop3: (taskId: string) => void;
   onRemoveFromTop3: (taskId: string) => void;
   onComplete: (taskId: string) => void;
+  onRename: (taskId: string, title: string) => void;
+  onRemove: (taskId: string) => void;
   onStartFocus: (taskId: string, durationMinutes: number) => void;
 }
 
@@ -26,6 +28,8 @@ export function TodaySurface({
   onAddToTop3,
   onRemoveFromTop3,
   onComplete,
+  onRename,
+  onRemove,
   onStartFocus,
 }: TodaySurfaceProps) {
   const top3Ids = new Set(top3.map((task) => task.id));
@@ -139,6 +143,8 @@ export function TodaySurface({
                 <TaskRow
                   key={task.id}
                   task={task}
+                  onRename={onRename}
+                  onRemove={onRemove}
                   leading={<span className="priority-index">{index + 1}</span>}
                   actions={
                     <>
@@ -187,6 +193,8 @@ export function TodaySurface({
                   <TaskRow
                     key={task.id}
                     task={task}
+                  onRename={onRename}
+                  onRemove={onRemove}
                     actions={
                       <>
                         <button
