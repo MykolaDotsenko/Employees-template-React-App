@@ -90,7 +90,12 @@ describe("DayDock core daily flow", () => {
 
     render(<App store={createDayDockStore()} />);
 
-    await user.click(screen.getByRole("button", { name: "Capture" }));
+    const primaryNavigation = screen.getByRole("navigation", {
+      name: "Primary",
+    });
+    await user.click(
+      within(primaryNavigation).getByRole("button", { name: "Capture" }),
+    );
 
     expect(
       screen.getByRole("dialog", { name: "What’s on your mind?" }),
