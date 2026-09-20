@@ -11,7 +11,9 @@ It started as an employee-management React exercise and was rebuilt into a compl
 ## Product capabilities
 
 - one-field Quick Capture with keyboard shortcut
-- Inbox triage into Today, Later, or Done
+- Inbox triage into Today, Done, or calm **Later** scheduling with automatic resurfacing
+- Tomorrow / Next week / custom-date / Someday resurfacing
+- Daily, Weekdays, Weekly, and Monthly recurring work without rewriting completion history
 - protected **Top 3** daily priorities
 - resilient Focus Mode with pause/resume and timestamp-derived timing
 - People context with scheduled follow-ups and linked tasks
@@ -76,7 +78,8 @@ DayDock external store
         v
 pure domain reducer
         |
-        +--> task invariants
+        +--> task + resurface invariants
+        +--> recurrence lifecycle
         +--> Top 3 limit
         +--> focus lifecycle
         +--> people relationships
@@ -88,6 +91,12 @@ The reducer does not create ids, read the clock, access storage, or call browser
 See [ARCHITECTURE.md](./ARCHITECTURE.md), [UX flow](./docs/UX_FLOW.md), and [Nordic Daylight design system](./docs/DESIGN_SYSTEM.md).
 
 ## Signature engineering decisions
+
+### Attention dates are not deadlines
+
+Later work can carry a `deferUntil` date that controls when it returns to Inbox. The UI calls this **Ready again**, never overdue. Recurrence has a separate anchor so snoozing one occurrence does not silently move the whole series.
+
+Completing a recurring occurrence atomically records the old task as Done and creates a fresh future occurrence with a new id. Historical completion and focus records therefore remain truthful.
 
 ### Resilient focus timing
 
@@ -129,14 +138,15 @@ npm run check
 For a fast technical review:
 
 1. `src/domain/daydock/reducer.ts` — deterministic business transitions and invariants
-2. `src/storage/dayDockPersistence.ts` — versioned persistence and validation
-3. `src/store/synchronizedDayDockStore.ts` — cross-tab ordering and failure isolation
-4. `src/features/focus/FocusMode.tsx` — signature focus workflow
-5. `src/features/review/ReviewSurface.tsx` — derived closure and insight UX
-6. `src/features/data-safety/DataSafetyPopover.tsx` — backup/recovery product boundary
-7. `src/App.test.tsx` — end-to-end component journeys
-8. `.github/workflows/quality.yml` — automated quality gate
-9. `.github/workflows/pages.yml` — release deployment gate
+2. `src/domain/daydock/scheduling.ts` — calendar-safe resurface and recurrence arithmetic
+3. `src/storage/dayDockPersistence.ts` — versioned persistence and validation
+4. `src/store/synchronizedDayDockStore.ts` — cross-tab ordering and failure isolation
+5. `src/features/focus/FocusMode.tsx` — signature focus workflow
+6. `src/features/review/ReviewSurface.tsx` — derived closure and insight UX
+7. `src/features/data-safety/DataSafetyPopover.tsx` — backup/recovery product boundary
+8. `src/App.test.tsx` — end-to-end component journeys
+9. `.github/workflows/quality.yml` — automated quality gate
+10. `.github/workflows/pages.yml` — release deployment gate
 
 ## Privacy
 
