@@ -132,6 +132,7 @@ export function App({ store = dayDockStore }: AppProps) {
   const captureDialogRef = useRef<HTMLDialogElement>(null);
   const commandDialogRef = useRef<HTMLDialogElement>(null);
   const state = useDayDockState(store);
+  const persistenceStatus = store.getPersistenceStatus();
   const initialFocus = state.focus.active;
   const [presentationMode, setPresentationMode] = useState<"workspace" | "focus">(
     () => (initialFocus === null ? "workspace" : "focus"),
@@ -509,11 +510,29 @@ export function App({ store = dayDockStore }: AppProps) {
             })}
           </nav>
 
-          <div className="privacy-note">
+          <div
+            className={
+              persistenceStatus === "durable"
+                ? "privacy-note"
+                : "privacy-note is-warning"
+            }
+            role="status"
+            aria-live="polite"
+          >
             <span className="privacy-dot" aria-hidden="true" />
             <span>
-              Local only
-              <small>Saved in this browser</small>
+              {persistenceStatus === "durable"
+                ? "Local only"
+                : persistenceStatus === "memory"
+                  ? "Session only"
+                  : "Save problem"}
+              <small>
+                {persistenceStatus === "durable"
+                  ? "Saved in this browser"
+                  : persistenceStatus === "memory"
+                    ? "Changes may disappear on reload"
+                    : "Latest changes may not survive reload"}
+              </small>
             </span>
           </div>
         </header>
@@ -536,6 +555,7 @@ export function App({ store = dayDockStore }: AppProps) {
               </button>
               <DataSafetyPopover
                 state={state}
+                persistenceStatus={persistenceStatus}
                 onRestore={restoreWorkspace}
               />
             </div>
