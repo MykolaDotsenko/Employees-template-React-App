@@ -87,7 +87,10 @@ export function TaskScheduleDialog({
       date && recurrence !== "none"
         ? {
             kind: recurrence,
-            anchorDate: date,
+            anchorDate:
+              task.recurrence?.kind === recurrence
+                ? task.recurrence.anchorDate
+                : date,
           }
         : null;
 
@@ -192,7 +195,11 @@ export function TaskScheduleDialog({
 
           <p className="task-schedule-note">
             {date
-              ? `DayDock will return this to Inbox on ${formatCalendarDate(date)}.`
+              ? task.recurrence !== null &&
+                recurrence === task.recurrence.kind &&
+                date !== task.recurrence.anchorDate
+                ? `Snoozed until ${formatCalendarDate(date)}. The ${recurrenceLabel(task.recurrence.kind).toLocaleLowerCase()} rhythm stays anchored to its original schedule.`
+                : `DayDock will return this to Inbox on ${formatCalendarDate(date)}.`
               : "It stays safely in Later until you choose to bring it back."}
           </p>
 
