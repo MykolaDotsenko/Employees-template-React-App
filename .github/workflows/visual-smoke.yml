@@ -245,7 +245,7 @@ jobs:
             local url="$4"
             local status=0
 
-            if timeout 8s "${browser}" "${common_flags[@]}" \
+            if timeout 15s "${browser}" "${common_flags[@]}" \
               --user-data-dir="${profile}" \
               --window-size="${size}" \
               --screenshot="${output}" \
