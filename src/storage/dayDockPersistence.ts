@@ -3,6 +3,7 @@ import {
   createInitialDayDockState,
   type ActiveFocusSession,
   type DayDockState,
+  type DayPlan,
   type FocusSessionRecord,
   type Person,
   type Task,
@@ -14,7 +15,7 @@ import {
 } from "../store/dayDockStore";
 
 export const DAYDOCK_STORAGE_KEY = "daydock:workspace";
-export const DAYDOCK_SCHEMA_VERSION = 3 as const;
+export const DAYDOCK_SCHEMA_VERSION = 4 as const;
 
 export interface StorageLike {
   getItem(key: string): string | null;
@@ -64,6 +65,12 @@ const taskSchema = z
     "Completion timestamp must match task status",
   );
 
+const dayPlanSchema = z.object({
+  dateKey: isoDateSchema,
+  focusRoomMinutes: z.number().int().min(30).max(480),
+  startedAt: isoDateTimeSchema,
+});
+
 const personSchema = z.object({
   id: z.string().min(1),
   name: z.string().trim().min(1).max(120),
@@ -95,23 +102,33 @@ const legacyStateSchema = z.object({
   personOrder: z.array(z.string()),
 });
 
-const dayDockStateSchema = legacyStateSchema.extend({
+const v3StateSchema = legacyStateSchema.extend({
   focus: z.object({
     active: activeFocusSchema.nullable(),
     history: z.array(focusRecordSchema),
   }),
 });
 
-const v3EnvelopeSchema = z.object({
+const dayDockStateSchema = v3StateSchema.extend({
+  dayPlan: dayPlanSchema.nullable(),
+});
+
+const v4EnvelopeSchema = z.object({
   schemaVersion: z.literal(DAYDOCK_SCHEMA_VERSION),
   updatedAt: isoDateTimeSchema,
   data: dayDockStateSchema,
 });
 
+const v3EnvelopeSchema = z.object({
+  schemaVersion: z.literal(3),
+  updatedAt: isoDateTimeSchema,
+  data: v3StateSchema,
+});
+
 const v2EnvelopeSchema = z.object({
   schemaVersion: z.literal(2),
   updatedAt: isoDateTimeSchema,
-  data: dayDockStateSchema,
+  data: v3StateSchema,
 });
 
 const v1EnvelopeSchema = z.object({
@@ -216,6 +233,17 @@ export function normalizeDayDockState(state: DayDockState): DayDockState {
     if (top3.length === 3) break;
   }
 
+  const dayPlan: DayPlan | null =
+    state.dayPlan === null
+      ? null
+      : {
+          ...state.dayPlan,
+          focusRoomMinutes: Math.min(
+            480,
+            Math.max(30, Math.round(state.dayPlan.focusRoomMinutes)),
+          ),
+        };
+
   return {
     tasks,
     taskOrder,
@@ -229,12 +257,22 @@ export function normalizeDayDockState(state: DayDockState): DayDockState {
           : normalizeFocusSession(state.focus.active, tasks),
       history: normalizeFocusHistory(state.focus.history, tasks),
     },
+    dayPlan,
   };
 }
 
 export function parseDayDockState(value: unknown): DayDockState | null {
   const parsed = dayDockStateSchema.safeParse(value);
   return parsed.success ? normalizeDayDockState(parsed.data) : null;
+}
+
+function withEmptyDayPlan(
+  state: z.infer<typeof v3StateSchema>,
+): DayDockState {
+  return {
+    ...state,
+    dayPlan: null,
+  };
 }
 
 function withEmptyFocus(
@@ -246,6 +284,7 @@ function withEmptyFocus(
       active: null,
       history: [],
     },
+    dayPlan: null,
   };
 }
 
@@ -305,7 +344,7 @@ export function loadDayDockWorkspace(
     };
   }
 
-  const current = v3EnvelopeSchema.safeParse(parsed);
+  const current = v4EnvelopeSchema.safeParse(parsed);
 
   if (current.success) {
     return {
@@ -314,10 +353,18 @@ export function loadDayDockWorkspace(
     };
   }
 
+  const v3 = v3EnvelopeSchema.safeParse(parsed);
+
+  if (v3.success) {
+    const state = normalizeDayDockState(withEmptyDayPlan(v3.data.data));
+    saveDayDockWorkspace(state, storage, now);
+    return { state, source: "migrated" };
+  }
+
   const v2 = v2EnvelopeSchema.safeParse(parsed);
 
   if (v2.success) {
-    const state = normalizeDayDockState(v2.data.data);
+    const state = normalizeDayDockState(withEmptyDayPlan(v2.data.data));
     saveDayDockWorkspace(state, storage, now);
     return { state, source: "migrated" };
   }
