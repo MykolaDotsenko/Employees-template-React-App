@@ -442,7 +442,14 @@ describe("DayDock core daily flow", () => {
     expect(store.getSnapshot().tasks.deferred?.status).toBe("today");
 
     await user.click(screen.getByRole("button", { name: "Today" }));
-    expect(screen.getByText("Revisit onboarding copy")).toBeInTheDocument();
+
+    const todaySection = screen
+      .getByRole("heading", { name: "What matters today" })
+      .closest("section");
+    expect(todaySection).not.toBeNull();
+    expect(
+      within(todaySection as HTMLElement).getByText("Revisit onboarding copy"),
+    ).toBeInTheDocument();
   });
 
   it("routes deferred task search to Inbox where Later is visible", async () => {
