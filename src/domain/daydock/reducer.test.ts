@@ -451,7 +451,7 @@ describe("dayDockReducer", () => {
         deferUntil: "2026-09-21",
         recurrence: {
           kind: "weekly",
-          anchorDate: "2026-09-21",
+          anchorDate: "2026-09-14",
         },
         createdAt: "2026-09-20T10:20:00.000Z",
       },
