@@ -939,8 +939,11 @@ describe("DayDock core daily flow", () => {
       "today",
     );
     expect(
-      screen.queryByText("Revisit release notes"),
+      screen.queryByRole("heading", { name: "Completed before today" }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Before you close the day" }),
+    ).toBeInTheDocument();
   });
 
 });
