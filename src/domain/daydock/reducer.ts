@@ -139,7 +139,8 @@ export function dayDockReducer(
         return state;
       }
 
-      const { [action.taskId]: _removedTask, ...tasks } = state.tasks;
+      const tasks = { ...state.tasks };
+      delete tasks[action.taskId];
 
       return {
         ...state,
