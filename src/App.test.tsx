@@ -1010,6 +1010,52 @@ describe("DayDock core daily flow", () => {
   });
 
 
+  it("shows imported calendar constraints and focus windows without becoming a calendar editor", () => {
+    const store = createDayDockStore();
+    const now = new Date();
+    const start = new Date(now);
+    start.setMinutes(now.getMinutes() + 30, 0, 0);
+    const end = new Date(start);
+    end.setMinutes(start.getMinutes() + 45);
+
+    store.dispatch({
+      type: "person/added",
+      person: {
+        id: "calendar-context-person",
+        name: "Anna",
+        context: "Keeps the workspace beyond first-run mode",
+        nextFollowUpDate: null,
+        createdAt: now.toISOString(),
+      },
+    });
+    store.dispatch({
+      type: "calendar/replaced",
+      events: [
+        {
+          id: "calendar-review",
+          title: "Release review",
+          startAt: start.toISOString(),
+          endAt: end.toISOString(),
+          allDay: false,
+          source: "ics",
+        },
+      ],
+      importedAt: now.toISOString(),
+      sourceLabel: "work.ics",
+    });
+
+    render(<App store={store} />);
+
+    expect(
+      screen.getByRole("heading", { name: "Room around the meetings" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Release review")).toBeInTheDocument();
+    expect(screen.getByText(/work\.ics/)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /create calendar event/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it("starts the workday once with attention signals and a realistic focus room", async () => {
     const user = userEvent.setup();
     const store = createDayDockStore();
