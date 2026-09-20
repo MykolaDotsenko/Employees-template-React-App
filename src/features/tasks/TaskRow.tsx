@@ -1,13 +1,62 @@
-import type { ReactNode } from "react";
+import {
+  useId,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import type { Task } from "../../domain/daydock/model";
 
 interface TaskRowProps {
   task: Task;
   leading?: ReactNode;
   actions?: ReactNode;
+  onRename?: (taskId: string, title: string) => void;
+  onRemove?: (taskId: string) => void;
 }
 
-export function TaskRow({ task, leading, actions }: TaskRowProps) {
+export function TaskRow({
+  task,
+  leading,
+  actions,
+  onRename,
+  onRemove,
+}: TaskRowProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  const [draftTitle, setDraftTitle] = useState(task.title);
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const canManage = onRename !== undefined || onRemove !== undefined;
+
+  function openEditor() {
+    const dialog = dialogRef.current;
+    if (!dialog || dialog.open) return;
+
+    setDraftTitle(task.title);
+    setConfirmingRemove(false);
+    dialog.showModal();
+  }
+
+  function closeEditor() {
+    setConfirmingRemove(false);
+    dialogRef.current?.close();
+  }
+
+  function saveTitle(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextTitle = draftTitle.trim();
+    if (!nextTitle || onRename === undefined) return;
+
+    onRename(task.id, nextTitle);
+    closeEditor();
+  }
+
+  function removeTask() {
+    if (onRemove === undefined) return;
+    onRemove(task.id);
+    closeEditor();
+  }
+
   return (
     <li className="task-row">
       <span className="task-leading" aria-hidden="true">
@@ -19,7 +68,105 @@ export function TaskRow({ task, leading, actions }: TaskRowProps) {
           <span>{task.estimateMinutes} min</span>
         ) : null}
       </span>
-      {actions ? <span className="task-actions">{actions}</span> : null}
+      {actions || canManage ? (
+        <span className="task-actions">
+          {actions}
+          {canManage ? (
+            <button
+              type="button"
+              className="task-more-button"
+              aria-label={`Edit or remove ${task.title}`}
+              onClick={openEditor}
+            >
+              <span aria-hidden="true">•••</span>
+            </button>
+          ) : null}
+        </span>
+      ) : null}
+
+      {canManage ? (
+        <dialog
+          ref={dialogRef}
+          className="task-editor-dialog"
+          aria-labelledby={titleId}
+          onCancel={() => setConfirmingRemove(false)}
+        >
+          {confirmingRemove ? (
+            <div className="task-remove-confirmation">
+              <p className="section-kicker">Remove task</p>
+              <h2 id={titleId}>Remove “{task.title}”?</h2>
+              <p>
+                This clears the task and any focus history attached to it. This
+                action cannot be undone.
+              </p>
+              <div className="task-editor-actions">
+                <button
+                  type="button"
+                  className="task-editor-secondary"
+                  onClick={() => setConfirmingRemove(false)}
+                >
+                  Keep task
+                </button>
+                <button
+                  type="button"
+                  className="task-editor-danger"
+                  onClick={removeTask}
+                >
+                  Remove task
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form className="task-editor-form" onSubmit={saveTitle}>
+              <div>
+                <p className="section-kicker">Task details</p>
+                <h2 id={titleId}>Keep the wording useful</h2>
+              </div>
+
+              {onRename !== undefined ? (
+                <label className="task-editor-field">
+                  <span>Task title</span>
+                  <input
+                    value={draftTitle}
+                    onChange={(event) => setDraftTitle(event.currentTarget.value)}
+                    maxLength={280}
+                    autoFocus
+                  />
+                </label>
+              ) : null}
+
+              <div className="task-editor-actions">
+                {onRemove !== undefined ? (
+                  <button
+                    type="button"
+                    className="task-editor-remove-link"
+                    onClick={() => setConfirmingRemove(true)}
+                  >
+                    Remove…
+                  </button>
+                ) : null}
+                <span className="task-editor-action-spacer" />
+                <button
+                  type="button"
+                  className="task-editor-secondary"
+                  onClick={closeEditor}
+                >
+                  Cancel
+                </button>
+                {onRename !== undefined ? (
+                  <button
+                    type="submit"
+                    className="task-editor-primary"
+                    disabled={!draftTitle.trim()}
+                  >
+                    Save changes
+                  </button>
+                ) : null}
+              </div>
+            </form>
+          )}
+        </dialog>
+      ) : null}
     </li>
   );
 }
