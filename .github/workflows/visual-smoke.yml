@@ -189,53 +189,53 @@ jobs:
             --virtual-time-budget=2500
           )
 
-          "${browser}" "${common_flags[@]}" \
+          timeout 20s "${browser}" "${common_flags[@]}" \
             --user-data-dir=/tmp/daydock-desktop \
             --window-size=1440,1100 \
             --screenshot="$GITHUB_WORKSPACE/visual-smoke/desktop.png" \
             http://127.0.0.1:4173/
 
-          "${browser}" "${common_flags[@]}" \
+          timeout 20s "${browser}" "${common_flags[@]}" \
             --user-data-dir=/tmp/daydock-mobile \
             --window-size=390,844 \
             --screenshot="$GITHUB_WORKSPACE/visual-smoke/mobile.png" \
             http://127.0.0.1:4173/
 
-          "${browser}" "${common_flags[@]}" \
+          timeout 20s "${browser}" "${common_flags[@]}" \
             --user-data-dir=/tmp/daydock-dom \
             --dump-dom \
             http://127.0.0.1:4173/ > visual-smoke/dom.html
 
-          "${browser}" "${common_flags[@]}" \
+          timeout 20s "${browser}" "${common_flags[@]}" \
             --user-data-dir=/tmp/daydock-mature-desktop \
             --window-size=1440,1100 \
             --screenshot="$GITHUB_WORKSPACE/visual-smoke/mature-desktop.png" \
             "http://127.0.0.1:4173/__visual-seed.html?mode=mature"
 
-          "${browser}" "${common_flags[@]}" \
+          timeout 20s "${browser}" "${common_flags[@]}" \
             --user-data-dir=/tmp/daydock-mature-mobile \
             --window-size=390,844 \
             --screenshot="$GITHUB_WORKSPACE/visual-smoke/mature-mobile.png" \
             "http://127.0.0.1:4173/__visual-seed.html?mode=mature"
 
-          "${browser}" "${common_flags[@]}" \
+          timeout 20s "${browser}" "${common_flags[@]}" \
             --user-data-dir=/tmp/daydock-focus-desktop \
             --window-size=1440,1100 \
             --screenshot="$GITHUB_WORKSPACE/visual-smoke/focus-desktop.png" \
             "http://127.0.0.1:4173/__visual-seed.html?mode=focus"
 
-          "${browser}" "${common_flags[@]}" \
+          timeout 20s "${browser}" "${common_flags[@]}" \
             --user-data-dir=/tmp/daydock-focus-mobile \
             --window-size=390,844 \
             --screenshot="$GITHUB_WORKSPACE/visual-smoke/focus-mobile.png" \
             "http://127.0.0.1:4173/__visual-seed.html?mode=focus"
 
-          "${browser}" "${common_flags[@]}" \
+          timeout 20s "${browser}" "${common_flags[@]}" \
             --user-data-dir=/tmp/daydock-mature-dom \
             --dump-dom \
             "http://127.0.0.1:4173/__visual-seed.html?mode=mature" > visual-smoke/mature-dom.html
 
-          "${browser}" "${common_flags[@]}" \
+          timeout 20s "${browser}" "${common_flags[@]}" \
             --user-data-dir=/tmp/daydock-focus-dom \
             --dump-dom \
             "http://127.0.0.1:4173/__visual-seed.html?mode=focus" > visual-smoke/focus-dom.html
