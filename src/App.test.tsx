@@ -426,11 +426,25 @@ describe("DayDock core daily flow", () => {
 
     await user.click(
       within(reviewRegion as HTMLElement).getByRole("button", {
-        name: "Move Resolve review notes to Later",
+        name: "Choose when Resolve review notes should return",
       }),
     );
 
-    expect(store.getSnapshot().tasks["review-task"]?.status).toBe("later");
+    const reviewSchedule = screen.getByRole("dialog", {
+      name: "When should this come back?",
+    });
+    await user.click(
+      within(reviewSchedule).getByRole("button", { name: /Someday/ }),
+    );
+    await user.click(
+      within(reviewSchedule).getByRole("button", { name: "Park task" }),
+    );
+
+    expect(store.getSnapshot().tasks["review-task"]).toMatchObject({
+      status: "later",
+      deferUntil: null,
+      recurrence: null,
+    });
     expect(
       screen.getByRole("heading", { name: "Everything has a home" }),
     ).toBeInTheDocument();
@@ -593,9 +607,21 @@ describe("DayDock core daily flow", () => {
     await user.click(screen.getByRole("button", { name: "Inbox" }));
     await user.click(
       screen.getByRole("button", {
-        name: "Move Revisit onboarding copy to Later",
+        name: "Choose when Revisit onboarding copy should return",
       }),
     );
+
+    const scheduleDialog = screen.getByRole("dialog", {
+      name: "When should this come back?",
+    });
+    await user.click(
+      within(scheduleDialog).getByRole("button", { name: /Tomorrow/ }),
+    );
+    await user.click(
+      within(scheduleDialog).getByRole("button", { name: "Park task" }),
+    );
+
+    expect(store.getSnapshot().tasks.deferred?.deferUntil).not.toBeNull();
 
     const laterSection = screen
       .getByRole("heading", { name: "Later" })
