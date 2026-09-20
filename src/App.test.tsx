@@ -85,6 +85,21 @@ describe("DayDock core daily flow", () => {
     expect(screen.getByText("Prepare release checklist")).toBeInTheDocument();
   });
 
+  it("opens capture from the mobile-primary navigation action", async () => {
+    const user = userEvent.setup();
+
+    render(<App store={createDayDockStore()} />);
+
+    await user.click(screen.getByRole("button", { name: "Capture" }));
+
+    expect(
+      screen.getByRole("dialog", { name: "What’s on your mind?" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: "Capture item" }),
+    ).toHaveFocus();
+  });
+
   it("captures an item into Inbox and processes it into Today", async () => {
     const user = userEvent.setup();
     const store = createDayDockStore();
