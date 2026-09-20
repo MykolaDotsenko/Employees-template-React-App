@@ -4,6 +4,7 @@ import {
   getFocusElapsedMs,
   getFocusProgress,
   getFocusRemainingMs,
+  normalizeFocusDurationMinutes,
 } from "./focus";
 import type { ActiveFocusSession } from "./model";
 
@@ -58,4 +59,12 @@ describe("focus timing", () => {
     expect(getFocusRemainingMs(active, now)).toBe(0);
     expect(formatFocusClock(0)).toBe("00:00");
   });
+  it("normalizes imported task estimates to safe focus-session bounds", () => {
+    expect(normalizeFocusDurationMinutes(null)).toBe(50);
+    expect(normalizeFocusDurationMinutes(1)).toBe(5);
+    expect(normalizeFocusDurationMinutes(25)).toBe(25);
+    expect(normalizeFocusDurationMinutes(1_440)).toBe(240);
+    expect(normalizeFocusDurationMinutes(Number.NaN)).toBe(50);
+  });
+
 });

@@ -1,4 +1,8 @@
 import type { DayDockAction } from "./actions";
+import {
+  MAX_FOCUS_DURATION_MINUTES,
+  MIN_FOCUS_DURATION_MINUTES,
+} from "./focus";
 import type {
   ActiveFocusSession,
   DayDockState,
@@ -280,8 +284,8 @@ export function dayDockReducer(
         state.focus.active !== null ||
         !task ||
         task.status !== "today" ||
-        action.session.durationMinutes < 5 ||
-        action.session.durationMinutes > 240 ||
+        action.session.durationMinutes < MIN_FOCUS_DURATION_MINUTES ||
+        action.session.durationMinutes > MAX_FOCUS_DURATION_MINUTES ||
         action.session.accumulatedPauseMs !== 0 ||
         action.session.pausedAt !== null
       ) {

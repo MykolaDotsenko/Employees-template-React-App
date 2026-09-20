@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { normalizeFocusDurationMinutes } from "./domain/daydock/focus";
 import { buildReviewInsights } from "./domain/daydock/insights";
 import type {
   ActiveFocusSession,
@@ -312,7 +313,7 @@ export function App({ store = dayDockStore }: AppProps) {
       id: createId("focus"),
       taskId,
       startedAt: new Date().toISOString(),
-      durationMinutes: task.estimateMinutes ?? 50,
+      durationMinutes: normalizeFocusDurationMinutes(task.estimateMinutes),
       pausedAt: null,
       accumulatedPauseMs: 0,
     };

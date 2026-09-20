@@ -1,5 +1,6 @@
 import {
   createPersistentDayDockStore,
+  type StorageLike,
 } from "../storage/dayDockPersistence";
 import { createDayDockStore, type DayDockStore } from "./dayDockStore";
 import {
@@ -24,16 +25,43 @@ function createBrowserBroadcastChannel(): BroadcastChannelLike {
   return adapter;
 }
 
-function createBrowserDayDockStore(): DayDockStore {
-  if (typeof BroadcastChannel === "undefined") {
-    return createPersistentDayDockStore({
-      storage: window.localStorage,
-    });
+export interface BrowserDayDockStoreOptions {
+  getStorage?: () => StorageLike;
+  createChannel?: () => BroadcastChannelLike | null;
+}
+
+export function createBrowserDayDockStore({
+  getStorage = () => window.localStorage,
+  createChannel,
+}: BrowserDayDockStoreOptions = {}): DayDockStore {
+  let storage: StorageLike;
+
+  try {
+    storage = getStorage();
+  } catch {
+    return createDayDockStore();
+  }
+
+  let channel: BroadcastChannelLike | null;
+
+  try {
+    channel =
+      createChannel !== undefined
+        ? createChannel()
+        : typeof BroadcastChannel === "undefined"
+          ? null
+          : createBrowserBroadcastChannel();
+  } catch {
+    channel = null;
+  }
+
+  if (channel === null) {
+    return createPersistentDayDockStore({ storage });
   }
 
   return createSynchronizedDayDockStore({
-    storage: window.localStorage,
-    channel: createBrowserBroadcastChannel(),
+    storage,
+    channel,
   }).store;
 }
 
