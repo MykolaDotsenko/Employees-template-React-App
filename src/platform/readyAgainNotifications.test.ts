@@ -28,7 +28,7 @@ function installNotification(
 ) {
   class FakeNotification {
     static permission = permission;
-    static requestPermission = vi.fn(async () => requestResult);
+    static requestPermission = vi.fn(() => Promise.resolve(requestResult));
   }
 
   Object.defineProperty(globalThis, "Notification", {
@@ -52,14 +52,16 @@ describe("Ready again notifications", () => {
 
   it("uses the service worker for a persistent notification", async () => {
     installNotification("granted");
-    const showNotification = vi.fn(async () => undefined);
+    const showNotification = vi.fn(() => Promise.resolve(undefined));
 
     Object.defineProperty(navigator, "serviceWorker", {
       configurable: true,
       value: {
-        getRegistration: vi.fn(async () => ({
-          showNotification,
-        })),
+        getRegistration: vi.fn(() =>
+          Promise.resolve({
+            showNotification,
+          }),
+        ),
       },
     });
 
