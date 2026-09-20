@@ -305,7 +305,6 @@ export function dayDockReducer(
         nextTask.recurrence === null ||
         !isDateKey(nextTask.deferUntil) ||
         !isDateKey(nextTask.recurrence.anchorDate) ||
-        nextTask.recurrence.anchorDate !== nextTask.deferUntil ||
         (nextTask.personId !== null && !state.people[nextTask.personId])
       ) {
         return state;
