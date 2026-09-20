@@ -26,7 +26,8 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-      - run: npm install --no-audit --no-fund
+          cache: npm
+      - run: npm ci --no-audit --no-fund
       - run: npm run verify
       - run: npm run build:pages
       - uses: actions/configure-pages@v5
