@@ -109,6 +109,27 @@ describe("DayDock portable backups", () => {
     ).toBeNull();
   });
 
+  it("restores a pre-calendar schema backup with an empty calendar", () => {
+    const current = createInitialDayDockState();
+    const { calendar: _calendar, ...v4Data } = current;
+
+    const parsed = parseDayDockBackup(
+      JSON.stringify({
+        format: DAYDOCK_BACKUP_FORMAT,
+        formatVersion: DAYDOCK_BACKUP_FORMAT_VERSION,
+        exportedAt: "2026-09-20T08:00:00.000Z",
+        appSchemaVersion: 4,
+        data: v4Data,
+      }),
+    );
+
+    expect(parsed?.state.calendar).toEqual({
+      events: [],
+      importedAt: null,
+      sourceLabel: null,
+    });
+  });
+
   it("summarizes backup contents without duplicating analytics", () => {
     expect(summarizeDayDockBackup(workspace())).toEqual({
       taskCount: 1,
