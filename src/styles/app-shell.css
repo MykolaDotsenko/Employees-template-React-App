@@ -3212,7 +3212,11 @@
       padding: 1rem;
     }
 
-    .person-follow-up-form button {
+    .person-date-control input,
+    .person-follow-up-form input,
+    .person-follow-up-form button,
+    .data-safety-primary,
+    .data-safety-secondary {
       min-height: 2.75rem;
     }
 
