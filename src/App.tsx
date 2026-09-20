@@ -244,13 +244,20 @@ export function App({ store = dayDockStore }: AppProps) {
       return;
     }
 
+    const dialog = captureDialogRef.current;
+    if (!dialog || dialog.open) return;
+
     captureLaunchHandledRef.current = true;
     window.history.replaceState(
       window.history.state,
       "",
       stripCaptureLaunchFromUrl(window.location.href),
     );
-    showCaptureDialog(initialCaptureLaunch.prefill);
+    setCapturePrefill(initialCaptureLaunch.prefill);
+    dialog.showModal();
+    window.requestAnimationFrame(() => {
+      dialog.querySelector<HTMLTextAreaElement>("[data-capture-input]")?.focus();
+    });
   }, [initialCaptureLaunch]);
 
   function showCommandPalette() {
