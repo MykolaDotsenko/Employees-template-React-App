@@ -38,4 +38,6 @@ After each release deployment, verify:
 8. Reload preserves the workspace.
 9. Manifest, favicon, and service worker resolve under the GitHub Pages subpath.
 10. Reload once, disable the network, and confirm the installed shell still opens with its JS/CSS assets.
-11. Mobile navigation remains usable at narrow widths.
+11. On a supporting installed-PWA platform, Share → DayDock opens prefilled Quick Capture and does not save until confirmed.
+12. Reload after a share launch does not reopen the one-time shared content.
+13. Mobile navigation remains usable at narrow widths.
