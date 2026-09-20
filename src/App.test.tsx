@@ -901,4 +901,46 @@ describe("DayDock core daily flow", () => {
     expect(screen.getByText("Keep the linked task")).toBeInTheDocument();
   });
 
+
+  it("keeps older completed work visible and recoverable from Review history", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+    const completedAt = new Date();
+    completedAt.setDate(completedAt.getDate() - 2);
+
+    store.dispatch({
+      type: "task/captured",
+      task: {
+        id: "historical-completion",
+        title: "Revisit release notes",
+        status: "done",
+        estimateMinutes: null,
+        personId: null,
+        createdAt: new Date(completedAt.getTime() - 60_000).toISOString(),
+        completedAt: completedAt.toISOString(),
+      },
+    });
+
+    render(<App store={store} />);
+    await user.click(screen.getByRole("button", { name: "Review" }));
+
+    expect(
+      screen.getByRole("heading", { name: "Completed before today" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Revisit release notes")).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Reopen Revisit release notes to Today",
+      }),
+    );
+
+    expect(store.getSnapshot().tasks["historical-completion"]?.status).toBe(
+      "today",
+    );
+    expect(
+      screen.queryByText("Revisit release notes"),
+    ).not.toBeInTheDocument();
+  });
+
 });
