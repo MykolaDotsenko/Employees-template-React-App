@@ -15,11 +15,9 @@ export function TaskRow({ task, leading, actions }: TaskRowProps) {
       </span>
       <span className="task-copy">
         <strong>{task.title}</strong>
-        <span>
-          {task.estimateMinutes !== null
-            ? `${task.estimateMinutes} min`
-            : "No estimate"}
-        </span>
+        {task.estimateMinutes !== null ? (
+          <span>{task.estimateMinutes} min</span>
+        ) : null}
       </span>
       {actions ? <span className="task-actions">{actions}</span> : null}
     </li>
