@@ -197,6 +197,38 @@ jobs:
             --virtual-time-budget=2500
           )
 
+          capture_screenshot() {
+            local profile="$1"
+            local size="$2"
+            local output="$3"
+            local url="$4"
+            local status=0
+
+            if timeout 8s "${browser}" "${common_flags[@]}" \
+              --user-data-dir="${profile}" \
+              --window-size="${size}" \
+              --screenshot="${output}" \
+              "${url}"; then
+              status=0
+            else
+              status=$?
+            fi
+
+            if [ "${status}" -ne 0 ] && [ "${status}" -ne 124 ]; then
+              echo "::error::Chromium screenshot failed for ${url} with status ${status}."
+              return "${status}"
+            fi
+
+            if [ ! -s "${output}" ]; then
+              echo "::error::Chromium produced no screenshot for ${url}."
+              return 1
+            fi
+
+            if [ "${status}" -eq 124 ]; then
+              echo "::notice::Chromium stayed alive after writing ${output}; accepting the rendered screenshot."
+            fi
+          }
+
           dump_dom() {
             local profile="$1"
             local url="$2"
@@ -227,22 +259,22 @@ jobs:
             fi
           }
 
-          timeout 20s "${browser}" "${common_flags[@]}" \
-            --user-data-dir=/tmp/daydock-desktop \
-            --window-size=1440,1100 \
-            --screenshot="$GITHUB_WORKSPACE/visual-smoke/desktop.png" \
+          capture_screenshot \
+            /tmp/daydock-desktop \
+            1440,1100 \
+            "$GITHUB_WORKSPACE/visual-smoke/desktop.png" \
             http://127.0.0.1:4173/
 
-          timeout 20s "${browser}" "${common_flags[@]}" \
-            --user-data-dir=/tmp/daydock-mobile \
-            --window-size=390,844 \
-            --screenshot="$GITHUB_WORKSPACE/visual-smoke/mobile.png" \
+          capture_screenshot \
+            /tmp/daydock-mobile \
+            390,844 \
+            "$GITHUB_WORKSPACE/visual-smoke/mobile.png" \
             http://127.0.0.1:4173/
 
-          timeout 20s "${browser}" "${common_flags[@]}" \
-            --user-data-dir=/tmp/daydock-small-mobile \
-            --window-size=360,740 \
-            --screenshot="$GITHUB_WORKSPACE/visual-smoke/small-mobile.png" \
+          capture_screenshot \
+            /tmp/daydock-small-mobile \
+            360,740 \
+            "$GITHUB_WORKSPACE/visual-smoke/small-mobile.png" \
             http://127.0.0.1:4173/
 
           dump_dom \
@@ -250,34 +282,34 @@ jobs:
             http://127.0.0.1:4173/ \
             visual-smoke/dom.html
 
-          timeout 20s "${browser}" "${common_flags[@]}" \
-            --user-data-dir=/tmp/daydock-mature-desktop \
-            --window-size=1440,1100 \
-            --screenshot="$GITHUB_WORKSPACE/visual-smoke/mature-desktop.png" \
+          capture_screenshot \
+            /tmp/daydock-mature-desktop \
+            1440,1100 \
+            "$GITHUB_WORKSPACE/visual-smoke/mature-desktop.png" \
             "http://127.0.0.1:4173/__visual-seed.html?mode=mature"
 
-          timeout 20s "${browser}" "${common_flags[@]}" \
-            --user-data-dir=/tmp/daydock-mature-mobile \
-            --window-size=390,844 \
-            --screenshot="$GITHUB_WORKSPACE/visual-smoke/mature-mobile.png" \
+          capture_screenshot \
+            /tmp/daydock-mature-mobile \
+            390,844 \
+            "$GITHUB_WORKSPACE/visual-smoke/mature-mobile.png" \
             "http://127.0.0.1:4173/__visual-seed.html?mode=mature"
 
-          timeout 20s "${browser}" "${common_flags[@]}" \
-            --user-data-dir=/tmp/daydock-mature-small-mobile \
-            --window-size=360,740 \
-            --screenshot="$GITHUB_WORKSPACE/visual-smoke/mature-small-mobile.png" \
+          capture_screenshot \
+            /tmp/daydock-mature-small-mobile \
+            360,740 \
+            "$GITHUB_WORKSPACE/visual-smoke/mature-small-mobile.png" \
             "http://127.0.0.1:4173/__visual-seed.html?mode=mature"
 
-          timeout 20s "${browser}" "${common_flags[@]}" \
-            --user-data-dir=/tmp/daydock-focus-desktop \
-            --window-size=1440,1100 \
-            --screenshot="$GITHUB_WORKSPACE/visual-smoke/focus-desktop.png" \
+          capture_screenshot \
+            /tmp/daydock-focus-desktop \
+            1440,1100 \
+            "$GITHUB_WORKSPACE/visual-smoke/focus-desktop.png" \
             "http://127.0.0.1:4173/__visual-seed.html?mode=focus"
 
-          timeout 20s "${browser}" "${common_flags[@]}" \
-            --user-data-dir=/tmp/daydock-focus-mobile \
-            --window-size=390,844 \
-            --screenshot="$GITHUB_WORKSPACE/visual-smoke/focus-mobile.png" \
+          capture_screenshot \
+            /tmp/daydock-focus-mobile \
+            390,844 \
+            "$GITHUB_WORKSPACE/visual-smoke/focus-mobile.png" \
             "http://127.0.0.1:4173/__visual-seed.html?mode=focus"
 
           dump_dom \
