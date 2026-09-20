@@ -107,7 +107,7 @@ export function CommandPalette({
       keywords: `${task.status} task`,
       run: () =>
         onNavigate(
-          task.status === "inbox"
+          task.status === "inbox" || task.status === "later"
             ? "inbox"
             : task.status === "done"
               ? "review"
