@@ -19,6 +19,7 @@ interface ReviewSurfaceProps {
   dueFollowUpsCount: number;
   onMoveLater: (taskId: string) => void;
   onComplete: (taskId: string) => void;
+  onReopen: (taskId: string) => void;
   onNavigate: (surface: PaletteSurface) => void;
 }
 
@@ -52,6 +53,7 @@ export function ReviewSurface({
   dueFollowUpsCount,
   onMoveLater,
   onComplete,
+  onReopen,
   onNavigate,
 }: ReviewSurfaceProps) {
   const maxFocus = Math.max(1, ...week.map((day) => day.focusMinutes));
@@ -262,9 +264,19 @@ export function ReviewSurface({
           </div>
           <ul>
             {completedToday.map((task) => (
-              <li key={task.id}>
-                <span aria-hidden="true">✓</span>
-                {task.title}
+              <li key={task.id} className="completed-task-row">
+                <span className="completed-task-copy">
+                  <span aria-hidden="true">✓</span>
+                  <span>{task.title}</span>
+                </span>
+                <button
+                  type="button"
+                  className="text-action"
+                  aria-label={`Reopen ${task.title} to Today`}
+                  onClick={() => onReopen(task.id)}
+                >
+                  Reopen
+                </button>
               </li>
             ))}
           </ul>
