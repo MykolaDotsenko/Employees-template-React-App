@@ -71,7 +71,11 @@ describe("DayDock core daily flow", () => {
       screen.getByRole("textbox", { name: "Capture item" }),
       "Prepare release checklist",
     );
-    await user.click(screen.getByRole("button", { name: "Capture" }));
+    await user.click(
+      within(
+        screen.getByRole("dialog", { name: "What’s on your mind?" }),
+      ).getByRole("button", { name: "Capture" }),
+    );
 
     expect(
       screen.getByRole("heading", { name: "Your first item is safe" }),
@@ -85,6 +89,50 @@ describe("DayDock core daily flow", () => {
     expect(screen.getByText("Prepare release checklist")).toBeInTheDocument();
   });
 
+  it("opens capture from the mobile-primary navigation action", async () => {
+    const user = userEvent.setup();
+
+    render(<App store={createDayDockStore()} />);
+
+    const primaryNavigation = screen.getByRole("navigation", {
+      name: "Primary",
+    });
+    await user.click(
+      within(primaryNavigation).getByRole("button", { name: "Capture" }),
+    );
+
+    expect(
+      screen.getByRole("dialog", { name: "What’s on your mind?" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: "Capture item" }),
+    ).toHaveFocus();
+  });
+
+  it("submits Quick Capture from the keyboard without a second tap", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+
+    render(<App store={store} />);
+
+    const primaryNavigation = screen.getByRole("navigation", {
+      name: "Primary",
+    });
+    await user.click(
+      within(primaryNavigation).getByRole("button", { name: "Capture" }),
+    );
+
+    const field = screen.getByRole("textbox", { name: "Capture item" });
+    await user.type(field, "Send the release note{Enter}");
+
+    expect(
+      Object.values(store.getSnapshot().tasks).some(
+        (task) =>
+          task.title === "Send the release note" && task.status === "inbox",
+      ),
+    ).toBe(true);
+  });
+
   it("captures an item into Inbox and processes it into Today", async () => {
     const user = userEvent.setup();
     const store = createDayDockStore();
@@ -95,7 +143,11 @@ describe("DayDock core daily flow", () => {
       screen.getByRole("textbox", { name: "Capture item" }),
       "Finish PR review",
     );
-    await user.click(screen.getByRole("button", { name: "Capture" }));
+    await user.click(
+      within(
+        screen.getByRole("dialog", { name: "What’s on your mind?" }),
+      ).getByRole("button", { name: "Capture" }),
+    );
 
     expect(store.getSnapshot().taskOrder).toHaveLength(1);
 
@@ -793,7 +845,11 @@ describe("DayDock core daily flow", () => {
       screen.getByRole("textbox", { name: "Capture item" }),
       "Protect this unsaved thought",
     );
-    await user.click(screen.getByRole("button", { name: "Capture" }));
+    await user.click(
+      within(
+        screen.getByRole("dialog", { name: "What’s on your mind?" }),
+      ).getByRole("button", { name: "Capture" }),
+    );
 
     expect(screen.getByText("Storage warning")).toBeInTheDocument();
     expect(screen.getByText("Save problem")).toBeInTheDocument();

@@ -151,8 +151,11 @@ export function DataSafetyPopover({
         }
       >
         <span className="data-safety-dot" aria-hidden="true" />
-        <span>
+        <span className="data-safety-label data-safety-label-desktop">
           {persistenceStatus === "durable" ? "Private by default" : "Storage warning"}
+        </span>
+        <span className="data-safety-label data-safety-label-mobile">
+          {persistenceStatus === "durable" ? "Data" : "Storage"}
         </span>
       </button>
 

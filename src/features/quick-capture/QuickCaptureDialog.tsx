@@ -61,7 +61,20 @@ export function QuickCaptureDialog({
             data-capture-input
             rows={1}
             value={title}
+            enterKeyHint="done"
             onChange={(event) => setTitle(event.currentTarget.value)}
+            onKeyDown={(event) => {
+              if (
+                event.key !== "Enter" ||
+                event.shiftKey ||
+                event.nativeEvent.isComposing
+              ) {
+                return;
+              }
+
+              event.preventDefault();
+              event.currentTarget.form?.requestSubmit();
+            }}
             placeholder="Write it down and get back to work…"
             maxLength={280}
           />

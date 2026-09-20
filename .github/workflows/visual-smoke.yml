@@ -144,9 +144,50 @@ jobs:
                 data: state,
               }),
             );
-            location.replace("/");
+            const surface =
+              new URLSearchParams(location.search).get("surface");
+            location.replace(
+              surface ? `/?__visualSurface=${encodeURIComponent(surface)}` : "/",
+            );
           </script>
           HTML
+
+          cat > dist/__visual-nav.js <<'JS'
+          (() => {
+            const surface = new URLSearchParams(location.search).get(
+              "__visualSurface",
+            );
+            const label = {
+              today: "Today",
+              inbox: "Inbox",
+              people: "People",
+              review: "Review",
+            }[surface];
+
+            if (!label) return;
+
+            let attempts = 0;
+            const openSurface = () => {
+              const button = document.querySelector(
+                `nav[aria-label="Primary"] button[aria-label="${label}"]`,
+              );
+
+              if (button instanceof HTMLButtonElement) {
+                button.click();
+                return;
+              }
+
+              attempts += 1;
+              if (attempts < 80) window.setTimeout(openSurface, 50);
+            };
+
+            window.addEventListener("DOMContentLoaded", openSurface, {
+              once: true,
+            });
+          })();
+          JS
+
+          sed -i 's#</body>#<script src="./__visual-nav.js"></script></body>#' dist/index.html
 
           npm run preview -- --host 127.0.0.1 --port 4173 > visual-smoke/preview.log 2>&1 &
           preview_pid=$!
@@ -184,61 +225,184 @@ jobs:
             --headless=new
             --no-sandbox
             --disable-dev-shm-usage
+            --disable-background-networking
+            --disable-component-update
+            --disable-default-apps
+            --disable-domain-reliability
+            --disable-sync
+            --metrics-recording-only
+            --no-first-run
+            --disable-features=OptimizationHints,MediaRouter,Translate,AutofillServerCommunication
             --hide-scrollbars
             --run-all-compositor-stages-before-draw
             --virtual-time-budget=2500
           )
 
-          timeout 20s "${browser}" "${common_flags[@]}" \
-            --user-data-dir=/tmp/daydock-desktop \
-            --window-size=1440,1100 \
-            --screenshot="$GITHUB_WORKSPACE/visual-smoke/desktop.png" \
+          capture_screenshot() {
+            local profile="$1"
+            local size="$2"
+            local output="$3"
+            local url="$4"
+            local status=0
+
+            rm -f "${output}"
+
+            if timeout 12s "${browser}" "${common_flags[@]}" \
+              --user-data-dir="${profile}" \
+              --window-size="${size}" \
+              --screenshot="${output}" \
+              "${url}"; then
+              status=0
+            else
+              status=$?
+            fi
+
+            if [ -s "${output}" ]; then
+              if [ "${status}" -eq 124 ]; then
+                echo "::notice::Chromium stayed alive after writing ${output}; accepting the rendered screenshot."
+              fi
+              return 0
+            fi
+
+            echo "::notice::Retrying screenshot for ${url} with a clean Chromium profile."
+            rm -rf "${profile}"
+            status=0
+
+            if timeout 15s "${browser}" "${common_flags[@]}" \
+              --user-data-dir="${profile}" \
+              --window-size="${size}" \
+              --screenshot="${output}" \
+              "${url}"; then
+              status=0
+            else
+              status=$?
+            fi
+
+            if [ "${status}" -ne 0 ] && [ "${status}" -ne 124 ]; then
+              echo "::error::Chromium screenshot failed for ${url} with status ${status}."
+              return "${status}"
+            fi
+
+            if [ ! -s "${output}" ]; then
+              echo "::error::Chromium produced no screenshot for ${url} after retry."
+              return 1
+            fi
+
+            if [ "${status}" -eq 124 ]; then
+              echo "::notice::Chromium stayed alive after writing ${output}; accepting the rendered screenshot."
+            fi
+          }
+
+          dump_dom() {
+            local profile="$1"
+            local url="$2"
+            local output="$3"
+            local status=0
+
+            if timeout 8s "${browser}" "${common_flags[@]}" \
+              --user-data-dir="${profile}" \
+              --dump-dom \
+              "${url}" > "${output}"; then
+              status=0
+            else
+              status=$?
+            fi
+
+            if [ "${status}" -ne 0 ] && [ "${status}" -ne 124 ]; then
+              echo "::error::Chromium DOM render failed for ${url} with status ${status}."
+              return "${status}"
+            fi
+
+            if [ ! -s "${output}" ]; then
+              echo "::error::Chromium produced no DOM for ${url}."
+              return 1
+            fi
+
+            if [ "${status}" -eq 124 ]; then
+              echo "::notice::Chromium stayed alive after producing DOM for ${url}; accepting the captured document and continuing assertions."
+            fi
+          }
+
+          capture_screenshot \
+            /tmp/daydock-desktop \
+            1440,1100 \
+            "$GITHUB_WORKSPACE/visual-smoke/desktop.png" \
             http://127.0.0.1:4173/
 
-          timeout 20s "${browser}" "${common_flags[@]}" \
-            --user-data-dir=/tmp/daydock-mobile \
-            --window-size=390,844 \
-            --screenshot="$GITHUB_WORKSPACE/visual-smoke/mobile.png" \
+          capture_screenshot \
+            /tmp/daydock-mobile \
+            390,844 \
+            "$GITHUB_WORKSPACE/visual-smoke/mobile.png" \
             http://127.0.0.1:4173/
 
-          timeout 20s "${browser}" "${common_flags[@]}" \
-            --user-data-dir=/tmp/daydock-dom \
-            --dump-dom \
-            http://127.0.0.1:4173/ > visual-smoke/dom.html
+          capture_screenshot \
+            /tmp/daydock-small-mobile \
+            360,740 \
+            "$GITHUB_WORKSPACE/visual-smoke/small-mobile.png" \
+            http://127.0.0.1:4173/
 
-          timeout 20s "${browser}" "${common_flags[@]}" \
-            --user-data-dir=/tmp/daydock-mature-desktop \
-            --window-size=1440,1100 \
-            --screenshot="$GITHUB_WORKSPACE/visual-smoke/mature-desktop.png" \
+          dump_dom \
+            /tmp/daydock-dom \
+            http://127.0.0.1:4173/ \
+            visual-smoke/dom.html
+
+          capture_screenshot \
+            /tmp/daydock-mature-desktop \
+            1440,1100 \
+            "$GITHUB_WORKSPACE/visual-smoke/mature-desktop.png" \
             "http://127.0.0.1:4173/__visual-seed.html?mode=mature"
 
-          timeout 20s "${browser}" "${common_flags[@]}" \
-            --user-data-dir=/tmp/daydock-mature-mobile \
-            --window-size=390,844 \
-            --screenshot="$GITHUB_WORKSPACE/visual-smoke/mature-mobile.png" \
+          capture_screenshot \
+            /tmp/daydock-mature-mobile \
+            390,844 \
+            "$GITHUB_WORKSPACE/visual-smoke/mature-mobile.png" \
             "http://127.0.0.1:4173/__visual-seed.html?mode=mature"
 
-          timeout 20s "${browser}" "${common_flags[@]}" \
-            --user-data-dir=/tmp/daydock-focus-desktop \
-            --window-size=1440,1100 \
-            --screenshot="$GITHUB_WORKSPACE/visual-smoke/focus-desktop.png" \
+          capture_screenshot \
+            /tmp/daydock-mature-small-mobile \
+            360,740 \
+            "$GITHUB_WORKSPACE/visual-smoke/mature-small-mobile.png" \
+            "http://127.0.0.1:4173/__visual-seed.html?mode=mature"
+
+          capture_screenshot \
+            /tmp/daydock-inbox-mobile \
+            390,844 \
+            "$GITHUB_WORKSPACE/visual-smoke/inbox-mobile.png" \
+            "http://127.0.0.1:4173/__visual-seed.html?mode=mature&surface=inbox"
+
+          capture_screenshot \
+            /tmp/daydock-people-mobile \
+            390,844 \
+            "$GITHUB_WORKSPACE/visual-smoke/people-mobile.png" \
+            "http://127.0.0.1:4173/__visual-seed.html?mode=mature&surface=people"
+
+          capture_screenshot \
+            /tmp/daydock-review-mobile \
+            390,844 \
+            "$GITHUB_WORKSPACE/visual-smoke/review-mobile.png" \
+            "http://127.0.0.1:4173/__visual-seed.html?mode=mature&surface=review"
+
+          capture_screenshot \
+            /tmp/daydock-focus-desktop \
+            1440,1100 \
+            "$GITHUB_WORKSPACE/visual-smoke/focus-desktop.png" \
             "http://127.0.0.1:4173/__visual-seed.html?mode=focus"
 
-          timeout 20s "${browser}" "${common_flags[@]}" \
-            --user-data-dir=/tmp/daydock-focus-mobile \
-            --window-size=390,844 \
-            --screenshot="$GITHUB_WORKSPACE/visual-smoke/focus-mobile.png" \
+          capture_screenshot \
+            /tmp/daydock-focus-mobile \
+            390,844 \
+            "$GITHUB_WORKSPACE/visual-smoke/focus-mobile.png" \
             "http://127.0.0.1:4173/__visual-seed.html?mode=focus"
 
-          timeout 20s "${browser}" "${common_flags[@]}" \
-            --user-data-dir=/tmp/daydock-mature-dom \
-            --dump-dom \
-            "http://127.0.0.1:4173/__visual-seed.html?mode=mature" > visual-smoke/mature-dom.html
+          dump_dom \
+            /tmp/daydock-mature-dom \
+            "http://127.0.0.1:4173/__visual-seed.html?mode=mature" \
+            visual-smoke/mature-dom.html
 
-          timeout 20s "${browser}" "${common_flags[@]}" \
-            --user-data-dir=/tmp/daydock-focus-dom \
-            --dump-dom \
-            "http://127.0.0.1:4173/__visual-seed.html?mode=focus" > visual-smoke/focus-dom.html
+          dump_dom \
+            /tmp/daydock-focus-dom \
+            "http://127.0.0.1:4173/__visual-seed.html?mode=focus" \
+            visual-smoke/focus-dom.html
 
           grep -q "DayDock" visual-smoke/dom.html
           grep -q "Capture your first item" visual-smoke/dom.html
@@ -250,8 +414,13 @@ jobs:
 
           test -s visual-smoke/desktop.png
           test -s visual-smoke/mobile.png
+          test -s visual-smoke/small-mobile.png
           test -s visual-smoke/mature-desktop.png
           test -s visual-smoke/mature-mobile.png
+          test -s visual-smoke/mature-small-mobile.png
+          test -s visual-smoke/inbox-mobile.png
+          test -s visual-smoke/people-mobile.png
+          test -s visual-smoke/review-mobile.png
           test -s visual-smoke/focus-desktop.png
           test -s visual-smoke/focus-mobile.png
 

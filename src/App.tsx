@@ -46,9 +46,14 @@ interface AppProps {
   store?: DayDockStore;
 }
 
-const NAV_ITEMS: readonly { id: Surface; label: string; hint: string }[] = [
+type NavItem =
+  | { id: Surface; label: string; hint: string }
+  | { id: "capture"; label: "Capture"; hint: string };
+
+const NAV_ITEMS: readonly NavItem[] = [
   { id: "today", label: "Today", hint: "What matters now" },
   { id: "inbox", label: "Inbox", hint: "Unsorted thoughts" },
+  { id: "capture", label: "Capture", hint: "Add quickly" },
   { id: "people", label: "People", hint: "Follow-ups" },
   { id: "review", label: "Review", hint: "Close the loop" },
 ];
@@ -494,6 +499,26 @@ export function App({ store = dayDockStore }: AppProps) {
 
           <nav className="primary-nav" aria-label="Primary">
             {NAV_ITEMS.map((item) => {
+              if (item.id === "capture") {
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className="nav-item mobile-capture-nav"
+                    aria-label="Capture"
+                    onClick={openCapture}
+                  >
+                    <span className="mobile-capture-nav-icon" aria-hidden="true">
+                      +
+                    </span>
+                    <span className="nav-copy">
+                      <span>{item.label}</span>
+                      <small>{item.hint}</small>
+                    </span>
+                  </button>
+                );
+              }
+
               const active = surface === item.id;
               const badge =
                 item.id === "inbox" && inboxCount > 0
