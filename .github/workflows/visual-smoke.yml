@@ -255,6 +255,45 @@ jobs:
           test -s visual-smoke/focus-desktop.png
           test -s visual-smoke/focus-mobile.png
 
+
+          # Warm one real production profile so its service worker installs the
+          # generated app-shell precache before the network is removed.
+          timeout 20s "${browser}" "${common_flags[@]}" \
+            --user-data-dir=/tmp/daydock-offline \
+            --dump-dom \
+            http://127.0.0.1:4173/ > visual-smoke/offline-warm-dom.html
+
+          timeout 20s "${browser}" "${common_flags[@]}" \
+            --user-data-dir=/tmp/daydock-offline \
+            --window-size=390,844 \
+            --screenshot="$GITHUB_WORKSPACE/visual-smoke/offline-warm-mobile.png" \
+            http://127.0.0.1:4173/
+
+          grep -q "DayDock" visual-smoke/offline-warm-dom.html
+          test -s visual-smoke/offline-warm-mobile.png
+
+          kill "${preview_pid}" 2>/dev/null || true
+          wait "${preview_pid}" 2>/dev/null || true
+          trap - EXIT
+
+          # The same browser profile must now reopen DayDock with the preview
+          # server fully stopped. A generic browser error page fails the DOM
+          # assertions below.
+          timeout 20s "${browser}" "${common_flags[@]}" \
+            --user-data-dir=/tmp/daydock-offline \
+            --window-size=390,844 \
+            --screenshot="$GITHUB_WORKSPACE/visual-smoke/offline-mobile.png" \
+            http://127.0.0.1:4173/
+
+          timeout 20s "${browser}" "${common_flags[@]}" \
+            --user-data-dir=/tmp/daydock-offline \
+            --dump-dom \
+            http://127.0.0.1:4173/ > visual-smoke/offline-dom.html
+
+          grep -q "DayDock" visual-smoke/offline-dom.html
+          grep -q "Capture your first item" visual-smoke/offline-dom.html
+          test -s visual-smoke/offline-mobile.png
+
       - name: Upload visual smoke evidence
         if: always()
         uses: actions/upload-artifact@v4
