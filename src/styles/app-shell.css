@@ -3153,7 +3153,7 @@
 
     .review-metric span {
       margin-top: 0.35rem;
-      font-size: 0.64rem;
+      font-size: 0.68rem;
       line-height: 1.3;
     }
 
@@ -3215,6 +3215,7 @@
       min-width: auto;
       gap: 0.38rem;
       padding-inline: 0.65rem;
+      font-size: 0.72rem;
     }
 
     .quick-capture-dialog,
