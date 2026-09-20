@@ -2884,3 +2884,133 @@
     }
   }
 }
+
+
+@layer components {
+  .person-card-heading {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .person-manage-button {
+    width: 2.45rem;
+    height: 2.45rem;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    margin-left: auto;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    color: var(--color-text-faint);
+    background: transparent;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    transition:
+      color var(--motion-fast) ease,
+      border-color var(--motion-fast) ease,
+      background var(--motion-fast) ease;
+  }
+
+  .person-manage-button:hover,
+  .person-manage-button:focus-visible {
+    border-color: var(--color-border);
+    color: var(--color-text);
+    background: var(--color-surface-raised);
+  }
+
+  .person-edit-dialog .quick-capture-form,
+  .person-remove-confirmation {
+    gap: var(--space-5);
+  }
+
+  .person-edit-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding-top: var(--space-1);
+  }
+
+  .person-edit-spacer {
+    flex: 1 1 auto;
+  }
+
+  .person-edit-secondary,
+  .person-edit-danger,
+  .person-edit-remove {
+    min-height: 2.75rem;
+    padding: 0.62rem 0.82rem;
+    border-radius: 0.75rem;
+    font-size: 0.72rem;
+    font-weight: 760;
+  }
+
+  .person-edit-secondary {
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    background: var(--color-surface);
+  }
+
+  .person-edit-remove {
+    padding-inline: 0.35rem;
+    color: oklch(48% 0.12 34);
+    background: transparent;
+  }
+
+  .person-edit-danger {
+    color: white;
+    background: oklch(50% 0.16 32);
+  }
+
+  .person-remove-confirmation {
+    display: grid;
+    padding: clamp(1.15rem, 4vw, 1.55rem);
+  }
+
+  .person-remove-confirmation h2 {
+    margin-top: var(--space-1);
+    font-size: clamp(1.2rem, 4vw, 1.55rem);
+    letter-spacing: -0.04em;
+  }
+
+  .person-remove-confirmation > p {
+    color: var(--color-text-soft);
+    font-size: 0.8rem;
+    line-height: 1.55;
+  }
+
+  @container (max-width: 520px) {
+    .person-manage-button {
+      width: 2.75rem;
+      height: 2.75rem;
+    }
+
+    .person-edit-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .person-edit-spacer {
+      display: none;
+    }
+
+    .person-edit-remove {
+      grid-column: 1 / -1;
+      justify-self: start;
+    }
+
+    .person-edit-secondary,
+    .person-edit-danger,
+    .person-edit-dialog .capture-submit {
+      width: 100%;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .person-manage-button,
+    .person-edit-danger {
+      forced-color-adjust: auto;
+    }
+  }
+}

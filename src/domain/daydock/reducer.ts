@@ -285,6 +285,39 @@ export function dayDockReducer(
       };
     }
 
+    case "person/renamed": {
+      const name = action.name.trim();
+      if (!name || name.length > 120) return state;
+
+      return updatePerson(state, action.personId, (person) =>
+        person.name === name ? person : { ...person, name },
+      );
+    }
+
+    case "person/removed": {
+      if (!state.people[action.personId]) return state;
+
+      const people = { ...state.people };
+      delete people[action.personId];
+
+      let tasks = state.tasks;
+
+      for (const taskId of state.taskOrder) {
+        const task = tasks[taskId];
+        if (!task || task.personId !== action.personId) continue;
+
+        if (tasks === state.tasks) tasks = { ...state.tasks };
+        tasks[taskId] = { ...task, personId: null };
+      }
+
+      return {
+        ...state,
+        people,
+        personOrder: removeId(state.personOrder, action.personId),
+        tasks,
+      };
+    }
+
     case "person/followUpChanged": {
       if (!isDateKey(action.nextFollowUpDate)) return state;
 

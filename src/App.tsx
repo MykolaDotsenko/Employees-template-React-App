@@ -310,6 +310,18 @@ export function App({ store = dayDockStore }: AppProps) {
     store.dispatch({ type: "person/added", person });
   }
 
+  function renamePerson(personId: string, name: string) {
+    store.dispatch({ type: "person/renamed", personId, name });
+  }
+
+  function setPersonContext(personId: string, context: string) {
+    store.dispatch({ type: "person/contextChanged", personId, context });
+  }
+
+  function removePerson(personId: string) {
+    store.dispatch({ type: "person/removed", personId });
+  }
+
   function setPersonFollowUp(
     personId: string,
     nextFollowUpDate: string | null,
@@ -598,7 +610,10 @@ export function App({ store = dayDockStore }: AppProps) {
                   tasksByPerson={tasksByPerson}
                   todayKey={todayKey}
                   onAddPerson={addPerson}
+                  onRenamePerson={renamePerson}
+                  onSetContext={setPersonContext}
                   onSetFollowUp={setPersonFollowUp}
+                  onRemovePerson={removePerson}
                   onAddFollowUpTask={addPersonFollowUpTask}
                 />
               </Activity>

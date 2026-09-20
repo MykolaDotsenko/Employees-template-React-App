@@ -803,4 +803,102 @@ describe("DayDock core daily flow", () => {
     expect(store.getSnapshot().tasks).not.toEqual({});
   });
 
+
+  it("lets a user keep person context current without recreating the contact", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+
+    store.dispatch({
+      type: "person/added",
+      person: {
+        id: "anna-edit",
+        name: "Anna",
+        context: "Waiting for first draft",
+        nextFollowUpDate: null,
+        createdAt: "2026-09-20T08:00:00.000Z",
+      },
+    });
+
+    render(<App store={store} />);
+    await user.click(screen.getByRole("button", { name: "People" }));
+    await user.click(screen.getByRole("button", { name: "Edit Anna" }));
+
+    const dialog = screen.getByRole("dialog", {
+      name: "Keep the context current",
+    });
+    const name = within(dialog).getByLabelText("Name");
+    const context = within(dialog).getByLabelText("Context");
+
+    await user.clear(name);
+    await user.type(name, "Anna Rivera");
+    await user.clear(context);
+    await user.type(context, "Final mobile review");
+    await user.click(
+      within(dialog).getByRole("button", { name: "Save changes" }),
+    );
+
+    expect(store.getSnapshot().people["anna-edit"]?.name).toBe("Anna Rivera");
+    expect(store.getSnapshot().people["anna-edit"]?.context).toBe(
+      "Final mobile review",
+    );
+    expect(screen.getByRole("heading", { name: "Anna Rivera" })).toBeInTheDocument();
+    expect(screen.getByText("Final mobile review")).toBeInTheDocument();
+  });
+
+  it("removes a person while keeping their linked task safe in Inbox", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+
+    store.dispatch({
+      type: "person/added",
+      person: {
+        id: "anna-remove",
+        name: "Anna",
+        context: "Release copy",
+        nextFollowUpDate: null,
+        createdAt: "2026-09-20T08:00:00.000Z",
+      },
+    });
+    store.dispatch({
+      type: "task/captured",
+      task: {
+        id: "safe-linked-task",
+        title: "Keep the linked task",
+        status: "inbox",
+        estimateMinutes: null,
+        personId: "anna-remove",
+        createdAt: "2026-09-20T08:30:00.000Z",
+        completedAt: null,
+      },
+    });
+
+    render(<App store={store} />);
+    await user.click(screen.getByRole("button", { name: "People" }));
+    await user.click(screen.getByRole("button", { name: "Edit Anna" }));
+
+    const editDialog = screen.getByRole("dialog", {
+      name: "Keep the context current",
+    });
+    await user.click(
+      within(editDialog).getByRole("button", { name: "Remove…" }),
+    );
+
+    const confirmation = screen.getByRole("dialog", {
+      name: "Remove Anna?",
+    });
+    expect(
+      within(confirmation).getByText(/linked tasks will stay in DayDock/i),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(confirmation).getByRole("button", { name: "Remove person" }),
+    );
+
+    expect(store.getSnapshot().people["anna-remove"]).toBeUndefined();
+    expect(store.getSnapshot().tasks["safe-linked-task"]?.personId).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Inbox" }));
+    expect(screen.getByText("Keep the linked task")).toBeInTheDocument();
+  });
+
 });
