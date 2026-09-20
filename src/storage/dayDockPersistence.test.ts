@@ -239,4 +239,38 @@ describe("DayDock persistence", () => {
     expect(result.source).toBe("stored");
     expect(result.state.tasks.a?.status).toBe("inbox");
   });
+
+  it("reports a degraded state when a browser write fails and recovers after a later successful write", () => {
+    let shouldFail = true;
+    let stored: string | null = null;
+    const storage: StorageLike = {
+      getItem: () => stored,
+      setItem: (_key, value) => {
+        if (shouldFail) {
+          throw new DOMException("Quota exceeded", "QuotaExceededError");
+        }
+        stored = value;
+      },
+    };
+    const store = createPersistentDayDockStore({ storage });
+
+    store.dispatch({
+      type: "task/captured",
+      task: task("quota", "inbox"),
+    });
+
+    expect(store.getPersistenceStatus()).toBe("degraded");
+    expect(store.getSnapshot().tasks.quota).toBeDefined();
+
+    shouldFail = false;
+    store.dispatch({
+      type: "task/renamed",
+      taskId: "quota",
+      title: "Task quota recovered",
+    });
+
+    expect(store.getPersistenceStatus()).toBe("durable");
+    expect(stored).toContain("Task quota recovered");
+  });
+
 });
