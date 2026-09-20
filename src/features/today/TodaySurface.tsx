@@ -1,4 +1,5 @@
-import { ViewTransition } from "react";
+import { ViewTransition, useState } from "react";
+import { normalizeFocusDurationMinutes } from "../../domain/daydock/focus";
 import type { Task } from "../../domain/daydock/model";
 import { TaskRow } from "../tasks/TaskRow";
 
@@ -13,7 +14,7 @@ interface TodaySurfaceProps {
   onAddToTop3: (taskId: string) => void;
   onRemoveFromTop3: (taskId: string) => void;
   onComplete: (taskId: string) => void;
-  onStartFocus: (taskId: string) => void;
+  onStartFocus: (taskId: string, durationMinutes: number) => void;
 }
 
 export function TodaySurface({
@@ -30,6 +31,18 @@ export function TodaySurface({
   const top3Ids = new Set(top3.map((task) => task.id));
   const remaining = todayTasks.filter((task) => !top3Ids.has(task.id));
   const currentTask = top3[0] ?? null;
+  const [focusDurations, setFocusDurations] = useState<Record<string, number>>({});
+  const defaultFocusDuration =
+    currentTask === null
+      ? 50
+      : normalizeFocusDurationMinutes(currentTask.estimateMinutes);
+  const focusDuration =
+    currentTask === null
+      ? defaultFocusDuration
+      : (focusDurations[currentTask.id] ?? defaultFocusDuration);
+  const focusOptions = Array.from(
+    new Set([25, 50, 90, defaultFocusDuration]),
+  ).sort((left, right) => left - right);
 
   return (
     <div className="surface-stack">
@@ -220,16 +233,37 @@ export function TodaySurface({
                 : "Choose a Top 3 priority and DayDock will make the next action obvious."}
             </p>
             {currentTask ? (
-              <button
-                type="button"
-                className="start-focus-button"
-                onClick={() => onStartFocus(currentTask.id)}
-              >
-                Start focus
-                <span aria-hidden="true">
-                  {currentTask.estimateMinutes ?? 50} min
-                </span>
-              </button>
+              <div className="focus-launch-controls">
+                <label className="focus-duration-field">
+                  <span>Focus block</span>
+                  <select
+                    aria-label="Focus duration"
+                    value={focusDuration}
+                    onChange={(event) => {
+                      const nextDuration = Number(event.currentTarget.value);
+                      setFocusDurations((current) => ({
+                        ...current,
+                        [currentTask.id]: nextDuration,
+                      }));
+                    }}
+                  >
+                    {focusOptions.map((minutes) => (
+                      <option key={minutes} value={minutes}>
+                        {minutes} min
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <button
+                  type="button"
+                  className="start-focus-button"
+                  onClick={() => onStartFocus(currentTask.id, focusDuration)}
+                >
+                  Start focus
+                  <span aria-hidden="true">{focusDuration} min</span>
+                </button>
+              </div>
             ) : null}
           </div>
           <span className="now-orbit" aria-hidden="true" />
