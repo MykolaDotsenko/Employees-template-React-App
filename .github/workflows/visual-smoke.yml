@@ -273,6 +273,14 @@ jobs:
             --virtual-time-budget=2500
           )
 
+          cleanup_chromium_profile() {
+            local profile="$1"
+
+            pkill -TERM -f -- "--user-data-dir=${profile}" 2>/dev/null || true
+            sleep 0.2
+            pkill -KILL -f -- "--user-data-dir=${profile}" 2>/dev/null || true
+          }
+
           capture_screenshot() {
             local profile="$1"
             local size="$2"
@@ -291,7 +299,7 @@ jobs:
 
               status=0
 
-              if timeout 20s "${browser}" "${common_flags[@]}" \
+              if timeout --kill-after=2s 20s "${browser}" "${common_flags[@]}" \
                 --user-data-dir="${profile}" \
                 --window-size="${size}" \
                 --screenshot="${output}" \
@@ -301,6 +309,8 @@ jobs:
                 status=$?
               fi
 
+              cleanup_chromium_profile "${profile}"
+
               if [ -s "${output}" ]; then
                 if [ "${status}" -eq 124 ]; then
                   echo "::notice::Chromium stayed alive after writing ${output}; accepting the rendered screenshot."
@@ -308,7 +318,7 @@ jobs:
                 return 0
               fi
 
-              if [ "${status}" -ne 0 ] && [ "${status}" -ne 124 ]; then
+              if [ "${status}" -ne 0 ] && [ "${status}" -ne 124 ] && [ "${status}" -ne 137 ]; then
                 echo "::notice::Chromium screenshot attempt ${attempt} exited with status ${status}."
               fi
 
@@ -325,7 +335,7 @@ jobs:
             local output="$3"
             local status=0
 
-            if timeout 8s "${browser}" "${common_flags[@]}" \
+            if timeout --kill-after=2s 8s "${browser}" "${common_flags[@]}" \
               --user-data-dir="${profile}" \
               --dump-dom \
               "${url}" > "${output}"; then
@@ -334,7 +344,9 @@ jobs:
               status=$?
             fi
 
-            if [ "${status}" -ne 0 ] && [ "${status}" -ne 124 ]; then
+            cleanup_chromium_profile "${profile}"
+
+            if [ "${status}" -ne 0 ] && [ "${status}" -ne 124 ] && [ "${status}" -ne 137 ]; then
               echo "::error::Chromium DOM render failed for ${url} with status ${status}."
               return "${status}"
             fi
