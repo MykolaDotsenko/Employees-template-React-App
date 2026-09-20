@@ -280,7 +280,14 @@ describe("DayDock persistence", () => {
   it("migrates schema v3 workspaces with an empty day plan", () => {
     const storage = new MemoryStorage();
     const state = stateWithTasks([task("a")]);
-    const { dayPlan: _dayPlan, ...v3Data } = state;
+    const v3Data = {
+      tasks: state.tasks,
+      taskOrder: state.taskOrder,
+      top3: state.top3,
+      people: state.people,
+      personOrder: state.personOrder,
+      focus: state.focus,
+    };
 
     storage.setItem(
       DAYDOCK_STORAGE_KEY,
