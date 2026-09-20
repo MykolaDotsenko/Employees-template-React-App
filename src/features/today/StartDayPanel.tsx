@@ -8,12 +8,13 @@ interface StartDayPanelProps {
   inboxCount: number;
   duePeopleCount: number;
   top3Count: number;
+  suggestedFocusRoomMinutes?: number | null;
   onOpenInbox: () => void;
   onOpenPeople: () => void;
   onStartDay: (focusRoomMinutes: number) => void;
 }
 
-const FOCUS_ROOM_OPTIONS = [90, 150, 210, 270] as const;
+const FOCUS_ROOM_OPTIONS = [60, 90, 120, 150, 180, 210, 240, 270, 300] as const;
 
 function formatMinutes(minutes: number): string {
   const hours = Math.floor(minutes / 60);
@@ -31,13 +32,14 @@ export function StartDayPanel({
   inboxCount,
   duePeopleCount,
   top3Count,
+  suggestedFocusRoomMinutes = null,
   onOpenInbox,
   onOpenPeople,
   onStartDay,
 }: StartDayPanelProps) {
   const alreadyStarted = existingPlan?.dateKey === todayKey;
   const [focusRoomMinutes, setFocusRoomMinutes] = useState(
-    existingPlan?.focusRoomMinutes ?? 150,
+    existingPlan?.focusRoomMinutes ?? suggestedFocusRoomMinutes ?? 150,
   );
 
   if (alreadyStarted) {
