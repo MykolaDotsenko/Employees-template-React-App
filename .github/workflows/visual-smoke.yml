@@ -184,6 +184,14 @@ jobs:
             --headless=new
             --no-sandbox
             --disable-dev-shm-usage
+            --disable-background-networking
+            --disable-component-update
+            --disable-default-apps
+            --disable-domain-reliability
+            --disable-sync
+            --metrics-recording-only
+            --no-first-run
+            --disable-features=OptimizationHints,MediaRouter,Translate,AutofillServerCommunication
             --hide-scrollbars
             --run-all-compositor-stages-before-draw
             --virtual-time-budget=2500
