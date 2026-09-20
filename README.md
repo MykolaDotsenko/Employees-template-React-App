@@ -24,7 +24,7 @@ It started as an employee-management React exercise and was rebuilt into a compl
 - portable JSON backup, validation preview, and explicit restore
 - responsive mobile navigation
 - reduced-motion and forced-colors support
-- installable PWA shell with project-scoped offline navigation fallback
+- installable PWA shell with build-generated, versioned offline precache
 - no account, analytics, ads, or cloud dependency
 
 ## Why DayDock is different
@@ -145,8 +145,10 @@ For a fast technical review:
 6. `src/features/review/ReviewSurface.tsx` — derived closure and insight UX
 7. `src/features/data-safety/DataSafetyPopover.tsx` — backup/recovery product boundary
 8. `src/App.test.tsx` — end-to-end component journeys
-9. `.github/workflows/quality.yml` — automated quality gate
-10. `.github/workflows/pages.yml` — release deployment gate
+9. `scripts/finalize-service-worker.mjs` — build-derived offline shell manifest
+10. `.github/workflows/quality.yml` — automated quality gate
+11. `.github/workflows/visual-smoke.yml` — desktop/mobile, mature-state, focus and offline release evidence
+12. `.github/workflows/pages.yml` — release deployment gate
 
 ## Privacy
 

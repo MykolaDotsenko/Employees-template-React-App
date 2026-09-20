@@ -7,7 +7,8 @@
 - unit and component tests pass
 - production build succeeds
 - GitHub Pages build uses the repository subpath
-- service worker navigation fallback is repository-scope aware
+- service worker precache is generated from the production build and repository-scope aware
+- a warmed production profile reopens successfully after the preview server is stopped
 - persisted and imported state is validated
 - backup restore is explicit and previewed
 - reduced-motion and forced-colors paths are preserved
@@ -36,4 +37,5 @@ After each release deployment, verify:
 7. A second tab receives synchronized state.
 8. Reload preserves the workspace.
 9. Manifest, favicon, and service worker resolve under the GitHub Pages subpath.
-10. Mobile navigation remains usable at narrow widths.
+10. Reload once, disable the network, and confirm the installed shell still opens with its JS/CSS assets.
+11. Mobile navigation remains usable at narrow widths.
