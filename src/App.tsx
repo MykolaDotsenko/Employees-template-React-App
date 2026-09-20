@@ -621,6 +621,7 @@ export function App({ store = dayDockStore }: AppProps) {
               <Activity mode={surface === "review" ? "visible" : "hidden"}>
                 <ReviewSurface
                   completedToday={reviewInsights.completedToday}
+                  completionHistory={reviewInsights.completionHistory}
                   openToday={todayTasks}
                   focusMinutesToday={reviewInsights.focusMinutesToday}
                   focusSessionsToday={reviewInsights.focusSessionsToday}
