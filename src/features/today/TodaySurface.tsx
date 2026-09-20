@@ -6,6 +6,7 @@ interface TodaySurfaceProps {
   top3: Task[];
   todayTasks: Task[];
   onAddToTop3: (taskId: string) => void;
+  onRemoveFromTop3: (taskId: string) => void;
   onComplete: (taskId: string) => void;
   onStartFocus: (taskId: string) => void;
 }
@@ -14,6 +15,7 @@ export function TodaySurface({
   top3,
   todayTasks,
   onAddToTop3,
+  onRemoveFromTop3,
   onComplete,
   onStartFocus,
 }: TodaySurfaceProps) {
@@ -48,14 +50,24 @@ export function TodaySurface({
                 task={task}
                 leading={<span className="priority-index">{index + 1}</span>}
                 actions={
-                  <button
-                    type="button"
-                    className="text-action positive-action"
-                    aria-label={`Complete ${task.title}`}
-                    onClick={() => onComplete(task.id)}
-                  >
-                    Done
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      className="text-action"
+                      aria-label={`Remove ${task.title} from Top 3`}
+                      onClick={() => onRemoveFromTop3(task.id)}
+                    >
+                      Unpin
+                    </button>
+                    <button
+                      type="button"
+                      className="text-action positive-action"
+                      aria-label={`Complete ${task.title}`}
+                      onClick={() => onComplete(task.id)}
+                    >
+                      Done
+                    </button>
+                  </>
                 }
               />
             ))}
