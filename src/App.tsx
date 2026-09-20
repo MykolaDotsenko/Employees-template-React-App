@@ -244,9 +244,6 @@ export function App({ store = dayDockStore }: AppProps) {
       return;
     }
 
-    const dialog = captureDialogRef.current;
-    if (!dialog || dialog.open) return;
-
     captureLaunchHandledRef.current = true;
     window.history.replaceState(
       window.history.state,
@@ -254,8 +251,10 @@ export function App({ store = dayDockStore }: AppProps) {
       stripCaptureLaunchFromUrl(window.location.href),
     );
     setCapturePrefill(initialCaptureLaunch.prefill);
-    dialog.showModal();
     window.requestAnimationFrame(() => {
+      const dialog = captureDialogRef.current;
+      if (!dialog || dialog.open) return;
+      dialog.showModal();
       dialog.querySelector<HTMLTextAreaElement>("[data-capture-input]")?.focus();
     });
   }, [initialCaptureLaunch]);
@@ -827,6 +826,7 @@ export function App({ store = dayDockStore }: AppProps) {
       </button>
 
       <QuickCaptureDialog
+        key={capturePrefill === null ? "quick-capture" : `quick-capture-${capturePrefill}`}
         dialogRef={captureDialogRef}
         prefill={capturePrefill}
         onCapture={captureTask}
