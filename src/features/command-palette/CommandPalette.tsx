@@ -100,7 +100,9 @@ export function CommandPalette({
       return [...actions, ...navigation];
     }
 
-    const searchableTasks: PaletteItem[] = tasks.map((task) => ({
+    const searchableTasks: PaletteItem[] = tasks
+      .filter((task) => task.status !== "done")
+      .map((task) => ({
       id: `task-${task.id}`,
       label: task.title,
       meta: `Task · ${task.status}`,
@@ -109,9 +111,7 @@ export function CommandPalette({
         onNavigate(
           task.status === "inbox" || task.status === "later"
             ? "inbox"
-            : task.status === "done"
-              ? "review"
-              : "today",
+            : "today",
         ),
     }));
 
@@ -194,13 +194,13 @@ export function CommandPalette({
         <div className="command-search">
           <span aria-hidden="true">⌕</span>
           <label>
-            <span className="sr-only">Search commands, tasks and people</span>
+            <span className="sr-only">Search commands, open tasks and people</span>
             <input
               data-command-input
               value={query}
               onChange={(event) => setQuery(event.currentTarget.value)}
               onKeyDown={handleInputKeyDown}
-              placeholder="Search or run a command…"
+              placeholder="Search open work or run a command…"
               autoComplete="off"
             />
           </label>

@@ -4,6 +4,7 @@ import {
   useEffectEvent,
   useState,
 } from "react";
+import { BrandMark } from "../../components/BrandMark";
 import {
   formatFocusClock,
   getFocusProgress,
@@ -60,7 +61,7 @@ export function FocusMode({
     <main className="focus-shell" aria-labelledby="focus-task-title">
       <header className="focus-topbar">
         <div className="brand-lockup compact-brand">
-          <span className="brand-mark" aria-hidden="true">D</span>
+          <BrandMark />
           <div>
             <strong className="brand-name">DayDock</strong>
             <span className="brand-subtitle">Focus</span>
