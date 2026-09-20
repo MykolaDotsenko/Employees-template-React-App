@@ -184,6 +184,34 @@ export function dayDockReducer(
             },
           };
 
+    case "notifications/readyAgainChanged":
+      return state.notifications.readyAgain === action.enabled
+        ? state
+        : {
+            ...state,
+            notifications: {
+              ...state.notifications,
+              readyAgain: action.enabled,
+            },
+          };
+
+    case "notifications/readyAgainNotified":
+      if (
+        !state.notifications.readyAgain ||
+        !isDateKey(action.dateKey) ||
+        state.notifications.lastReadyAgainNotifiedDate === action.dateKey
+      ) {
+        return state;
+      }
+
+      return {
+        ...state,
+        notifications: {
+          ...state.notifications,
+          lastReadyAgainNotifiedDate: action.dateKey,
+        },
+      };
+
     case "day/started": {
       const { plan } = action;
 
