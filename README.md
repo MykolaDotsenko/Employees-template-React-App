@@ -11,7 +11,7 @@ It started as an employee-management React exercise and was rebuilt into a compl
 ## Product capabilities
 
 - 60-second **Start Day** ritual with attention signals and a realistic focus-room estimate
-- one-field Quick Capture with keyboard shortcut
+- one-field Quick Capture with keyboard shortcut, installed-app shortcut, and Android/PWA Share Target
 - Inbox triage into Today, Done, or calm **Later** scheduling with automatic resurfacing
 - Tomorrow / Next week / custom-date / Someday resurfacing
 - Daily, Weekdays, Weekly, and Monthly recurring work without rewriting completion history
