@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">DayDock</title>
+  <defs>
+    <linearGradient id="bg" x1="80" y1="56" x2="432" y2="456" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#edf2ff"/>
+      <stop offset="1" stop-color="#f8f5ee"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="url(#bg)"/>
+  <circle cx="365" cy="132" r="46" fill="#f0b85a"/>
+  <path d="M104 334h304" fill="none" stroke="#7890a8" stroke-width="18" stroke-linecap="round"/>
+  <path d="M150 382V168h84c88 0 142 43 142 107.5S322 382 234 382h-84Z" fill="#dce7f7" stroke="#335f88" stroke-width="24" stroke-linejoin="round"/>
+</svg>
