@@ -803,7 +803,7 @@ describe("DayDock core daily flow", () => {
     expect(store.getSnapshot().tasks["editable-task"]?.title).toBe(
       "Publish release announcement",
     );
-    expect(screen.getByText("Publish release announcement")).toBeInTheDocument();
+    expect(\n      screen.getByText("Publish release announcement", { selector: "strong" }),\n    ).toBeInTheDocument();
 
     await user.click(
       screen.getByRole("button", {
@@ -1002,7 +1002,7 @@ describe("DayDock core daily flow", () => {
     expect(store.getSnapshot().tasks["safe-linked-task"]?.personId).toBeNull();
 
     await user.click(screen.getByRole("button", { name: "Inbox" }));
-    expect(screen.getByText("Keep the linked task")).toBeInTheDocument();
+    expect(\n      screen.getByText("Keep the linked task", { selector: "strong" }),\n    ).toBeInTheDocument();
   });
 
 
@@ -1041,7 +1041,7 @@ describe("DayDock core daily flow", () => {
       }),
     ).toBeInTheDocument();
     expect(store.getSnapshot().tasks["returning-task"]?.status).toBe("inbox");
-    expect(screen.getByText("Ready again")).toBeInTheDocument();
+    const readySection = screen\n      .getByRole("heading", { name: "You asked DayDock to bring this back" })\n      .closest("section");\n    expect(readySection).not.toBeNull();\n    expect(\n      within(readySection as HTMLElement).getByText("Ready again", {\n        selector: ".resurface-meta",\n      }),\n    ).toBeInTheDocument();
 
     await user.click(
       screen.getByRole("button", {
