@@ -273,6 +273,18 @@ export function App({ store = dayDockStore }: AppProps) {
     });
   }
 
+  function renameTask(taskId: string, title: string) {
+    store.dispatch({ type: "task/renamed", taskId, title });
+  }
+
+  function removeTask(taskId: string) {
+    store.dispatch({ type: "task/removed", taskId });
+  }
+
+  function reopenTask(taskId: string) {
+    store.dispatch({ type: "task/reopened", taskId, status: "today" });
+  }
+
   function addToTop3(taskId: string) {
     store.dispatch({ type: "top3/added", taskId });
   }
@@ -541,6 +553,8 @@ export function App({ store = dayDockStore }: AppProps) {
                   onAddToTop3={addToTop3}
                   onRemoveFromTop3={removeFromTop3}
                   onComplete={completeTask}
+                  onRename={renameTask}
+                  onRemove={removeTask}
                   onStartFocus={startFocus}
                 />
               </Activity>
@@ -553,6 +567,8 @@ export function App({ store = dayDockStore }: AppProps) {
                   onMoveToday={(taskId) => moveTask(taskId, "today")}
                   onMoveLater={(taskId) => moveTask(taskId, "later")}
                   onComplete={completeTask}
+                  onRename={renameTask}
+                  onRemove={removeTask}
                 />
               </Activity>
 
@@ -579,6 +595,7 @@ export function App({ store = dayDockStore }: AppProps) {
                   dueFollowUpsCount={duePeople.length}
                   onMoveLater={(taskId) => moveTask(taskId, "later")}
                   onComplete={completeTask}
+                  onReopen={reopenTask}
                   onNavigate={navigateFromPalette}
                 />
               </Activity>
