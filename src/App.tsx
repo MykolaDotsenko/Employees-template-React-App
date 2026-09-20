@@ -171,6 +171,9 @@ export function App({ store = dayDockStore }: AppProps) {
   const todayTasks = selectTasksByStatus(state, "today");
   const inboxTasks = selectTasksByStatus(state, "inbox");
   const laterTasks = selectTasksByStatus(state, "later");
+  const readyAgainCount = inboxTasks.filter(
+    (task) => task.deferUntil !== null && task.deferUntil <= todayKey,
+  ).length;
   const people = selectPeople(state);
   const duePeople = selectFollowUpsDue(state, todayKey);
   const tasksByPerson = Object.fromEntries(
@@ -331,6 +334,17 @@ export function App({ store = dayDockStore }: AppProps) {
       taskId,
       deferUntil,
       recurrence,
+    });
+  }
+
+  function startDay(focusRoomMinutes: number) {
+    store.dispatch({
+      type: "day/started",
+      plan: {
+        dateKey: todayKey,
+        focusRoomMinutes,
+        startedAt: new Date().toISOString(),
+      },
     });
   }
 
@@ -662,8 +676,15 @@ export function App({ store = dayDockStore }: AppProps) {
                   top3={top3}
                   todayTasks={todayTasks}
                   gettingStartedStage={gettingStartedStage}
+                  todayKey={todayKey}
+                  dayPlan={state.dayPlan}
+                  readyAgainCount={readyAgainCount}
+                  inboxCount={inboxCount}
+                  duePeopleCount={duePeople.length}
                   onCapture={openCapture}
                   onOpenInbox={() => navigateTo("inbox")}
+                  onOpenPeople={() => navigateTo("people")}
+                  onStartDay={startDay}
                   onAddToTop3={addToTop3}
                   onRemoveFromTop3={removeFromTop3}
                   onComplete={completeTask}
