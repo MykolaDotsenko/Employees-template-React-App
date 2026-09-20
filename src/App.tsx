@@ -4,7 +4,6 @@ import {
   startTransition,
   useEffect,
   useEffectEvent,
-  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -137,7 +136,19 @@ export function App({ store = dayDockStore }: AppProps) {
   );
   const [focusSnapshot, setFocusSnapshot] = useState(initialFocus);
 
-  const today = useMemo(() => new Date(), []);
+  const [today, setToday] = useState(() => new Date());
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setToday((current) => {
+        const next = new Date();
+        return localDateKey(next) === localDateKey(current) ? current : next;
+      });
+    }, 60_000);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
   const todayKey = localDateKey(today);
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const reviewInsights = buildReviewInsights(state, todayKey, timeZone);
@@ -484,7 +495,7 @@ export function App({ store = dayDockStore }: AppProps) {
                 onClick={openCommands}
               >
                 <span>Search</span>
-                <kbd>⌘K</kbd>
+                <kbd>Ctrl/⌘ K</kbd>
               </button>
               <DataSafetyPopover
                 state={state}

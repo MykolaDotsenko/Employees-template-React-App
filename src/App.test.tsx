@@ -27,7 +27,7 @@ describe("DayDock core daily flow", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Today" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Your day, clearly.")).toBeInTheDocument();
+    expect(screen.getByText("Make room for what matters.")).toBeInTheDocument();
     expect(screen.getByText("Private by default")).toBeInTheDocument();
     expect(screen.getByText("A fresh day")).toBeInTheDocument();
   });

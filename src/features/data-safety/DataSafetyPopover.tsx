@@ -189,7 +189,8 @@ export function DataSafetyPopover({
         {message ? (
           <p
             className={hasError ? "backup-status is-error" : "backup-status"}
-            role="status"
+            role={hasError ? "alert" : "status"}
+            aria-live={hasError ? "assertive" : "polite"}
           >
             {message}
           </p>
