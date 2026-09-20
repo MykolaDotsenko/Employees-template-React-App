@@ -32,6 +32,7 @@ describe("DataSafetyPopover", () => {
     render(
       <DataSafetyPopover
         state={createInitialDayDockState()}
+        persistenceStatus="durable"
         onRestore={onRestore}
       />,
     );
@@ -72,6 +73,7 @@ describe("DataSafetyPopover", () => {
     render(
       <DataSafetyPopover
         state={createInitialDayDockState()}
+        persistenceStatus="durable"
         onRestore={vi.fn()}
       />,
     );
@@ -96,4 +98,20 @@ describe("DataSafetyPopover", () => {
       }),
     ).not.toBeInTheDocument();
   });
+
+  it("explains when the workspace is running without durable browser storage", () => {
+    render(
+      <DataSafetyPopover
+        state={createInitialDayDockState()}
+        persistenceStatus="memory"
+        onRestore={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Storage warning")).toBeInTheDocument();
+    expect(
+      screen.getByText(/running in memory only/i),
+    ).toBeInTheDocument();
+  });
+
 });
