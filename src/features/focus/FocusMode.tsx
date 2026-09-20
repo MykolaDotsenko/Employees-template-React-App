@@ -36,6 +36,10 @@ export function FocusMode({
   });
 
   useEffect(() => {
+    if (session.pausedAt !== null) {
+      return;
+    }
+
     const intervalId = window.setInterval(tick, 1_000);
 
     function syncAfterVisibilityChange() {
@@ -50,7 +54,7 @@ export function FocusMode({
       window.clearInterval(intervalId);
       document.removeEventListener("visibilitychange", syncAfterVisibilityChange);
     };
-  }, []);
+  }, [session.pausedAt]);
 
   const remainingMs = getFocusRemainingMs(session, nowMs);
   const progress = getFocusProgress(session, nowMs);

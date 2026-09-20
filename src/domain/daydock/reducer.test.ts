@@ -15,6 +15,8 @@ function task(id: string, status: Task["status"] = "inbox"): Task {
     status,
     estimateMinutes: null,
     personId: null,
+    deferUntil: null,
+    recurrence: null,
     createdAt: "2026-09-19T08:00:00.000Z",
     completedAt: null,
   };
@@ -360,6 +362,218 @@ describe("dayDockReducer", () => {
     expect(state.personOrder).not.toContain("anna");
     expect(state.tasks.linked?.title).toBe("Keep this commitment");
     expect(state.tasks.linked?.personId).toBeNull();
+  });
+
+
+  it("parks work with a return date and removes it from Top 3", () => {
+    let state = dayDockReducer(createInitialDayDockState(), {
+      type: "task/captured",
+      task: task("scheduled", "today"),
+    });
+    state = dayDockReducer(state, {
+      type: "top3/added",
+      taskId: "scheduled",
+    });
+
+    state = dayDockReducer(state, {
+      type: "task/deferred",
+      taskId: "scheduled",
+      deferUntil: "2026-09-21",
+      recurrence: null,
+    });
+
+    expect(state.tasks.scheduled).toMatchObject({
+      status: "later",
+      deferUntil: "2026-09-21",
+      recurrence: null,
+    });
+    expect(state.top3).toEqual([]);
+  });
+
+  it("returns due deferred work to Inbox while future work stays quiet", () => {
+    let state = createInitialDayDockState();
+
+    for (const [id, date] of [
+      ["ready", "2026-09-20"],
+      ["future", "2026-09-22"],
+    ] as const) {
+      state = dayDockReducer(state, {
+        type: "task/captured",
+        task: {
+          ...task(id, "later"),
+          deferUntil: date,
+        },
+      });
+    }
+
+    state = dayDockReducer(state, {
+      type: "task/resurfaceDue",
+      dateKey: "2026-09-20",
+    });
+
+    expect(state.tasks.ready).toMatchObject({
+      status: "inbox",
+      deferUntil: "2026-09-20",
+    });
+    expect(state.tasks.future).toMatchObject({
+      status: "later",
+      deferUntil: "2026-09-22",
+    });
+  });
+
+  it("completes a recurring occurrence atomically and creates the next one", () => {
+    let state = dayDockReducer(createInitialDayDockState(), {
+      type: "task/captured",
+      task: {
+        ...task("repeat", "today"),
+        recurrence: {
+          kind: "weekly",
+          anchorDate: "2026-09-14",
+        },
+      },
+    });
+    state = dayDockReducer(state, {
+      type: "top3/added",
+      taskId: "repeat",
+    });
+    state = dayDockReducer(state, {
+      type: "focus/started",
+      session: focusSession("repeat"),
+    });
+
+    state = dayDockReducer(state, {
+      type: "task/completedWithNext",
+      taskId: "repeat",
+      completedAt: "2026-09-20T10:20:00.000Z",
+      nextTask: {
+        ...task("repeat-next", "later"),
+        title: "Task repeat",
+        deferUntil: "2026-09-21",
+        recurrence: {
+          kind: "weekly",
+          anchorDate: "2026-09-14",
+        },
+        createdAt: "2026-09-20T10:20:00.000Z",
+      },
+    });
+
+    expect(state.tasks.repeat).toMatchObject({
+      status: "done",
+      recurrence: null,
+      deferUntil: null,
+      completedAt: "2026-09-20T10:20:00.000Z",
+    });
+    expect(state.tasks["repeat-next"]).toMatchObject({
+      status: "later",
+      deferUntil: "2026-09-21",
+      recurrence: {
+        kind: "weekly",
+        anchorDate: "2026-09-14",
+      },
+    });
+    expect(state.taskOrder).toEqual(["repeat", "repeat-next"]);
+    expect(state.top3).toEqual([]);
+    expect(state.focus.active).toBeNull();
+    expect(state.focus.history).toHaveLength(1);
+    expect(state.focus.history[0]?.outcome).toBe("completed");
+  });
+
+  it("rejects recurrence without a concrete return date", () => {
+    const state = dayDockReducer(createInitialDayDockState(), {
+      type: "task/captured",
+      task: task("repeat", "inbox"),
+    });
+
+    const unchanged = dayDockReducer(state, {
+      type: "task/deferred",
+      taskId: "repeat",
+      deferUntil: null,
+      recurrence: {
+        kind: "weekly",
+        anchorDate: "2026-09-21",
+      },
+    });
+
+    expect(unchanged).toBe(state);
+  });
+
+  it("allows one occurrence to be snoozed without shifting its recurrence anchor", () => {
+    let state = dayDockReducer(createInitialDayDockState(), {
+      type: "task/captured",
+      task: {
+        ...task("repeat", "inbox"),
+        recurrence: {
+          kind: "weekly",
+          anchorDate: "2026-09-21",
+        },
+      },
+    });
+
+    state = dayDockReducer(state, {
+      type: "task/deferred",
+      taskId: "repeat",
+      deferUntil: "2026-09-23",
+      recurrence: {
+        kind: "weekly",
+        anchorDate: "2026-09-21",
+      },
+    });
+
+    expect(state.tasks.repeat).toMatchObject({
+      status: "later",
+      deferUntil: "2026-09-23",
+      recurrence: {
+        kind: "weekly",
+        anchorDate: "2026-09-21",
+      },
+    });
+  });
+
+
+  it("rejects a parked recurring task that has no return date", () => {
+    const state = createInitialDayDockState();
+
+    const unchanged = dayDockReducer(state, {
+      type: "task/captured",
+      task: {
+        ...task("invalid-repeat", "later"),
+        recurrence: {
+          kind: "weekly",
+          anchorDate: "2026-09-21",
+        },
+      },
+    });
+
+    expect(unchanged).toBe(state);
+  });
+
+  it("rejects a next occurrence that mutates the recurrence series", () => {
+    const state = dayDockReducer(createInitialDayDockState(), {
+      type: "task/captured",
+      task: {
+        ...task("series", "today"),
+        recurrence: {
+          kind: "weekly",
+          anchorDate: "2026-09-21",
+        },
+      },
+    });
+
+    const unchanged = dayDockReducer(state, {
+      type: "task/completedWithNext",
+      taskId: "series",
+      completedAt: "2026-09-21T10:00:00.000Z",
+      nextTask: {
+        ...task("series-next", "later"),
+        deferUntil: "2026-09-22",
+        recurrence: {
+          kind: "daily",
+          anchorDate: "2026-09-22",
+        },
+      },
+    });
+
+    expect(unchanged).toBe(state);
   });
 
 });

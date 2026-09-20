@@ -10,6 +10,7 @@ import type { Task } from "../../domain/daydock/model";
 interface TaskRowProps {
   task: Task;
   leading?: ReactNode;
+  metadata?: ReactNode;
   actions?: ReactNode;
   onRename?: (taskId: string, title: string) => void;
   onRemove?: (taskId: string) => void;
@@ -18,6 +19,7 @@ interface TaskRowProps {
 export function TaskRow({
   task,
   leading,
+  metadata,
   actions,
   onRename,
   onRemove,
@@ -64,8 +66,13 @@ export function TaskRow({
       </span>
       <span className="task-copy">
         <strong>{task.title}</strong>
-        {task.estimateMinutes !== null ? (
-          <span>{task.estimateMinutes} min</span>
+        {task.estimateMinutes !== null || metadata ? (
+          <span className="task-meta">
+            {task.estimateMinutes !== null ? (
+              <span>{task.estimateMinutes} min</span>
+            ) : null}
+            {metadata}
+          </span>
         ) : null}
       </span>
       {actions || canManage ? (

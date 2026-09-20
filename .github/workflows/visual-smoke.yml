@@ -46,6 +46,9 @@ jobs:
             const iso = (offsetMinutes = 0) =>
               new Date(now.getTime() + offsetMinutes * 60_000).toISOString();
             const dateKey = now.toISOString().slice(0, 10);
+            const tomorrowKey = new Date(
+              now.getTime() + 24 * 60 * 60 * 1000,
+            ).toISOString().slice(0, 10);
 
             const tasks = {
               release: {
@@ -54,6 +57,8 @@ jobs:
                 status: "today",
                 estimateMinutes: 50,
                 personId: null,
+                deferUntil: null,
+                recurrence: null,
                 createdAt: iso(-180),
                 completedAt: null,
               },
@@ -63,15 +68,19 @@ jobs:
                 status: "today",
                 estimateMinutes: 25,
                 personId: null,
+                deferUntil: null,
+                recurrence: null,
                 createdAt: iso(-150),
                 completedAt: null,
               },
               followup: {
                 id: "followup",
                 title: "Ask Anna for final copy review",
-                status: "inbox",
+                status: "later",
                 estimateMinutes: null,
                 personId: "anna",
+                deferUntil: dateKey,
+                recurrence: null,
                 createdAt: iso(-120),
                 completedAt: null,
               },
@@ -81,6 +90,11 @@ jobs:
                 status: "later",
                 estimateMinutes: null,
                 personId: null,
+                deferUntil: tomorrowKey,
+                recurrence: {
+                  kind: "weekly",
+                  anchorDate: tomorrowKey,
+                },
                 createdAt: iso(-90),
                 completedAt: null,
               },
@@ -90,6 +104,8 @@ jobs:
                 status: "done",
                 estimateMinutes: 20,
                 personId: null,
+                deferUntil: null,
+                recurrence: null,
                 createdAt: iso(-240),
                 completedAt: iso(-60),
               },
@@ -117,7 +133,7 @@ jobs:
                         taskId: "release",
                         startedAt: iso(-8),
                         durationMinutes: 50,
-                        pausedAt: null,
+                        pausedAt: iso(-1),
                         accumulatedPauseMs: 0,
                       }
                     : null,
@@ -139,7 +155,7 @@ jobs:
             localStorage.setItem(
               "daydock:workspace",
               JSON.stringify({
-                schemaVersion: 2,
+                schemaVersion: 3,
                 updatedAt: iso(),
                 data: state,
               }),

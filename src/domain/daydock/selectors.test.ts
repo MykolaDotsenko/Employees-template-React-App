@@ -10,6 +10,8 @@ function task(id: string, personId: string | null, status: Task["status"]): Task
     status,
     estimateMinutes: null,
     personId,
+    deferUntil: null,
+    recurrence: null,
     createdAt: "2026-09-19T08:00:00.000Z",
     completedAt: status === "done" ? "2026-09-19T09:00:00.000Z" : null,
   };

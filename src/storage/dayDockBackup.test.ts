@@ -30,6 +30,8 @@ function workspace(): DayDockState {
     status: "today",
     estimateMinutes: 30,
     personId: "anna",
+    deferUntil: null,
+    recurrence: null,
     createdAt: "2026-09-19T08:00:00.000Z",
     completedAt: null,
   };
@@ -114,4 +116,43 @@ describe("DayDock portable backups", () => {
       focusSessionCount: 1,
     });
   });
+
+  it("imports an older v2 backup and defaults scheduling fields safely", () => {
+    const raw = JSON.stringify({
+      format: DAYDOCK_BACKUP_FORMAT,
+      formatVersion: DAYDOCK_BACKUP_FORMAT_VERSION,
+      exportedAt: "2026-09-19T12:00:00.000Z",
+      appSchemaVersion: 2,
+      data: {
+        tasks: {
+          legacy: {
+            id: "legacy",
+            title: "Bring this forward",
+            status: "later",
+            estimateMinutes: null,
+            personId: null,
+            createdAt: "2026-09-19T08:00:00.000Z",
+            completedAt: null,
+          },
+        },
+        taskOrder: ["legacy"],
+        top3: [],
+        people: {},
+        personOrder: [],
+        focus: {
+          active: null,
+          history: [],
+        },
+      },
+    });
+
+    const backup = parseDayDockBackup(raw);
+
+    expect(backup?.appSchemaVersion).toBe(2);
+    expect(backup?.state.tasks.legacy).toMatchObject({
+      deferUntil: null,
+      recurrence: null,
+    });
+  });
+
 });

@@ -4,6 +4,7 @@ import type {
   NonDoneTaskStatus,
   Person,
   Task,
+  TaskRecurrence,
 } from "./model";
 
 export type DayDockAction =
@@ -11,7 +12,20 @@ export type DayDockAction =
   | { type: "task/renamed"; taskId: string; title: string }
   | { type: "task/removed"; taskId: string }
   | { type: "task/moved"; taskId: string; status: NonDoneTaskStatus }
+  | {
+      type: "task/deferred";
+      taskId: string;
+      deferUntil: string | null;
+      recurrence: TaskRecurrence | null;
+    }
+  | { type: "task/resurfaceDue"; dateKey: string }
   | { type: "task/completed"; taskId: string; completedAt: string }
+  | {
+      type: "task/completedWithNext";
+      taskId: string;
+      completedAt: string;
+      nextTask: Task;
+    }
   | { type: "task/reopened"; taskId: string; status: NonDoneTaskStatus }
   | { type: "task/personAttached"; taskId: string; personId: string | null }
   | { type: "top3/added"; taskId: string }

@@ -19,7 +19,11 @@ const backupEnvelopeSchema = z.object({
   format: z.literal(DAYDOCK_BACKUP_FORMAT),
   formatVersion: z.literal(DAYDOCK_BACKUP_FORMAT_VERSION),
   exportedAt: isoDateTimeSchema,
-  appSchemaVersion: z.literal(DAYDOCK_SCHEMA_VERSION),
+  appSchemaVersion: z
+    .number()
+    .int()
+    .min(0)
+    .max(DAYDOCK_SCHEMA_VERSION),
   data: z.unknown(),
 });
 

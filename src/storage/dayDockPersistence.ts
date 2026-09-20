@@ -14,7 +14,7 @@ import {
 } from "../store/dayDockStore";
 
 export const DAYDOCK_STORAGE_KEY = "daydock:workspace";
-export const DAYDOCK_SCHEMA_VERSION = 2 as const;
+export const DAYDOCK_SCHEMA_VERSION = 3 as const;
 
 export interface StorageLike {
   getItem(key: string): string | null;
@@ -39,6 +39,11 @@ const isoDateTimeSchema = z.string().refine(
 
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
+const recurrenceSchema = z.object({
+  kind: z.enum(["daily", "weekdays", "weekly", "monthly"]),
+  anchorDate: isoDateSchema,
+});
+
 const taskSchema = z
   .object({
     id: z.string().min(1),
@@ -46,6 +51,8 @@ const taskSchema = z
     status: z.enum(["inbox", "today", "later", "done"]),
     estimateMinutes: z.number().int().positive().max(24 * 60).nullable(),
     personId: z.string().min(1).nullable(),
+    deferUntil: isoDateSchema.nullable().default(null),
+    recurrence: recurrenceSchema.nullable().default(null),
     createdAt: isoDateTimeSchema,
     completedAt: isoDateTimeSchema.nullable(),
   })
@@ -95,8 +102,14 @@ const dayDockStateSchema = legacyStateSchema.extend({
   }),
 });
 
-const v2EnvelopeSchema = z.object({
+const v3EnvelopeSchema = z.object({
   schemaVersion: z.literal(DAYDOCK_SCHEMA_VERSION),
+  updatedAt: isoDateTimeSchema,
+  data: dayDockStateSchema,
+});
+
+const v2EnvelopeSchema = z.object({
+  schemaVersion: z.literal(2),
   updatedAt: isoDateTimeSchema,
   data: dayDockStateSchema,
 });
@@ -165,6 +178,15 @@ export function normalizeDayDockState(state: DayDockState): DayDockState {
   const tasks: Record<string, Task> = {};
 
   for (const [id, task] of Object.entries(state.tasks)) {
+    const deferUntil = task.status === "done" ? null : task.deferUntil;
+    const recurrence =
+      task.status === "done" ||
+      (task.status === "later" &&
+        task.recurrence !== null &&
+        deferUntil === null)
+        ? null
+        : task.recurrence;
+
     tasks[id] = {
       ...task,
       id,
@@ -173,6 +195,8 @@ export function normalizeDayDockState(state: DayDockState): DayDockState {
         task.personId !== null && people[task.personId]
           ? task.personId
           : null,
+      deferUntil,
+      recurrence,
     };
   }
 
@@ -281,13 +305,21 @@ export function loadDayDockWorkspace(
     };
   }
 
-  const current = v2EnvelopeSchema.safeParse(parsed);
+  const current = v3EnvelopeSchema.safeParse(parsed);
 
   if (current.success) {
     return {
       state: normalizeDayDockState(current.data.data),
       source: "stored",
     };
+  }
+
+  const v2 = v2EnvelopeSchema.safeParse(parsed);
+
+  if (v2.success) {
+    const state = normalizeDayDockState(v2.data.data);
+    saveDayDockWorkspace(state, storage, now);
+    return { state, source: "migrated" };
   }
 
   const v1 = v1EnvelopeSchema.safeParse(parsed);

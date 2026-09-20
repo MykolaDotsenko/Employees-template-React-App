@@ -4,9 +4,10 @@ import {
   type DayInsight,
   type ReviewInsights,
 } from "../../domain/daydock/insights";
-import type { Task } from "../../domain/daydock/model";
+import type { Task, TaskRecurrence } from "../../domain/daydock/model";
 import type { PaletteSurface } from "../command-palette/CommandPalette";
 import { TaskRow } from "../tasks/TaskRow";
+import { TaskScheduleDialog } from "../tasks/TaskScheduleDialog";
 
 interface ReviewSurfaceProps {
   completedToday: Task[];
@@ -17,7 +18,12 @@ interface ReviewSurfaceProps {
   tasksById: Record<string, Task>;
   inboxCount: number;
   dueFollowUpsCount: number;
-  onMoveLater: (taskId: string) => void;
+  todayKey: string;
+  onSchedule: (
+    taskId: string,
+    deferUntil: string | null,
+    recurrence: TaskRecurrence | null,
+  ) => void;
   onComplete: (taskId: string) => void;
   onReopen: (taskId: string) => void;
   onNavigate: (surface: PaletteSurface) => void;
@@ -51,7 +57,8 @@ export function ReviewSurface({
   tasksById,
   inboxCount,
   dueFollowUpsCount,
-  onMoveLater,
+  todayKey,
+  onSchedule,
   onComplete,
   onReopen,
   onNavigate,
@@ -145,14 +152,11 @@ export function ReviewSurface({
                 task={task}
                 actions={
                   <>
-                    <button
-                      type="button"
-                      className="text-action"
-                      aria-label={`Move ${task.title} to Later`}
-                      onClick={() => onMoveLater(task.id)}
-                    >
-                      Later
-                    </button>
+                    <TaskScheduleDialog
+                      task={task}
+                      todayKey={todayKey}
+                      onSchedule={onSchedule}
+                    />
                     <button
                       type="button"
                       className="text-action positive-action"

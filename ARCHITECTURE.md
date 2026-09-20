@@ -49,8 +49,8 @@ versioned envelope
         v
 Zod validation
         |
-        +--> current schema → normalize
-        +--> v0 schema → migrate → write v1
+        +--> current schema v3 → normalize
+        +--> v0/v1/v2 → migrate → write v3
         +--> corrupt/future → safe recovery
         |
         v
@@ -66,7 +66,7 @@ Persistence is deliberately outside the reducer. Stored data is untrusted input 
 
 ```text
 {
-  schemaVersion: 1,
+  schemaVersion: 3,
   updatedAt: ISO date-time,
   data: DayDockState
 }
@@ -109,6 +109,34 @@ external local-first store
 9. Unknown persisted schemas fail safe rather than being silently downgraded.
 
 
+## Resurface and recurrence boundary
+
+Scheduling remains part of the deterministic domain rather than a timer running in
+the background.
+
+```text
+Later task
+    |
+    +--> deferUntil: YYYY-MM-DD | null
+    +--> recurrence: { kind, anchorDate } | null
+    |
+calendar day becomes relevant
+    |
+task/resurfaceDue(dateKey)
+    |
+    v
+Inbox → "Ready again"
+```
+
+A return date is an **attention date**, not a deadline. No background service is
+required: the application dispatches the deterministic resurface command when it
+opens and when the local calendar day changes.
+
+Recurring completion is atomic. The caller generates the next id/timestamp/date
+outside the reducer, then the reducer marks the current occurrence Done and inserts
+the future occurrence in one transition. Snooze dates are separate from recurrence
+anchors so moving one occurrence does not accidentally move the whole cadence.
+
 ## Cross-tab local-first synchronization
 
 DayDock keeps `localStorage` as the durable local source of truth and uses
@@ -123,7 +151,7 @@ pure reducer
     v
 external store
     |
-    +--> persist normalized v2 workspace to localStorage
+    +--> persist normalized v3 workspace to localStorage
     |
     +--> revisioned BroadcastChannel snapshot
               |

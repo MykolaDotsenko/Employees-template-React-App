@@ -1,5 +1,11 @@
 export type NonDoneTaskStatus = "inbox" | "today" | "later";
 export type TaskStatus = NonDoneTaskStatus | "done";
+export type TaskRecurrenceKind = "daily" | "weekdays" | "weekly" | "monthly";
+
+export interface TaskRecurrence {
+  kind: TaskRecurrenceKind;
+  anchorDate: string;
+}
 
 export interface Task {
   id: string;
@@ -7,6 +13,8 @@ export interface Task {
   status: TaskStatus;
   estimateMinutes: number | null;
   personId: string | null;
+  deferUntil: string | null;
+  recurrence: TaskRecurrence | null;
   createdAt: string;
   completedAt: string | null;
 }
