@@ -548,7 +548,7 @@ describe("dayDockReducer", () => {
   });
 
   it("rejects a next occurrence that mutates the recurrence series", () => {
-    let state = dayDockReducer(createInitialDayDockState(), {
+    const state = dayDockReducer(createInitialDayDockState(), {
       type: "task/captured",
       task: {
         ...task("series", "today"),
