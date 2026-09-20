@@ -19,6 +19,7 @@ It started as an employee-management React exercise and was rebuilt into a compl
 - resilient Focus Mode with pause/resume and timestamp-derived timing
 - People context with scheduled follow-ups and linked tasks
 - command palette and local search with **Ctrl/Cmd + K**
+- local read-only **Calendar Awareness** from standard `.ics` files with meeting constraints and derived focus windows
 - Daily Review with completed work, unresolved work, and seven-day focus rhythm
 - versioned local-first persistence and legacy migration
 - validated cross-tab synchronization with BroadcastChannel
@@ -75,6 +76,7 @@ DayDock external store
         +--> versioned persistence
         +--> BroadcastChannel sync
         +--> backup / restore
+        +--> local calendar snapshot / focus windows
         |
         v
 pure domain reducer
