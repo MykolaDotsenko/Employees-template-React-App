@@ -1,7 +1,8 @@
 import { ViewTransition, useState } from "react";
 import { normalizeFocusDurationMinutes } from "../../domain/daydock/focus";
-import type { Task } from "../../domain/daydock/model";
+import type { DayPlan, Task } from "../../domain/daydock/model";
 import { TaskRow } from "../tasks/TaskRow";
+import { StartDayPanel } from "./StartDayPanel";
 
 export type GettingStartedStage = "capture" | "decide" | null;
 
@@ -9,8 +10,15 @@ interface TodaySurfaceProps {
   top3: Task[];
   todayTasks: Task[];
   gettingStartedStage: GettingStartedStage;
+  todayKey: string;
+  dayPlan: DayPlan | null;
+  readyAgainCount: number;
+  inboxCount: number;
+  duePeopleCount: number;
   onCapture: () => void;
   onOpenInbox: () => void;
+  onOpenPeople: () => void;
+  onStartDay: (focusRoomMinutes: number) => void;
   onAddToTop3: (taskId: string) => void;
   onRemoveFromTop3: (taskId: string) => void;
   onComplete: (taskId: string) => void;
@@ -23,8 +31,15 @@ export function TodaySurface({
   top3,
   todayTasks,
   gettingStartedStage,
+  todayKey,
+  dayPlan,
+  readyAgainCount,
+  inboxCount,
+  duePeopleCount,
   onCapture,
   onOpenInbox,
+  onOpenPeople,
+  onStartDay,
   onAddToTop3,
   onRemoveFromTop3,
   onComplete,
@@ -57,6 +72,20 @@ export function TodaySurface({
           Keep the day small. Choose up to three outcomes worth finishing.
         </p>
       </section>
+
+      {gettingStartedStage === null ? (
+        <StartDayPanel
+          todayKey={todayKey}
+          existingPlan={dayPlan}
+          readyAgainCount={readyAgainCount}
+          inboxCount={inboxCount}
+          duePeopleCount={duePeopleCount}
+          top3Count={top3.length}
+          onOpenInbox={onOpenInbox}
+          onOpenPeople={onOpenPeople}
+          onStartDay={onStartDay}
+        />
+      ) : null}
 
       {gettingStartedStage ? (
         <section className="first-run-guide" aria-labelledby="first-run-title">
