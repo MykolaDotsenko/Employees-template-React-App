@@ -313,4 +313,53 @@ describe("dayDockReducer", () => {
     ).toBe(focusedState);
   });
 
+
+  it("renames a person and keeps linked task relationships intact", () => {
+    let state = dayDockReducer(createInitialDayDockState(), {
+      type: "person/added",
+      person: person("anna", null),
+    });
+    state = dayDockReducer(state, {
+      type: "task/captured",
+      task: {
+        ...task("linked", "inbox"),
+        personId: "anna",
+      },
+    });
+
+    state = dayDockReducer(state, {
+      type: "person/renamed",
+      personId: "anna",
+      name: "Anna Rivera",
+    });
+
+    expect(state.people.anna?.name).toBe("Anna Rivera");
+    expect(state.tasks.linked?.personId).toBe("anna");
+  });
+
+  it("removes a person without deleting their linked work", () => {
+    let state = dayDockReducer(createInitialDayDockState(), {
+      type: "person/added",
+      person: person("anna", "2026-09-20"),
+    });
+    state = dayDockReducer(state, {
+      type: "task/captured",
+      task: {
+        ...task("linked", "inbox"),
+        title: "Keep this commitment",
+        personId: "anna",
+      },
+    });
+
+    state = dayDockReducer(state, {
+      type: "person/removed",
+      personId: "anna",
+    });
+
+    expect(state.people.anna).toBeUndefined();
+    expect(state.personOrder).not.toContain("anna");
+    expect(state.tasks.linked?.title).toBe("Keep this commitment");
+    expect(state.tasks.linked?.personId).toBeNull();
+  });
+
 });
