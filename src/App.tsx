@@ -41,6 +41,10 @@ import { FocusMode } from "./features/focus/FocusMode";
 import { InboxSurface } from "./features/inbox/InboxSurface";
 import { PeopleSurface } from "./features/people/PeopleSurface";
 import { QuickCaptureDialog } from "./features/quick-capture/QuickCaptureDialog";
+import {
+  parseCaptureLaunch,
+  stripCaptureLaunchFromUrl,
+} from "./features/quick-capture/captureLaunch";
 import { ReviewSurface } from "./features/review/ReviewSurface";
 import { TodaySurface } from "./features/today/TodaySurface";
 import { dayDockStore } from "./store/browserDayDockStore";
@@ -143,6 +147,11 @@ export function App({ store = dayDockStore }: AppProps) {
   const [surface, setSurface] = useState<Surface>("today");
   const captureDialogRef = useRef<HTMLDialogElement>(null);
   const commandDialogRef = useRef<HTMLDialogElement>(null);
+  const captureLaunchHandledRef = useRef(false);
+  const [capturePrefill, setCapturePrefill] = useState<string | null>(null);
+  const [initialCaptureLaunch] = useState(() =>
+    parseCaptureLaunch(window.location.search),
+  );
   const state = useDayDockState(store);
   const persistenceStatus = store.getPersistenceStatus();
   const initialFocus = state.focus.active;
@@ -219,13 +228,30 @@ export function App({ store = dayDockStore }: AppProps) {
   const focusedTask =
     activeFocus === null ? null : state.tasks[activeFocus.taskId] ?? null;
 
-  function showCaptureDialog() {
+  function showCaptureDialog(prefill: string | null = null) {
     const dialog = captureDialogRef.current;
     if (!dialog || dialog.open) return;
 
+    setCapturePrefill(prefill);
     dialog.showModal();
-    dialog.querySelector<HTMLTextAreaElement>("[data-capture-input]")?.focus();
+    window.requestAnimationFrame(() => {
+      dialog.querySelector<HTMLTextAreaElement>("[data-capture-input]")?.focus();
+    });
   }
+
+  useEffect(() => {
+    if (captureLaunchHandledRef.current || initialCaptureLaunch === null) {
+      return;
+    }
+
+    captureLaunchHandledRef.current = true;
+    window.history.replaceState(
+      window.history.state,
+      "",
+      stripCaptureLaunchFromUrl(window.location.href),
+    );
+    showCaptureDialog(initialCaptureLaunch.prefill);
+  }, [initialCaptureLaunch]);
 
   function showCommandPalette() {
     const dialog = commandDialogRef.current;
@@ -795,7 +821,9 @@ export function App({ store = dayDockStore }: AppProps) {
 
       <QuickCaptureDialog
         dialogRef={captureDialogRef}
+        prefill={capturePrefill}
         onCapture={captureTask}
+        onPrefillConsumed={() => setCapturePrefill(null)}
       />
 
       <CommandPalette
