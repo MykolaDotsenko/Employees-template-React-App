@@ -18,6 +18,8 @@ describe("createDayDockStore", () => {
         status: "inbox",
         estimateMinutes: 30,
         personId: null,
+        deferUntil: null,
+        recurrence: null,
         createdAt: "2026-09-19T08:00:00.000Z",
         completedAt: null,
       },
