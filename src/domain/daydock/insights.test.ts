@@ -77,4 +77,38 @@ describe("review insights", () => {
       "focus-a",
     ]);
   });
+
+  it("keeps older completed work accessible in newest-first history", () => {
+    const state = createInitialDayDockState();
+
+    state.tasks.older = {
+      id: "older",
+      title: "Older completion",
+      status: "done",
+      estimateMinutes: null,
+      personId: null,
+      createdAt: "2026-09-10T08:00:00.000Z",
+      completedAt: "2026-09-17T10:00:00.000Z",
+    };
+    state.tasks.newer = {
+      id: "newer",
+      title: "Newer completion",
+      status: "done",
+      estimateMinutes: null,
+      personId: null,
+      createdAt: "2026-09-10T08:00:00.000Z",
+      completedAt: "2026-09-18T10:00:00.000Z",
+    };
+    state.taskOrder.push("older", "newer");
+
+    const insights = buildReviewInsights(state, "2026-09-19", "UTC");
+
+    expect(
+      insights.completionHistory.map(({ task, dateKey }) => [task.id, dateKey]),
+    ).toEqual([
+      ["newer", "2026-09-18"],
+      ["older", "2026-09-17"],
+    ]);
+  });
+
 });
