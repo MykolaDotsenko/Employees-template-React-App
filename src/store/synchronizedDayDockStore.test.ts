@@ -234,4 +234,35 @@ describe("cross-tab DayDock synchronization", () => {
     primary.dispose();
     outsider.close();
   });
+
+  it("keeps the workspace usable and reports degraded persistence when storage writes fail", () => {
+    const bus = new FakeBroadcastBus();
+    const storage: StorageLike = {
+      getItem: () => null,
+      setItem: () => {
+        throw new DOMException("Quota exceeded", "QuotaExceededError");
+      },
+    };
+
+    const synchronized = createSynchronizedDayDockStore({
+      storage,
+      channel: bus.connect(),
+      sourceId: "tab-a",
+      nowMs: () => 900,
+    });
+
+    synchronized.store.dispatch({
+      type: "task/captured",
+      task: task("unsaved", "Still available in memory"),
+    });
+
+    expect(synchronized.store.getSnapshot().tasks.unsaved?.title).toBe(
+      "Still available in memory",
+    );
+    expect(synchronized.store.getPersistenceStatus()).toBe("degraded");
+    expect(bus.posts).toBe(1);
+
+    synchronized.dispose();
+  });
+
 });
