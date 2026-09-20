@@ -1,23 +1,31 @@
-const CACHE = "daydock-shell-v1";
-const SHELL = ["./"];
+const CACHE = "daydock-shell-v2";
+const APP_BASE = new URL("./", self.registration.scope).pathname;
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.add(APP_BASE)));
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))),
-    ),
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))),
+      ),
   );
   self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET" || event.request.mode === "navigate" === false) return;
+  const request = event.request;
+
+  if (request.method !== "GET" || request.mode !== "navigate") return;
+
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request).then((response) => response ?? caches.match("./"))),
+    fetch(request).catch(async () => {
+      const cached = await caches.match(APP_BASE);
+      return cached ?? Response.error();
+    }),
   );
 });
