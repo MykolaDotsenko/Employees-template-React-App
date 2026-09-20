@@ -30,6 +30,8 @@ function workspace(): DayDockState {
     status: "today",
     estimateMinutes: 30,
     personId: "anna",
+    deferUntil: null,
+    recurrence: null,
     createdAt: "2026-09-19T08:00:00.000Z",
     completedAt: null,
   };
