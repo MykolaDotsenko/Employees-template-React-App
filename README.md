@@ -114,7 +114,7 @@ The visual rule is simple: **hierarchy over decoration**. Motion communicates co
 ## Run locally
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
