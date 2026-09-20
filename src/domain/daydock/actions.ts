@@ -9,6 +9,7 @@ import type {
 export type DayDockAction =
   | { type: "task/captured"; task: Task }
   | { type: "task/renamed"; taskId: string; title: string }
+  | { type: "task/removed"; taskId: string }
   | { type: "task/moved"; taskId: string; status: NonDoneTaskStatus }
   | { type: "task/completed"; taskId: string; completedAt: string }
   | { type: "task/reopened"; taskId: string; status: NonDoneTaskStatus }
