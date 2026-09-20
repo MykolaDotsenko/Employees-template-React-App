@@ -38,6 +38,7 @@ describe("createBrowserDayDockStore", () => {
     expect(store.getSnapshot().tasks["fallback-task"]?.title).toBe(
       "Keep the app usable",
     );
+    expect(store.getPersistenceStatus()).toBe("memory");
   });
 
   it("keeps durable persistence when BroadcastChannel construction fails", () => {
@@ -63,5 +64,6 @@ describe("createBrowserDayDockStore", () => {
     });
 
     expect(storage.read()).toContain("persisted-task");
+    expect(store.getPersistenceStatus()).toBe("durable");
   });
 });
