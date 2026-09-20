@@ -32,6 +32,55 @@ describe("DayDock core daily flow", () => {
     expect(screen.getByText("A fresh day")).toBeInTheDocument();
   });
 
+  it("guides a fresh workspace into the first capture without a tutorial modal", async () => {
+    const user = userEvent.setup();
+    render(<App store={createDayDockStore()} />);
+
+    expect(
+      screen.getByRole("heading", { name: "A fresh day" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("list", { name: "DayDock getting started" }),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Capture your first item" }),
+    );
+
+    expect(
+      screen.getByRole("dialog", { name: "What’s on your mind?" }),
+    ).toHaveAttribute("open");
+    expect(
+      screen.getByRole("textbox", { name: "Capture item" }),
+    ).toHaveFocus();
+  });
+
+  it("moves first-run guidance from Capture to Decide after the first item", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+    render(<App store={store} />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Capture your first item" }),
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Capture item" }),
+      "Prepare release checklist",
+    );
+    await user.click(screen.getByRole("button", { name: "Capture" }));
+
+    expect(
+      screen.getByRole("heading", { name: "Your first item is safe" }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Open Inbox" }));
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Inbox" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Prepare release checklist")).toBeInTheDocument();
+  });
+
   it("captures an item into Inbox and processes it into Today", async () => {
     const user = userEvent.setup();
     const store = createDayDockStore();
