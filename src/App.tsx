@@ -171,6 +171,22 @@ export function App({ store = dayDockStore }: AppProps) {
     return task ? [task] : [];
   });
   const currentTask = top3[0] ?? null;
+  const hasCompletedTask = state.taskOrder.some(
+    (taskId) => state.tasks[taskId]?.status === "done",
+  );
+  const gettingStartedStage =
+    state.focus.history.length === 0 &&
+    state.personOrder.length === 0 &&
+    top3.length === 0 &&
+    !hasCompletedTask
+      ? state.taskOrder.length === 0
+        ? "capture"
+        : todayTasks.length === 0 &&
+            inboxTasks.length > 0 &&
+            laterTasks.length === 0
+          ? "decide"
+          : null
+      : null;
 
   const activeFocus = state.focus.active;
   const focusedTask =
@@ -516,6 +532,9 @@ export function App({ store = dayDockStore }: AppProps) {
                 <TodaySurface
                   top3={top3}
                   todayTasks={todayTasks}
+                  gettingStartedStage={gettingStartedStage}
+                  onCapture={openCapture}
+                  onOpenInbox={() => navigateTo("inbox")}
                   onAddToTop3={addToTop3}
                   onRemoveFromTop3={removeFromTop3}
                   onComplete={completeTask}
