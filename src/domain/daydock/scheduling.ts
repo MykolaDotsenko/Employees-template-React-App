@@ -84,13 +84,51 @@ export function nextRecurrenceDate(
   }
 }
 
+function monthlyOccurrence(
+  anchorDate: string,
+  monthOffset: number,
+): string {
+  const anchor = parseDateKey(anchorDate);
+  const desiredDay = anchor.getUTCDate();
+  const targetStart = new Date(
+    Date.UTC(
+      anchor.getUTCFullYear(),
+      anchor.getUTCMonth() + monthOffset,
+      1,
+    ),
+  );
+  const targetLastDay = new Date(
+    Date.UTC(
+      targetStart.getUTCFullYear(),
+      targetStart.getUTCMonth() + 1,
+      0,
+    ),
+  ).getUTCDate();
+
+  targetStart.setUTCDate(Math.min(desiredDay, targetLastDay));
+  return toDateKey(targetStart);
+}
+
 export function nextRecurrenceDateAfter(
   recurrence: TaskRecurrence,
   completedDate: string,
 ): string {
+  if (recurrence.kind === "monthly") {
+    for (let monthOffset = 1; monthOffset <= 1_200; monthOffset += 1) {
+      const candidate = monthlyOccurrence(recurrence.anchorDate, monthOffset);
+      if (candidate > completedDate) return candidate;
+    }
+
+    throw new Error("Unable to advance monthly recurrence beyond completion date.");
+  }
+
   let next = nextRecurrenceDate(recurrence.kind, recurrence.anchorDate);
 
-  for (let iteration = 0; iteration < 5_000 && next <= completedDate; iteration += 1) {
+  for (
+    let iteration = 0;
+    iteration < 5_000 && next <= completedDate;
+    iteration += 1
+  ) {
     next = nextRecurrenceDate(recurrence.kind, next);
   }
 
