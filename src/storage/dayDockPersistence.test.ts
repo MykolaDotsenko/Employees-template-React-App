@@ -81,7 +81,8 @@ describe("DayDock persistence", () => {
   it("migrates schema v4 to schema v5 with empty calendar context", () => {
     const storage = new MemoryStorage();
     const state = createInitialDayDockState();
-    const { calendar: _calendar, ...v4Data } = state;
+    const { calendar, ...v4Data } = state;
+    void calendar;
 
     storage.setItem(
       DAYDOCK_STORAGE_KEY,
