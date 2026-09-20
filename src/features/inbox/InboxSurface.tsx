@@ -8,6 +8,8 @@ interface InboxSurfaceProps {
   onMoveToday: (taskId: string) => void;
   onMoveLater: (taskId: string) => void;
   onComplete: (taskId: string) => void;
+  onRename: (taskId: string, title: string) => void;
+  onRemove: (taskId: string) => void;
 }
 
 export function InboxSurface({
@@ -17,6 +19,8 @@ export function InboxSurface({
   onMoveToday,
   onMoveLater,
   onComplete,
+  onRename,
+  onRemove,
 }: InboxSurfaceProps) {
   const nothingStored = inboxTasks.length === 0 && laterTasks.length === 0;
 
@@ -70,6 +74,8 @@ export function InboxSurface({
                   <TaskRow
                     key={task.id}
                     task={task}
+                    onRename={onRename}
+                    onRemove={onRemove}
                     actions={
                       <>
                         <button
@@ -127,6 +133,8 @@ export function InboxSurface({
                     <TaskRow
                       key={task.id}
                       task={task}
+                    onRename={onRename}
+                    onRemove={onRemove}
                       actions={
                         <>
                           <button

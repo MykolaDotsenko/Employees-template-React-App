@@ -2603,3 +2603,221 @@
     }
   }
 }
+
+
+@layer components {
+  .task-more-button {
+    min-width: 2.35rem;
+    min-height: 2.35rem;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    color: var(--color-text-faint);
+    background: transparent;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    transition:
+      color var(--motion-fast) ease,
+      border-color var(--motion-fast) ease,
+      background var(--motion-fast) ease;
+  }
+
+  .task-more-button:hover,
+  .task-more-button:focus-visible {
+    border-color: var(--color-border);
+    color: var(--color-text);
+    background: var(--color-surface-raised);
+  }
+
+  .task-editor-dialog {
+    width: min(calc(100vw - 2rem), 31rem);
+    margin: auto;
+    padding: 0;
+    border: 1px solid color-mix(
+      in oklch,
+      var(--color-accent) 18%,
+      var(--color-border)
+    );
+    border-radius: var(--radius-xl);
+    color: var(--color-text);
+    background: var(--color-surface-raised);
+    box-shadow: 0 28px 90px oklch(28% 0.03 80 / 0.24);
+  }
+
+  .task-editor-dialog::backdrop {
+    background: oklch(22% 0.02 80 / 0.32);
+    backdrop-filter: blur(4px);
+  }
+
+  .task-editor-form,
+  .task-remove-confirmation {
+    display: grid;
+    gap: var(--space-5);
+    padding: clamp(1.15rem, 4vw, 1.55rem);
+  }
+
+  .task-editor-form h2,
+  .task-remove-confirmation h2 {
+    margin-top: var(--space-1);
+    font-size: clamp(1.2rem, 4vw, 1.55rem);
+    letter-spacing: -0.04em;
+  }
+
+  .task-editor-field {
+    display: grid;
+    gap: var(--space-2);
+    color: var(--color-text-soft);
+    font-size: 0.72rem;
+    font-weight: 740;
+  }
+
+  .task-editor-field input {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.82rem;
+    color: var(--color-text);
+    background: var(--color-surface);
+    font: inherit;
+    font-size: 0.88rem;
+    outline: none;
+  }
+
+  .task-editor-field input:focus-visible {
+    border-color: color-mix(
+      in oklch,
+      var(--color-accent) 55%,
+      var(--color-border)
+    );
+    box-shadow: 0 0 0 0.2rem
+      color-mix(in oklch, var(--color-accent-soft) 62%, transparent);
+  }
+
+  .task-remove-confirmation > p:not(.section-kicker) {
+    color: var(--color-text-soft);
+    font-size: 0.8rem;
+    line-height: 1.55;
+  }
+
+  .task-editor-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .task-editor-action-spacer {
+    flex: 1 1 auto;
+  }
+
+  .task-editor-primary,
+  .task-editor-secondary,
+  .task-editor-danger,
+  .task-editor-remove-link {
+    min-height: 2.75rem;
+    padding: 0.62rem 0.85rem;
+    border-radius: 0.75rem;
+    font-size: 0.74rem;
+    font-weight: 760;
+  }
+
+  .task-editor-primary {
+    color: white;
+    background: var(--color-accent-strong);
+  }
+
+  .task-editor-primary:disabled {
+    opacity: 0.46;
+    cursor: not-allowed;
+  }
+
+  .task-editor-secondary {
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    background: var(--color-surface);
+  }
+
+  .task-editor-remove-link {
+    padding-inline: 0.35rem;
+    color: oklch(48% 0.12 34);
+    background: transparent;
+  }
+
+  .task-editor-danger {
+    color: white;
+    background: oklch(50% 0.16 32);
+  }
+
+  .completed-task-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .completed-task-copy {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .completed-task-copy > span:last-child {
+    overflow-wrap: anywhere;
+  }
+
+  @container (max-width: 520px) {
+    .task-row {
+      row-gap: var(--space-2);
+    }
+
+    .task-actions {
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .task-more-button {
+      min-width: 2.75rem;
+      min-height: 2.75rem;
+    }
+
+    .task-editor-dialog {
+      width: calc(100vw - 1rem);
+      border-radius: var(--radius-lg);
+    }
+
+    .task-editor-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .task-editor-action-spacer {
+      display: none;
+    }
+
+    .task-editor-remove-link {
+      grid-column: 1 / -1;
+      justify-self: start;
+    }
+
+    .task-editor-primary,
+    .task-editor-secondary,
+    .task-editor-danger {
+      width: 100%;
+    }
+
+    .completed-task-row {
+      align-items: flex-start;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .task-editor-dialog,
+    .task-more-button {
+      forced-color-adjust: auto;
+    }
+  }
+}

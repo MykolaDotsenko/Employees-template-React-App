@@ -245,4 +245,72 @@ describe("dayDockReducer", () => {
     expect(state.focus.history[0]?.outcome).toBe("completed");
     expect(state.focus.history[0]?.endedAt).toBe("2026-09-19T10:20:00.000Z");
   });
+
+  it("removes an open task without leaving Top 3 or focus-history ghosts", () => {
+    let state = dayDockReducer(createInitialDayDockState(), {
+      type: "task/captured",
+      task: task("remove-me", "today"),
+    });
+    state = dayDockReducer(state, {
+      type: "top3/added",
+      taskId: "remove-me",
+    });
+    state = dayDockReducer(state, {
+      type: "focus/started",
+      session: focusSession("remove-me"),
+    });
+    state = dayDockReducer(state, {
+      type: "focus/finished",
+      endedAt: "2026-09-19T10:20:00.000Z",
+      outcome: "stopped",
+    });
+
+    expect(state.focus.history).toHaveLength(1);
+
+    state = dayDockReducer(state, {
+      type: "task/removed",
+      taskId: "remove-me",
+    });
+
+    expect(state.tasks["remove-me"]).toBeUndefined();
+    expect(state.taskOrder).not.toContain("remove-me");
+    expect(state.top3).not.toContain("remove-me");
+    expect(state.focus.history).toHaveLength(0);
+  });
+
+  it("does not remove completed work or the task in an active focus session", () => {
+    let doneState = dayDockReducer(createInitialDayDockState(), {
+      type: "task/captured",
+      task: task("done-task", "today"),
+    });
+    doneState = dayDockReducer(doneState, {
+      type: "task/completed",
+      taskId: "done-task",
+      completedAt: "2026-09-19T10:00:00.000Z",
+    });
+
+    expect(
+      dayDockReducer(doneState, {
+        type: "task/removed",
+        taskId: "done-task",
+      }),
+    ).toBe(doneState);
+
+    let focusedState = dayDockReducer(createInitialDayDockState(), {
+      type: "task/captured",
+      task: task("focused-task", "today"),
+    });
+    focusedState = dayDockReducer(focusedState, {
+      type: "focus/started",
+      session: focusSession("focused-task"),
+    });
+
+    expect(
+      dayDockReducer(focusedState, {
+        type: "task/removed",
+        taskId: "focused-task",
+      }),
+    ).toBe(focusedState);
+  });
+
 });

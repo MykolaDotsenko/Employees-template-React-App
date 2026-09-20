@@ -663,4 +663,109 @@ describe("DayDock core daily flow", () => {
     ).toBeInTheDocument();
   });
 
+
+  it("lets a user rename and deliberately remove an open task", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+
+    store.dispatch({
+      type: "task/captured",
+      task: {
+        id: "editable-task",
+        title: "Draft release announcement",
+        status: "inbox",
+        estimateMinutes: null,
+        personId: null,
+        createdAt: "2026-09-20T10:00:00.000Z",
+        completedAt: null,
+      },
+    });
+
+    render(<App store={store} />);
+    await user.click(screen.getByRole("button", { name: "Inbox" }));
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Edit or remove Draft release announcement",
+      }),
+    );
+
+    const editor = screen.getByRole("dialog", {
+      name: "Keep the wording useful",
+    });
+    const title = within(editor).getByLabelText("Task title");
+    await user.clear(title);
+    await user.type(title, "Publish release announcement");
+    await user.click(
+      within(editor).getByRole("button", { name: "Save changes" }),
+    );
+
+    expect(store.getSnapshot().tasks["editable-task"]?.title).toBe(
+      "Publish release announcement",
+    );
+    expect(screen.getByText("Publish release announcement")).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Edit or remove Publish release announcement",
+      }),
+    );
+    const updatedEditor = screen.getByRole("dialog", {
+      name: "Keep the wording useful",
+    });
+    await user.click(
+      within(updatedEditor).getByRole("button", { name: "Remove…" }),
+    );
+
+    const confirmation = screen.getByRole("dialog", {
+      name: "Remove “Publish release announcement”?",
+    });
+    await user.click(
+      within(confirmation).getByRole("button", { name: "Remove task" }),
+    );
+
+    expect(store.getSnapshot().tasks["editable-task"]).toBeUndefined();
+    expect(
+      screen.queryByText("Publish release announcement"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("lets a user recover an accidentally completed task from Review", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+
+    store.dispatch({
+      type: "task/captured",
+      task: {
+        id: "reopen-task",
+        title: "Fix docs typo",
+        status: "today",
+        estimateMinutes: null,
+        personId: null,
+        createdAt: new Date().toISOString(),
+        completedAt: null,
+      },
+    });
+    store.dispatch({
+      type: "task/completed",
+      taskId: "reopen-task",
+      completedAt: new Date().toISOString(),
+    });
+
+    render(<App store={store} />);
+    await user.click(screen.getByRole("button", { name: "Review" }));
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Reopen Fix docs typo to Today",
+      }),
+    );
+
+    expect(store.getSnapshot().tasks["reopen-task"]?.status).toBe("today");
+    expect(store.getSnapshot().tasks["reopen-task"]?.completedAt).toBeNull();
+    expect(
+      screen.getByRole("heading", { name: "Before you close the day" }),
+    ).toBeInTheDocument();
+  });
+
 });
