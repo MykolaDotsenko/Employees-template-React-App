@@ -70,6 +70,11 @@ export interface CalendarState {
   sourceLabel: string | null;
 }
 
+export interface NotificationPreferences {
+  readyAgain: boolean;
+  lastReadyAgainNotifiedDate: string | null;
+}
+
 export interface DayDockState {
   tasks: Record<string, Task>;
   taskOrder: string[];
@@ -79,6 +84,7 @@ export interface DayDockState {
   focus: FocusState;
   dayPlan: DayPlan | null;
   calendar: CalendarState;
+  notifications: NotificationPreferences;
 }
 
 export function createInitialDayDockState(): DayDockState {
@@ -97,6 +103,10 @@ export function createInitialDayDockState(): DayDockState {
       events: [],
       importedAt: null,
       sourceLabel: null,
+    },
+    notifications: {
+      readyAgain: false,
+      lastReadyAgainNotifiedDate: null,
     },
   };
 }
