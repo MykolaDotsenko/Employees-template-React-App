@@ -39,7 +39,9 @@ export function createBrowserDayDockStore({
   try {
     storage = getStorage();
   } catch {
-    return createDayDockStore();
+    return createDayDockStore(undefined, {
+      getPersistenceStatus: () => "memory",
+    });
   }
 
   let channel: BroadcastChannelLike | null;

@@ -7,6 +7,7 @@ import {
 import {
   createDayDockStore,
   type DayDockStore,
+  type PersistenceStatus,
 } from "./dayDockStore";
 
 export const DAYDOCK_SYNC_CHANNEL = "daydock:workspace";
@@ -109,7 +110,10 @@ export function createSynchronizedDayDockStore({
   now = defaultNow,
 }: SynchronizedDayDockStoreOptions): SynchronizedDayDockStore {
   const loaded = loadDayDockWorkspace(storage, now);
-  const store = createDayDockStore(loaded.state);
+  let persistenceStatus: PersistenceStatus = "durable";
+  const store = createDayDockStore(loaded.state, {
+    getPersistenceStatus: () => persistenceStatus,
+  });
 
   let applyingRemoteSnapshot = false;
   let disposed = false;
@@ -122,7 +126,9 @@ export function createSynchronizedDayDockStore({
     if (disposed) return;
 
     const snapshot = store.getSnapshot();
-    saveDayDockWorkspace(snapshot, storage, now);
+    persistenceStatus = saveDayDockWorkspace(snapshot, storage, now)
+      ? "durable"
+      : "degraded";
 
     if (applyingRemoteSnapshot) return;
 

@@ -4,6 +4,7 @@ import {
   useState,
 } from "react";
 import type { DayDockState } from "../../domain/daydock/model";
+import type { PersistenceStatus } from "../../store/dayDockStore";
 import {
   DAYDOCK_BACKUP_MAX_BYTES,
   parseDayDockBackup,
@@ -16,6 +17,7 @@ const POPOVER_ID = "daydock-data-safety";
 
 interface DataSafetyPopoverProps {
   state: DayDockState;
+  persistenceStatus: PersistenceStatus;
   onRestore: (state: DayDockState) => void;
 }
 
@@ -67,6 +69,7 @@ function downloadBackup(state: DayDockState): void {
 
 export function DataSafetyPopover({
   state,
+  persistenceStatus,
   onRestore,
 }: DataSafetyPopoverProps) {
   const inputId = useId();
@@ -135,12 +138,22 @@ export function DataSafetyPopover({
     <>
       <button
         type="button"
-        className="local-badge data-safety-trigger"
+        className={
+          persistenceStatus === "durable"
+            ? "local-badge data-safety-trigger"
+            : "local-badge data-safety-trigger is-warning"
+        }
         popoverTarget={POPOVER_ID}
-        aria-label="Open data and recovery"
+        aria-label={
+          persistenceStatus === "durable"
+            ? "Open data and recovery"
+            : "Open data and recovery — storage warning"
+        }
       >
         <span className="data-safety-dot" aria-hidden="true" />
-        <span>Private by default</span>
+        <span>
+          {persistenceStatus === "durable" ? "Private by default" : "Storage warning"}
+        </span>
       </button>
 
       <aside
@@ -154,13 +167,28 @@ export function DataSafetyPopover({
             <p className="section-kicker">Local-first</p>
             <h2>Your data stays portable</h2>
           </div>
-          <span className="privacy-dot" aria-hidden="true" />
+          <span
+            className={
+              persistenceStatus === "durable"
+                ? "privacy-dot"
+                : "privacy-dot is-warning"
+            }
+            aria-hidden="true"
+          />
         </header>
 
         <p className="data-safety-copy">
           DayDock saves this workspace in your browser. Export a portable backup
           before clearing browser data or moving to another device.
         </p>
+
+        {persistenceStatus !== "durable" ? (
+          <p className="data-safety-storage-status" role="status" aria-live="polite">
+            {persistenceStatus === "memory"
+              ? "Browser storage is unavailable. This workspace is running in memory only, so export a backup before reloading or closing this tab."
+              : "DayDock could not save the latest change. Keep this tab open and export a backup now while your workspace is still available."}
+          </p>
+        ) : null}
 
         <div className="data-safety-actions">
           <button
