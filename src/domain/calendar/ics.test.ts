@@ -37,8 +37,8 @@ describe("ICS calendar import", () => {
 
     expect(result.events.map((event) => event.title)).toEqual([
       "Daily standup",
-      "Daily standup",
       "Company day",
+      "Daily standup",
       "Daily standup",
     ]);
     expect(
