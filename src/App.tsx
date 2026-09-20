@@ -299,7 +299,7 @@ export function App({ store = dayDockStore }: AppProps) {
         deferUntil: nextDate,
         recurrence: {
           kind: task.recurrence.kind,
-          anchorDate: nextDate,
+          anchorDate: task.recurrence.anchorDate,
         },
         createdAt: completedAt,
         completedAt: null,
