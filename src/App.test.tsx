@@ -3,6 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { App } from "./App";
 import { createDayDockStore } from "./store/dayDockStore";
+import {
+  createPersistentDayDockStore,
+  type StorageLike,
+} from "./storage/dayDockPersistence";
 
 function addTodayPriority(store: ReturnType<typeof createDayDockStore>) {
   store.dispatch({
@@ -766,6 +770,37 @@ describe("DayDock core daily flow", () => {
     expect(
       screen.getByRole("heading", { name: "Before you close the day" }),
     ).toBeInTheDocument();
+  });
+
+
+  it("warns immediately after a browser persistence write fails", async () => {
+    const user = userEvent.setup();
+    const storage: StorageLike = {
+      getItem: () => null,
+      setItem: () => {
+        throw new DOMException("Quota exceeded", "QuotaExceededError");
+      },
+    };
+    const store = createPersistentDayDockStore({ storage });
+
+    render(<App store={store} />);
+    expect(screen.getByText("Private by default")).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Capture your first item" }),
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Capture item" }),
+      "Protect this unsaved thought",
+    );
+    await user.click(screen.getByRole("button", { name: "Capture" }));
+
+    expect(screen.getByText("Storage warning")).toBeInTheDocument();
+    expect(screen.getByText("Save problem")).toBeInTheDocument();
+    expect(
+      screen.getByText("Latest changes may not survive reload"),
+    ).toBeInTheDocument();
+    expect(store.getSnapshot().tasks).not.toEqual({});
   });
 
 });
