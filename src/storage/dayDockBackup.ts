@@ -43,6 +43,44 @@ function defaultNow(): string {
   return new Date().toISOString();
 }
 
+function upgradeBackupData(data: unknown, schemaVersion: number): unknown {
+  if (typeof data !== "object" || data === null || Array.isArray(data)) {
+    return data;
+  }
+
+  let upgraded: Record<string, unknown> = { ...data };
+
+  if (schemaVersion <= 1 && !("focus" in upgraded)) {
+    upgraded = {
+      ...upgraded,
+      focus: {
+        active: null,
+        history: [],
+      },
+    };
+  }
+
+  if (schemaVersion <= 3 && !("dayPlan" in upgraded)) {
+    upgraded = {
+      ...upgraded,
+      dayPlan: null,
+    };
+  }
+
+  if (schemaVersion <= 4 && !("calendar" in upgraded)) {
+    upgraded = {
+      ...upgraded,
+      calendar: {
+        events: [],
+        importedAt: null,
+        sourceLabel: null,
+      },
+    };
+  }
+
+  return upgraded;
+}
+
 export function serializeDayDockBackup(
   state: DayDockState,
   now: () => string = defaultNow,
@@ -72,7 +110,12 @@ export function parseDayDockBackup(raw: string): DayDockBackup | null {
   const envelope = backupEnvelopeSchema.safeParse(value);
   if (!envelope.success) return null;
 
-  const state = parseDayDockState(envelope.data.data);
+  const state = parseDayDockState(
+    upgradeBackupData(
+      envelope.data.data,
+      envelope.data.appSchemaVersion,
+    ),
+  );
   if (state === null) return null;
 
   return {
