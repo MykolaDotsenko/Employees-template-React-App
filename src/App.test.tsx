@@ -323,7 +323,7 @@ describe("DayDock core daily flow", () => {
     await user.click(within(palette).getByRole("button", { name: /Anna/ }));
 
     expect(
-      screen.getByRole("heading", { level: 1, name: "People" }),
+      await screen.findByRole("heading", { level: 1, name: "People" }),
     ).toBeInTheDocument();
   });
 
