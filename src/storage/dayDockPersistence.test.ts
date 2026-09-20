@@ -220,6 +220,7 @@ describe("DayDock persistence", () => {
     expect(saved.schemaVersion).toBe(DAYDOCK_SCHEMA_VERSION);
     expect(saved.updatedAt).toBe("2026-09-19T13:00:00.000Z");
     expect(saved.data?.focus).toEqual({ active: null, history: [] });
+    expect(saved.data?.dayPlan).toBeNull();
   });
 
   it("persists external-store changes but ignores no-op actions", () => {
@@ -276,7 +277,43 @@ describe("DayDock persistence", () => {
   });
 
 
-  it("migrates schema v2 tasks without scheduling fields into v3", () => {
+  it("migrates schema v3 workspaces with an empty day plan", () => {
+    const storage = new MemoryStorage();
+    const state = stateWithTasks([task("a")]);
+    const v3Data = {
+      tasks: state.tasks,
+      taskOrder: state.taskOrder,
+      top3: state.top3,
+      people: state.people,
+      personOrder: state.personOrder,
+      focus: state.focus,
+    };
+
+    storage.setItem(
+      DAYDOCK_STORAGE_KEY,
+      JSON.stringify({
+        schemaVersion: 3,
+        updatedAt: "2026-09-20T08:00:00.000Z",
+        data: v3Data,
+      }),
+    );
+
+    const result = loadDayDockWorkspace(
+      storage,
+      () => "2026-09-20T09:00:00.000Z",
+    );
+
+    expect(result.source).toBe("migrated");
+    expect(result.state.dayPlan).toBeNull();
+
+    const upgraded = JSON.parse(
+      storage.getItem(DAYDOCK_STORAGE_KEY) ?? "{}",
+    ) as { schemaVersion?: number };
+
+    expect(upgraded.schemaVersion).toBe(DAYDOCK_SCHEMA_VERSION);
+  });
+
+  it("migrates schema v2 tasks without scheduling fields into the current schema", () => {
     const storage = new MemoryStorage();
 
     storage.setItem(

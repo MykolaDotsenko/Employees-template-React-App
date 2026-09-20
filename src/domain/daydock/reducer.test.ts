@@ -44,6 +44,35 @@ function focusSession(taskId: string): ActiveFocusSession {
 }
 
 describe("dayDockReducer", () => {
+  it("stores one bounded daily focus plan", () => {
+    const state = createInitialDayDockState();
+    const planned = dayDockReducer(state, {
+      type: "day/started",
+      plan: {
+        dateKey: "2026-09-20",
+        focusRoomMinutes: 150,
+        startedAt: "2026-09-20T07:00:00.000Z",
+      },
+    });
+
+    expect(planned.dayPlan).toEqual({
+      dateKey: "2026-09-20",
+      focusRoomMinutes: 150,
+      startedAt: "2026-09-20T07:00:00.000Z",
+    });
+
+    expect(
+      dayDockReducer(planned, {
+        type: "day/started",
+        plan: {
+          dateKey: "2026-09-20",
+          focusRoomMinutes: 900,
+          startedAt: "2026-09-20T07:00:00.000Z",
+        },
+      }),
+    ).toBe(planned);
+  });
+
   it("captures a task without accepting a duplicate id", () => {
     const initial = createInitialDayDockState();
     const captured = dayDockReducer(initial, {

@@ -150,12 +150,13 @@ jobs:
                   },
                 ],
               },
+              dayPlan: null,
             };
 
             localStorage.setItem(
               "daydock:workspace",
               JSON.stringify({
-                schemaVersion: 3,
+                schemaVersion: 4,
                 updatedAt: iso(),
                 data: state,
               }),

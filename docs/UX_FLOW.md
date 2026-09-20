@@ -57,6 +57,24 @@ Completion:
 
 Reopen is available from Review for accidental completion.
 
+
+## Start Day ritual
+
+For established workspaces, Today begins with a short daily reset rather than
+another dashboard.
+
+The panel answers four questions:
+
+1. What deferred work is **Ready again**?
+2. Which People follow-ups need attention?
+3. How many of the Top 3 have been chosen?
+4. How much protected focus room is realistic today?
+
+The user chooses a rough focus-room estimate and starts the day. This value is
+context, not a target or score. The daily plan is persisted, backed up, and
+cross-tab synchronized with the rest of the canonical workspace, so a reload
+does not restart the ritual.
+
 ## Primary surfaces
 
 ### Today

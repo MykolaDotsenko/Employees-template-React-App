@@ -120,6 +120,30 @@ export function dayDockReducer(
   action: DayDockAction,
 ): DayDockState {
   switch (action.type) {
+    case "day/started": {
+      const { plan } = action;
+
+      if (
+        !isDateKey(plan.dateKey) ||
+        !Number.isInteger(plan.focusRoomMinutes) ||
+        plan.focusRoomMinutes < 30 ||
+        plan.focusRoomMinutes > 480 ||
+        parseTime(plan.startedAt) <= 0
+      ) {
+        return state;
+      }
+
+      if (
+        state.dayPlan?.dateKey === plan.dateKey &&
+        state.dayPlan.focusRoomMinutes === plan.focusRoomMinutes &&
+        state.dayPlan.startedAt === plan.startedAt
+      ) {
+        return state;
+      }
+
+      return { ...state, dayPlan: plan };
+    }
+
     case "task/captured": {
       const title = action.task.title.trim();
       if (!title || state.tasks[action.task.id]) return state;

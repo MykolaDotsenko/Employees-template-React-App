@@ -1,5 +1,6 @@
 import type {
   ActiveFocusSession,
+  DayPlan,
   FocusOutcome,
   NonDoneTaskStatus,
   Person,
@@ -8,6 +9,7 @@ import type {
 } from "./model";
 
 export type DayDockAction =
+  | { type: "day/started"; plan: DayPlan }
   | { type: "task/captured"; task: Task }
   | { type: "task/renamed"; taskId: string; title: string }
   | { type: "task/removed"; taskId: string }

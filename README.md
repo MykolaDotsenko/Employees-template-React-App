@@ -10,6 +10,7 @@ It started as an employee-management React exercise and was rebuilt into a compl
 
 ## Product capabilities
 
+- 60-second **Start Day** ritual with attention signals and a realistic focus-room estimate
 - one-field Quick Capture with keyboard shortcut
 - Inbox triage into Today, Done, or calm **Later** scheduling with automatic resurfacing
 - Tomorrow / Next week / custom-date / Someday resurfacing
@@ -80,6 +81,7 @@ pure domain reducer
         |
         +--> task + resurface invariants
         +--> recurrence lifecycle
+        +--> daily planning state
         +--> Top 3 limit
         +--> focus lifecycle
         +--> people relationships
