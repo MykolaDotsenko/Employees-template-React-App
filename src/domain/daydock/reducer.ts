@@ -231,8 +231,7 @@ export function dayDockReducer(
         !isDateKey(action.deferUntil) ||
         (action.recurrence !== null &&
           (action.deferUntil === null ||
-            !isDateKey(action.recurrence.anchorDate) ||
-            action.recurrence.anchorDate !== action.deferUntil))
+            !isDateKey(action.recurrence.anchorDate)))
       ) {
         return state;
       }
