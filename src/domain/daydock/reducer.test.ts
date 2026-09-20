@@ -468,7 +468,7 @@ describe("dayDockReducer", () => {
       deferUntil: "2026-09-21",
       recurrence: {
         kind: "weekly",
-        anchorDate: "2026-09-21",
+        anchorDate: "2026-09-14",
       },
     });
     expect(state.taskOrder).toEqual(["repeat", "repeat-next"]);
