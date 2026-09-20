@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useId,
   useState,
   type FormEvent,
@@ -7,15 +8,25 @@ import {
 
 interface QuickCaptureDialogProps {
   dialogRef: RefObject<HTMLDialogElement | null>;
+  prefill: string | null;
   onCapture: (title: string) => void;
+  onPrefillConsumed: () => void;
 }
 
 export function QuickCaptureDialog({
   dialogRef,
+  prefill,
   onCapture,
+  onPrefillConsumed,
 }: QuickCaptureDialogProps) {
   const titleId = useId();
   const [title, setTitle] = useState("");
+
+  useEffect(() => {
+    if (prefill !== null) {
+      setTitle(prefill);
+    }
+  }, [prefill]);
 
   function closeDialog() {
     dialogRef.current?.close();
@@ -37,7 +48,10 @@ export function QuickCaptureDialog({
       ref={dialogRef}
       className="quick-capture-dialog"
       aria-labelledby={titleId}
-      onClose={() => setTitle("")}
+      onClose={() => {
+        setTitle("");
+        onPrefillConsumed();
+      }}
     >
       <form className="quick-capture-form" onSubmit={submitCapture}>
         <div className="capture-heading">
