@@ -78,7 +78,40 @@ describe("DayDock persistence", () => {
     expect(result.state).toEqual(createInitialDayDockState());
   });
 
-  it("migrates schema v4 to schema v5 with empty calendar context", () => {
+  it("migrates schema v5 to v6 with notifications disabled by default", () => {
+    const storage = new MemoryStorage();
+    const state = createInitialDayDockState();
+    const { notifications, ...v5Data } = state;
+    void notifications;
+
+    storage.setItem(
+      DAYDOCK_STORAGE_KEY,
+      JSON.stringify({
+        schemaVersion: 5,
+        updatedAt: "2026-09-20T08:00:00.000Z",
+        data: v5Data,
+      }),
+    );
+
+    const result = loadDayDockWorkspace(
+      storage,
+      () => "2026-09-20T09:00:00.000Z",
+    );
+
+    expect(result.source).toBe("migrated");
+    expect(result.state.notifications).toEqual({
+      readyAgain: false,
+      lastReadyAgainNotifiedDate: null,
+    });
+
+    const upgraded = JSON.parse(
+      storage.getItem(DAYDOCK_STORAGE_KEY) ?? "{}",
+    ) as { schemaVersion?: number };
+
+    expect(upgraded.schemaVersion).toBe(DAYDOCK_SCHEMA_VERSION);
+  });
+
+  it("migrates schema v4 to the current schema with empty calendar context", () => {
     const storage = new MemoryStorage();
     const state = createInitialDayDockState();
     const { calendar, ...v4Data } = state;
