@@ -17,6 +17,8 @@ export type DayDockAction =
       sourceLabel: string;
     }
   | { type: "calendar/cleared" }
+  | { type: "notifications/readyAgainChanged"; enabled: boolean }
+  | { type: "notifications/readyAgainNotified"; dateKey: string }
   | { type: "day/started"; plan: DayPlan }
   | { type: "task/captured"; task: Task }
   | { type: "task/renamed"; taskId: string; title: string }
