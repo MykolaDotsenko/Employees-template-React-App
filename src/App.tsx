@@ -418,10 +418,16 @@ export function App({ store = dayDockStore }: AppProps) {
       <div className="app-layout">
         <header className="brand-rail">
           <div className="brand-lockup">
-            <span className="brand-mark" aria-hidden="true">D</span>
+            <span className="brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 32 32" role="presentation">
+                <path className="brand-mark-horizon" d="M6 20.5h20" />
+                <path className="brand-mark-dock" d="M9 25V11.5h5.25c5.45 0 8.75 2.7 8.75 6.75S19.7 25 14.25 25H9Z" />
+                <circle className="brand-mark-sun" cx="23.5" cy="8.5" r="3.25" />
+              </svg>
+            </span>
             <div>
               <strong className="brand-name">DayDock</strong>
-              <span className="brand-subtitle">Your day, clearly.</span>
+              <span className="brand-subtitle">Make room for what matters.</span>
             </div>
           </div>
 
@@ -466,7 +472,10 @@ export function App({ store = dayDockStore }: AppProps) {
 
         <main id="main-content" className="main-surface">
           <header className="surface-topbar">
-            <span>{formatDay(today)}</span>
+            <div className="day-context">
+              <span className="day-context-kicker">Your workday</span>
+              <span>{formatDay(today)}</span>
+            </div>
             <div className="topbar-actions">
               <button
                 type="button"
