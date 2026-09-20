@@ -22,7 +22,7 @@ export interface CreateDayDockStoreOptions {
 export function createDayDockStore(
   initialState: DayDockState = createInitialDayDockState(),
   {
-    getPersistenceStatus = () => "memory",
+    getPersistenceStatus = () => "durable",
   }: CreateDayDockStoreOptions = {},
 ): DayDockStore {
   let state = initialState;
