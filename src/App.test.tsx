@@ -233,6 +233,40 @@ describe("DayDock core daily flow", () => {
     expect(store.getSnapshot().tasks.a?.status).toBe("today");
   });
 
+  it("prefills shared Android/PWA content but waits for user confirmation", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+
+    window.history.pushState(
+      {},
+      "",
+      "/?share-target=1&title=Release%20article&text=Read%20later&url=https%3A%2F%2Fexample.com%2Frelease",
+    );
+
+    render(<App store={store} />);
+
+    const dialog = await screen.findByRole("dialog", {
+      name: "What’s on your mind?",
+    });
+    const input = within(dialog).getByRole("textbox", { name: "Capture item" });
+
+    expect(input).toHaveValue(
+      "Release article — Read later — https://example.com/release",
+    );
+    expect(store.getSnapshot().taskOrder).toHaveLength(0);
+    expect(window.location.search).toBe("");
+
+    await user.click(
+      within(dialog).getByRole("button", { name: "Capture" }),
+    );
+
+    expect(store.getSnapshot().taskOrder).toHaveLength(1);
+    const taskId = store.getSnapshot().taskOrder[0];
+    expect(store.getSnapshot().tasks[taskId ?? ""]?.title).toContain(
+      "https://example.com/release",
+    );
+  });
+
   it("opens Quick Capture with the N shortcut outside editable controls", async () => {
     const user = userEvent.setup();
     render(<App store={createDayDockStore()} />);
