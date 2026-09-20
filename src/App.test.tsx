@@ -105,6 +105,30 @@ describe("DayDock core daily flow", () => {
     ).toHaveFocus();
   });
 
+  it("submits Quick Capture from the keyboard without a second tap", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+
+    render(<App store={store} />);
+
+    const primaryNavigation = screen.getByRole("navigation", {
+      name: "Primary",
+    });
+    await user.click(
+      within(primaryNavigation).getByRole("button", { name: "Capture" }),
+    );
+
+    const field = screen.getByRole("textbox", { name: "Capture item" });
+    await user.type(field, "Send the release note{Enter}");
+
+    expect(
+      Object.values(store.getSnapshot().tasks).some(
+        (task) =>
+          task.title === "Send the release note" && task.status === "inbox",
+      ),
+    ).toBe(true);
+  });
+
   it("captures an item into Inbox and processes it into Today", async () => {
     const user = userEvent.setup();
     const store = createDayDockStore();
