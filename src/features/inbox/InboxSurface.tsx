@@ -144,6 +144,7 @@ export function InboxSurface({
                           task={task}
                           todayKey={todayKey}
                           triggerLabel="Snooze"
+                          preserveCadence
                           onSchedule={onSchedule}
                         />
                         <button
