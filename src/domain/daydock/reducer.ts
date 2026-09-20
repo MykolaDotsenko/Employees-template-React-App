@@ -129,6 +129,32 @@ export function dayDockReducer(
       );
     }
 
+    case "task/removed": {
+      const current = state.tasks[action.taskId];
+      if (
+        !current ||
+        current.status === "done" ||
+        state.focus.active?.taskId === action.taskId
+      ) {
+        return state;
+      }
+
+      const { [action.taskId]: _removedTask, ...tasks } = state.tasks;
+
+      return {
+        ...state,
+        tasks,
+        taskOrder: removeId(state.taskOrder, action.taskId),
+        top3: removeId(state.top3, action.taskId),
+        focus: {
+          ...state.focus,
+          history: state.focus.history.filter(
+            (session) => session.taskId !== action.taskId,
+          ),
+        },
+      };
+    }
+
     case "task/moved": {
       const current = state.tasks[action.taskId];
       if (
