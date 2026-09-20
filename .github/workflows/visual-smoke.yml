@@ -195,13 +195,14 @@ jobs:
             local output="$3"
             local status=0
 
-            set +e
-            timeout 20s "${browser}" "${common_flags[@]}" \
+            if timeout 8s "${browser}" "${common_flags[@]}" \
               --user-data-dir="${profile}" \
               --dump-dom \
-              "${url}" > "${output}"
-            status=$?
-            set -e
+              "${url}" > "${output}"; then
+              status=0
+            else
+              status=$?
+            fi
 
             if [ "${status}" -ne 0 ] && [ "${status}" -ne 124 ]; then
               echo "::error::Chromium DOM render failed for ${url} with status ${status}."
