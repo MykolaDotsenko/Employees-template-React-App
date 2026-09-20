@@ -47,6 +47,8 @@ describe("review insights", () => {
       status: "done",
       estimateMinutes: 30,
       personId: null,
+      deferUntil: null,
+      recurrence: null,
       createdAt: "2026-09-19T08:00:00.000Z",
       completedAt: "2026-09-19T10:00:00.000Z",
     };
