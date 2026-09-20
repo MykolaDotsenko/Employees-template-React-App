@@ -3224,7 +3224,7 @@
       display: none;
     }
 
-    .data-safety-trigger > .data-safety-label-mobile {
+    .data-safety-trigger > span.data-safety-label-mobile:last-child {
       display: inline;
     }
 
