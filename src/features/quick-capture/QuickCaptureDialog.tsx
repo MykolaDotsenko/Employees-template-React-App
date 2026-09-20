@@ -1,5 +1,4 @@
 import {
-  useEffect,
   useId,
   useState,
   type FormEvent,
@@ -20,13 +19,7 @@ export function QuickCaptureDialog({
   onPrefillConsumed,
 }: QuickCaptureDialogProps) {
   const titleId = useId();
-  const [title, setTitle] = useState("");
-
-  useEffect(() => {
-    if (prefill !== null) {
-      setTitle(prefill);
-    }
-  }, [prefill]);
+  const [title, setTitle] = useState(prefill ?? "");
 
   function closeDialog() {
     dialogRef.current?.close();
