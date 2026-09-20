@@ -5,21 +5,32 @@ import {
 } from "../domain/daydock/model";
 import { dayDockReducer } from "../domain/daydock/reducer";
 
+export type PersistenceStatus = "memory" | "durable" | "degraded";
+
 export interface DayDockStore {
   getSnapshot: () => DayDockState;
+  getPersistenceStatus: () => PersistenceStatus;
   dispatch: (action: DayDockAction) => void;
   replaceState: (state: DayDockState) => void;
   subscribe: (listener: () => void) => () => void;
 }
 
+export interface CreateDayDockStoreOptions {
+  getPersistenceStatus?: () => PersistenceStatus;
+}
+
 export function createDayDockStore(
   initialState: DayDockState = createInitialDayDockState(),
+  {
+    getPersistenceStatus = () => "memory",
+  }: CreateDayDockStoreOptions = {},
 ): DayDockStore {
   let state = initialState;
   const listeners = new Set<() => void>();
 
   return {
     getSnapshot: () => state,
+    getPersistenceStatus,
 
     dispatch: (action) => {
       const nextState = dayDockReducer(state, action);
