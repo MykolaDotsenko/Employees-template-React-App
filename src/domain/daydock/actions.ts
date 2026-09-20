@@ -17,6 +17,8 @@ export type DayDockAction =
   | { type: "top3/added"; taskId: string }
   | { type: "top3/removed"; taskId: string }
   | { type: "person/added"; person: Person }
+  | { type: "person/renamed"; personId: string; name: string }
+  | { type: "person/removed"; personId: string }
   | {
       type: "person/followUpChanged";
       personId: string;
