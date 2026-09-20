@@ -13,7 +13,7 @@ The product is not another unlimited todo list. Its primary job is to reduce rep
 ### Capture
 
 - desktop: click **Capture** or press **N**
-- mobile: thumb-friendly floating **+**
+- mobile: centered **Capture** action in the bottom navigation
 - one required field: the thought itself
 - default destination: Inbox
 - no classification required at capture time
@@ -22,13 +22,17 @@ The user returns to the previous context immediately after capture.
 
 ### Decide in Inbox
 
-Each Inbox item currently has three high-signal outcomes:
+Each unsorted Inbox item has three high-signal outcomes:
 
 - **Today**
-- **Later**
+- **Later** — choose Tomorrow, Next week, a date, or Someday
 - **Done**
 
-Person attachment and richer scheduling are later layers.
+Later is not a second backlog. Dated items automatically return to Inbox as **Ready again** when attention becomes useful. Ready-again work can go to Today, be snoozed, or be completed.
+
+Scheduling is intentionally distinct from a deadline. A return date answers “when should I reconsider this?” and never produces an overdue or failure state.
+
+Optional recurrence supports Daily, Weekdays, Weekly, and Monthly rhythms. Snoozing one recurring occurrence can move that occurrence without silently moving the recurrence anchor.
 
 ### Today
 
@@ -48,8 +52,10 @@ Completion:
 - stamps the completion time outside the reducer
 - moves the task to Done
 - automatically removes it from Top 3
+- closes active Focus when that task is completed
+- for recurring work, atomically preserves the completed occurrence and creates a fresh future occurrence with a new id
 
-Undo/reopen exists in the domain model and will surface with review/recovery UI.
+Reopen is available from Review for accidental completion.
 
 ## Primary surfaces
 
@@ -146,7 +152,7 @@ It answers four questions:
 3. Which Today items still need a home?
 4. What has my recent focus rhythm looked like?
 
-Unfinished Today tasks can be moved to Later or completed directly from Review. When none remain, DayDock explicitly says that everything has a home.
+Unfinished Today tasks can be parked with a return date or completed directly from Review. When none remain, DayDock explicitly says that everything has a home.
 
 The seven-day chart is derived from completed focus-session history. It shows data, not a grade, target, streak, or comparison against other people. Session duration is attributed to the calendar day on which the session ended; this keeps the calculation deterministic and appropriate for short work sessions.
 
