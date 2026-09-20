@@ -15,7 +15,10 @@ interface PeopleSurfaceProps {
     context: string,
     nextFollowUpDate: string | null,
   ) => void;
+  onRenamePerson: (personId: string, name: string) => void;
+  onSetContext: (personId: string, context: string) => void;
   onSetFollowUp: (personId: string, nextFollowUpDate: string | null) => void;
+  onRemovePerson: (personId: string) => void;
   onAddFollowUpTask: (personId: string, title: string) => void;
 }
 
@@ -93,14 +96,24 @@ export function PeopleSurface({
   tasksByPerson,
   todayKey,
   onAddPerson,
+  onRenamePerson,
+  onSetContext,
   onSetFollowUp,
+  onRemovePerson,
   onAddFollowUpTask,
 }: PeopleSurfaceProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const titleId = useId();
+  const addDialogRef = useRef<HTMLDialogElement>(null);
+  const editDialogRef = useRef<HTMLDialogElement>(null);
+  const addTitleId = useId();
+  const editTitleId = useId();
   const [name, setName] = useState("");
   const [context, setContext] = useState("");
   const [date, setDate] = useState("");
+  const [editingPersonId, setEditingPersonId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editContext, setEditContext] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
 
   const orderedPeople = [...people].sort((left, right) => {
     const leftDate = left.nextFollowUpDate ?? "9999-12-31";
@@ -109,16 +122,21 @@ export function PeopleSurface({
     return leftDate.localeCompare(rightDate) || left.name.localeCompare(right.name);
   });
 
-  function openDialog() {
-    const dialog = dialogRef.current;
+  const editingPerson =
+    editingPersonId === null
+      ? null
+      : people.find((person) => person.id === editingPersonId) ?? null;
+
+  function openAddDialog() {
+    const dialog = addDialogRef.current;
     if (!dialog || dialog.open) return;
 
     dialog.showModal();
     dialog.querySelector<HTMLInputElement>("[data-person-name]")?.focus();
   }
 
-  function closeDialog() {
-    dialogRef.current?.close();
+  function closeAddDialog() {
+    addDialogRef.current?.close();
   }
 
   function submitPerson(event: FormEvent<HTMLFormElement>) {
@@ -131,7 +149,50 @@ export function PeopleSurface({
     setName("");
     setContext("");
     setDate("");
-    closeDialog();
+    closeAddDialog();
+  }
+
+  function openEditDialog(person: Person) {
+    const dialog = editDialogRef.current;
+    if (!dialog || dialog.open) return;
+
+    setEditingPersonId(person.id);
+    setEditName(person.name);
+    setEditContext(person.context);
+    setEditDate(person.nextFollowUpDate ?? "");
+    setConfirmingRemove(false);
+    dialog.showModal();
+  }
+
+  function resetEditDialog() {
+    setEditingPersonId(null);
+    setEditName("");
+    setEditContext("");
+    setEditDate("");
+    setConfirmingRemove(false);
+  }
+
+  function closeEditDialog() {
+    editDialogRef.current?.close();
+  }
+
+  function submitPersonEdits(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (editingPerson === null) return;
+
+    const trimmedName = editName.trim();
+    if (!trimmedName) return;
+
+    onRenamePerson(editingPerson.id, trimmedName);
+    onSetContext(editingPerson.id, editContext.trim());
+    onSetFollowUp(editingPerson.id, editDate || null);
+    closeEditDialog();
+  }
+
+  function removeEditingPerson() {
+    if (editingPerson === null) return;
+    onRemovePerson(editingPerson.id);
+    closeEditDialog();
   }
 
   return (
@@ -145,7 +206,7 @@ export function PeopleSurface({
             workday into a CRM.
           </p>
         </div>
-        <button type="button" className="people-add-button" onClick={openDialog}>
+        <button type="button" className="people-add-button" onClick={openAddDialog}>
           <span aria-hidden="true">+</span>
           Add person
         </button>
@@ -179,12 +240,20 @@ export function PeopleSurface({
                   <span className="person-avatar" aria-hidden="true">
                     {initials(person.name)}
                   </span>
-                  <div>
+                  <div className="person-card-heading">
                     <h2>{person.name}</h2>
                     <p className={isDue ? "person-due-label" : "person-date-label"}>
                       {followUpLabel(person.nextFollowUpDate, todayKey)}
                     </p>
                   </div>
+                  <button
+                    type="button"
+                    className="person-manage-button"
+                    aria-label={`Edit ${person.name}`}
+                    onClick={() => openEditDialog(person)}
+                  >
+                    <span aria-hidden="true">•••</span>
+                  </button>
                 </header>
 
                 {person.context ? (
@@ -240,9 +309,9 @@ export function PeopleSurface({
       )}
 
       <dialog
-        ref={dialogRef}
+        ref={addDialogRef}
         className="quick-capture-dialog person-dialog"
-        aria-labelledby={titleId}
+        aria-labelledby={addTitleId}
         onClose={() => {
           setName("");
           setContext("");
@@ -253,13 +322,13 @@ export function PeopleSurface({
           <div className="capture-heading">
             <div>
               <p className="eyebrow">People</p>
-              <h2 id={titleId}>Add someone to remember</h2>
+              <h2 id={addTitleId}>Add someone to remember</h2>
             </div>
             <button
               type="button"
               className="icon-button"
               aria-label="Close add person"
-              onClick={closeDialog}
+              onClick={closeAddDialog}
             >
               ×
             </button>
@@ -308,6 +377,119 @@ export function PeopleSurface({
             </button>
           </div>
         </form>
+      </dialog>
+
+      <dialog
+        ref={editDialogRef}
+        className="quick-capture-dialog person-dialog person-edit-dialog"
+        aria-labelledby={editTitleId}
+        onClose={resetEditDialog}
+        onCancel={() => setConfirmingRemove(false)}
+      >
+        {editingPerson !== null ? (
+          confirmingRemove ? (
+            <div className="person-remove-confirmation">
+              <div>
+                <p className="eyebrow">Remove person</p>
+                <h2 id={editTitleId}>Remove {editingPerson.name}?</h2>
+              </div>
+              <p>
+                Their linked tasks will stay in DayDock and become unassigned.
+                Only the person and follow-up context will be removed.
+              </p>
+              <div className="person-edit-actions">
+                <button
+                  type="button"
+                  className="person-edit-secondary"
+                  onClick={() => setConfirmingRemove(false)}
+                >
+                  Keep person
+                </button>
+                <button
+                  type="button"
+                  className="person-edit-danger"
+                  onClick={removeEditingPerson}
+                >
+                  Remove person
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form className="quick-capture-form" onSubmit={submitPersonEdits}>
+              <div className="capture-heading">
+                <div>
+                  <p className="eyebrow">People</p>
+                  <h2 id={editTitleId}>Keep the context current</h2>
+                </div>
+                <button
+                  type="button"
+                  className="icon-button"
+                  aria-label="Close edit person"
+                  onClick={closeEditDialog}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="person-dialog-fields">
+                <label>
+                  <span>Name</span>
+                  <input
+                    value={editName}
+                    onChange={(event) => setEditName(event.currentTarget.value)}
+                    maxLength={120}
+                    autoFocus
+                    required
+                  />
+                </label>
+
+                <label>
+                  <span>Context</span>
+                  <textarea
+                    value={editContext}
+                    onChange={(event) => setEditContext(event.currentTarget.value)}
+                    placeholder="What are you waiting for or discussing?"
+                    maxLength={2_000}
+                  />
+                </label>
+
+                <label>
+                  <span>Next follow-up</span>
+                  <input
+                    type="date"
+                    value={editDate}
+                    onChange={(event) => setEditDate(event.currentTarget.value)}
+                  />
+                </label>
+              </div>
+
+              <div className="person-edit-actions">
+                <button
+                  type="button"
+                  className="person-edit-remove"
+                  onClick={() => setConfirmingRemove(true)}
+                >
+                  Remove…
+                </button>
+                <span className="person-edit-spacer" />
+                <button
+                  type="button"
+                  className="person-edit-secondary"
+                  onClick={closeEditDialog}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="capture-submit"
+                  disabled={!editName.trim()}
+                >
+                  Save changes
+                </button>
+              </div>
+            </form>
+          )
+        ) : null}
       </dialog>
     </div>
   );
