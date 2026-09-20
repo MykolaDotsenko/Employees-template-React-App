@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   createInitialDayDockState,
   type ActiveFocusSession,
+  type CalendarState,
   type DayDockState,
   type DayPlan,
   type FocusSessionRecord,
@@ -15,7 +16,7 @@ import {
 } from "../store/dayDockStore";
 
 export const DAYDOCK_STORAGE_KEY = "daydock:workspace";
-export const DAYDOCK_SCHEMA_VERSION = 4 as const;
+export const DAYDOCK_SCHEMA_VERSION = 5 as const;
 
 export interface StorageLike {
   getItem(key: string): string | null;
@@ -71,6 +72,26 @@ const dayPlanSchema = z.object({
   startedAt: isoDateTimeSchema,
 });
 
+const calendarEventSchema = z
+  .object({
+    id: z.string().min(1).max(240),
+    title: z.string().trim().min(1).max(280),
+    startAt: isoDateTimeSchema,
+    endAt: isoDateTimeSchema,
+    allDay: z.boolean(),
+    source: z.literal("ics"),
+  })
+  .refine(
+    (event) => Date.parse(event.endAt) > Date.parse(event.startAt),
+    "Calendar event end must be after start",
+  );
+
+const calendarStateSchema = z.object({
+  events: z.array(calendarEventSchema).max(1_500),
+  importedAt: isoDateTimeSchema.nullable(),
+  sourceLabel: z.string().trim().min(1).max(180).nullable(),
+});
+
 const personSchema = z.object({
   id: z.string().min(1),
   name: z.string().trim().min(1).max(120),
@@ -109,14 +130,24 @@ const v3StateSchema = legacyStateSchema.extend({
   }),
 });
 
-const dayDockStateSchema = v3StateSchema.extend({
+const v4StateSchema = v3StateSchema.extend({
   dayPlan: dayPlanSchema.nullable().default(null),
 });
 
-const v4EnvelopeSchema = z.object({
+const dayDockStateSchema = v4StateSchema.extend({
+  calendar: calendarStateSchema,
+});
+
+const v5EnvelopeSchema = z.object({
   schemaVersion: z.literal(DAYDOCK_SCHEMA_VERSION),
   updatedAt: isoDateTimeSchema,
   data: dayDockStateSchema,
+});
+
+const v4EnvelopeSchema = z.object({
+  schemaVersion: z.literal(4),
+  updatedAt: isoDateTimeSchema,
+  data: v4StateSchema,
 });
 
 const v3EnvelopeSchema = z.object({
@@ -244,6 +275,22 @@ export function normalizeDayDockState(state: DayDockState): DayDockState {
           ),
         };
 
+  const calendar: CalendarState = {
+    events: [...state.calendar.events]
+      .filter(
+        (event) =>
+          Date.parse(event.endAt) > Date.parse(event.startAt) &&
+          event.title.trim().length > 0,
+      )
+      .sort(
+        (left, right) =>
+          Date.parse(left.startAt) - Date.parse(right.startAt) ||
+          left.title.localeCompare(right.title),
+      ),
+    importedAt: state.calendar.importedAt,
+    sourceLabel: state.calendar.sourceLabel?.trim() || null,
+  };
+
   return {
     tasks,
     taskOrder,
@@ -258,6 +305,7 @@ export function normalizeDayDockState(state: DayDockState): DayDockState {
       history: normalizeFocusHistory(state.focus.history, tasks),
     },
     dayPlan,
+    calendar,
   };
 }
 
@@ -266,12 +314,30 @@ export function parseDayDockState(value: unknown): DayDockState | null {
   return parsed.success ? normalizeDayDockState(parsed.data) : null;
 }
 
+function withEmptyCalendar(
+  state: z.infer<typeof v4StateSchema>,
+): DayDockState {
+  return {
+    ...state,
+    calendar: {
+      events: [],
+      importedAt: null,
+      sourceLabel: null,
+    },
+  };
+}
+
 function withEmptyDayPlan(
   state: z.infer<typeof v3StateSchema>,
 ): DayDockState {
   return {
     ...state,
     dayPlan: null,
+    calendar: {
+      events: [],
+      importedAt: null,
+      sourceLabel: null,
+    },
   };
 }
 
@@ -285,6 +351,11 @@ function withEmptyFocus(
       history: [],
     },
     dayPlan: null,
+    calendar: {
+      events: [],
+      importedAt: null,
+      sourceLabel: null,
+    },
   };
 }
 
@@ -344,13 +415,21 @@ export function loadDayDockWorkspace(
     };
   }
 
-  const current = v4EnvelopeSchema.safeParse(parsed);
+  const current = v5EnvelopeSchema.safeParse(parsed);
 
   if (current.success) {
     return {
       state: normalizeDayDockState(current.data.data),
       source: "stored",
     };
+  }
+
+  const v4 = v4EnvelopeSchema.safeParse(parsed);
+
+  if (v4.success) {
+    const state = normalizeDayDockState(withEmptyCalendar(v4.data.data));
+    saveDayDockWorkspace(state, storage, now);
+    return { state, source: "migrated" };
   }
 
   const v3 = v3EnvelopeSchema.safeParse(parsed);
