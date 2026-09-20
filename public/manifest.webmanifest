@@ -1,0 +1,14 @@
+{
+  "name": "DayDock — Workday Command Center",
+  "short_name": "DayDock",
+  "description": "A calm, local-first workday command center.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8f5ee",
+  "theme_color": "#f8f5ee",
+  "categories": [
+    "productivity",
+    "utilities"
+  ]
+}
