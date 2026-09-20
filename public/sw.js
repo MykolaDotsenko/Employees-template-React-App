@@ -1,4 +1,4 @@
-/* global self, caches, fetch, Response, URL */
+/* global self, caches, fetch, Response, URL, __DAYDOCK_PRECACHE__ */
 const CACHE = "__DAYDOCK_CACHE__";
 const PRECACHE = __DAYDOCK_PRECACHE__;
 const APP_BASE = new URL("./", self.registration.scope).pathname;
