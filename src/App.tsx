@@ -228,15 +228,24 @@ export function App({ store = dayDockStore }: AppProps) {
   const focusedTask =
     activeFocus === null ? null : state.tasks[activeFocus.taskId] ?? null;
 
+  function focusCaptureInput(dialog: HTMLDialogElement) {
+    const input =
+      dialog.querySelector<HTMLTextAreaElement>("[data-capture-input]");
+
+    input?.focus();
+
+    window.requestAnimationFrame(() => {
+      input?.focus();
+    });
+  }
+
   function showCaptureDialog(prefill: string | null = null) {
     const dialog = captureDialogRef.current;
     if (!dialog || dialog.open) return;
 
     setCapturePrefill(prefill);
     dialog.showModal();
-    window.requestAnimationFrame(() => {
-      dialog.querySelector<HTMLTextAreaElement>("[data-capture-input]")?.focus();
-    });
+    focusCaptureInput(dialog);
   }
 
   useEffect(() => {
@@ -254,8 +263,9 @@ export function App({ store = dayDockStore }: AppProps) {
     window.requestAnimationFrame(() => {
       const dialog = captureDialogRef.current;
       if (!dialog || dialog.open) return;
+
       dialog.showModal();
-      dialog.querySelector<HTMLTextAreaElement>("[data-capture-input]")?.focus();
+      focusCaptureInput(dialog);
     });
   }, [initialCaptureLaunch]);
 
