@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { BrandMark } from "./components/BrandMark";
 import { normalizeFocusDurationMinutes } from "./domain/daydock/focus";
 import { buildReviewInsights } from "./domain/daydock/insights";
 import type {
@@ -321,7 +322,7 @@ export function App({ store = dayDockStore }: AppProps) {
     store.dispatch({ type: "task/captured", task });
   }
 
-  function startFocus(taskId: string) {
+  function startFocus(taskId: string, durationMinutes?: number) {
     const task = state.tasks[taskId];
     if (!task || task.status !== "today" || state.focus.active !== null) return;
 
@@ -329,7 +330,9 @@ export function App({ store = dayDockStore }: AppProps) {
       id: createId("focus"),
       taskId,
       startedAt: new Date().toISOString(),
-      durationMinutes: normalizeFocusDurationMinutes(task.estimateMinutes),
+      durationMinutes: normalizeFocusDurationMinutes(
+        durationMinutes ?? task.estimateMinutes,
+      ),
       pausedAt: null,
       accumulatedPauseMs: 0,
     };
@@ -457,13 +460,7 @@ export function App({ store = dayDockStore }: AppProps) {
       <div className="app-layout">
         <header className="brand-rail">
           <div className="brand-lockup">
-            <span className="brand-mark" aria-hidden="true">
-              <svg viewBox="0 0 32 32" role="presentation">
-                <path className="brand-mark-horizon" d="M6 20.5h20" />
-                <path className="brand-mark-dock" d="M9 25V11.5h5.25c5.45 0 8.75 2.7 8.75 6.75S19.7 25 14.25 25H9Z" />
-                <circle className="brand-mark-sun" cx="23.5" cy="8.5" r="3.25" />
-              </svg>
-            </span>
+            <BrandMark />
             <div>
               <strong className="brand-name">DayDock</strong>
               <span className="brand-subtitle">Make room for what matters.</span>
