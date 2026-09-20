@@ -186,3 +186,17 @@ The seven-day Review stays intentionally aggregate, but today's review also expo
 - People follow-ups still due
 
 These are additive views over existing state. No second analytics model is introduced, and navigation from Review goes back to the canonical Inbox/People surfaces instead of duplicating their workflows.
+
+
+## Calendar awareness
+
+Calendar context is deliberately read-only. The user can import a standard `.ics` snapshot; DayDock normalizes only the busy events needed for the planning horizon and keeps them inside the local workspace.
+
+Today uses that snapshot to show:
+- timed constraints for the current day
+- all-day context without automatically blocking the whole day
+- 25+ minute focus windows inside an 08:00–18:00 working-day frame
+- five-minute breathing room around timed events
+- a realistic suggested Focus Room for Start Day
+
+DayDock does not edit calendar events and does not pretend a local snapshot is live sync. The UI labels the source and import time and asks the user to refresh the file when the external calendar changes.

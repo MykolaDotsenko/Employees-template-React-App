@@ -9,6 +9,11 @@ import {
   type ReactNode,
 } from "react";
 import { BrandMark } from "./components/BrandMark";
+import {
+  buildCalendarAwareness,
+  suggestedFocusRoomMinutes,
+} from "./domain/calendar/availability";
+import { parseIcsCalendar } from "./domain/calendar/ics";
 import { normalizeFocusDurationMinutes } from "./domain/daydock/focus";
 import { buildReviewInsights } from "./domain/daydock/insights";
 import type {
@@ -150,10 +155,7 @@ export function App({ store = dayDockStore }: AppProps) {
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      setToday((current) => {
-        const next = new Date();
-        return localDateKey(next) === localDateKey(current) ? current : next;
-      });
+      setToday(new Date());
     }, 60_000);
 
     return () => window.clearInterval(interval);
@@ -167,6 +169,14 @@ export function App({ store = dayDockStore }: AppProps) {
 
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const reviewInsights = buildReviewInsights(state, todayKey, timeZone);
+  const calendarAwareness = buildCalendarAwareness(
+    state.calendar.events,
+    today,
+  );
+  const calendarFocusSuggestion =
+    state.calendar.importedAt === null
+      ? null
+      : suggestedFocusRoomMinutes(calendarAwareness);
   const top3 = selectTop3(state);
   const todayTasks = selectTasksByStatus(state, "today");
   const inboxTasks = selectTasksByStatus(state, "inbox");
@@ -335,6 +345,29 @@ export function App({ store = dayDockStore }: AppProps) {
       deferUntil,
       recurrence,
     });
+  }
+
+  function importCalendar(source: string, sourceLabel: string) {
+    const result = parseIcsCalendar(source, {
+      now: today,
+      horizonDays: 45,
+    });
+
+    store.dispatch({
+      type: "calendar/replaced",
+      events: result.events,
+      importedAt: new Date().toISOString(),
+      sourceLabel,
+    });
+
+    return {
+      eventCount: result.events.length,
+      warnings: result.warnings,
+    };
+  }
+
+  function clearCalendar() {
+    store.dispatch({ type: "calendar/cleared" });
   }
 
   function startDay(focusRoomMinutes: number) {
@@ -681,6 +714,11 @@ export function App({ store = dayDockStore }: AppProps) {
                   readyAgainCount={readyAgainCount}
                   inboxCount={inboxCount}
                   duePeopleCount={duePeople.length}
+                  calendar={state.calendar}
+                  calendarAwareness={calendarAwareness}
+                  suggestedFocusRoomMinutes={calendarFocusSuggestion}
+                  onImportCalendar={importCalendar}
+                  onClearCalendar={clearCalendar}
                   onCapture={openCapture}
                   onOpenInbox={() => navigateTo("inbox")}
                   onOpenPeople={() => navigateTo("people")}

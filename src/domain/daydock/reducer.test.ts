@@ -44,6 +44,52 @@ function focusSession(taskId: string): ActiveFocusSession {
 }
 
 describe("dayDockReducer", () => {
+  it("replaces and clears validated local calendar context", () => {
+    const state = createInitialDayDockState();
+    const imported = dayDockReducer(state, {
+      type: "calendar/replaced",
+      events: [
+        {
+          id: "meeting-1",
+          title: "Design review",
+          startAt: "2026-09-20T09:00:00.000Z",
+          endAt: "2026-09-20T09:45:00.000Z",
+          allDay: false,
+          source: "ics",
+        },
+      ],
+      importedAt: "2026-09-20T07:00:00.000Z",
+      sourceLabel: "work.ics",
+    });
+
+    expect(imported.calendar.events).toHaveLength(1);
+    expect(imported.calendar.sourceLabel).toBe("work.ics");
+
+    const invalid = dayDockReducer(imported, {
+      type: "calendar/replaced",
+      events: [
+        {
+          id: "broken",
+          title: "Broken",
+          startAt: "2026-09-20T10:00:00.000Z",
+          endAt: "2026-09-20T09:00:00.000Z",
+          allDay: false,
+          source: "ics",
+        },
+      ],
+      importedAt: "2026-09-20T07:00:00.000Z",
+      sourceLabel: "broken.ics",
+    });
+
+    expect(invalid).toBe(imported);
+    expect(dayDockReducer(imported, { type: "calendar/cleared" }).calendar)
+      .toEqual({
+        events: [],
+        importedAt: null,
+        sourceLabel: null,
+      });
+  });
+
   it("stores one bounded daily focus plan", () => {
     const state = createInitialDayDockState();
     const planned = dayDockReducer(state, {

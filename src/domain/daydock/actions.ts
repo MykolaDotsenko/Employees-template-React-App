@@ -1,5 +1,6 @@
 import type {
   ActiveFocusSession,
+  CalendarBusyEvent,
   DayPlan,
   FocusOutcome,
   NonDoneTaskStatus,
@@ -9,6 +10,13 @@ import type {
 } from "./model";
 
 export type DayDockAction =
+  | {
+      type: "calendar/replaced";
+      events: CalendarBusyEvent[];
+      importedAt: string;
+      sourceLabel: string;
+    }
+  | { type: "calendar/cleared" }
   | { type: "day/started"; plan: DayPlan }
   | { type: "task/captured"; task: Task }
   | { type: "task/renamed"; taskId: string; title: string }

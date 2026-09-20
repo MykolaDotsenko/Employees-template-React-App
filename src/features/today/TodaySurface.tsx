@@ -1,7 +1,13 @@
 import { ViewTransition, useState } from "react";
 import { normalizeFocusDurationMinutes } from "../../domain/daydock/focus";
-import type { DayPlan, Task } from "../../domain/daydock/model";
+import type {
+  CalendarState,
+  DayPlan,
+  Task,
+} from "../../domain/daydock/model";
+import type { CalendarAwareness } from "../../domain/calendar/availability";
 import { TaskRow } from "../tasks/TaskRow";
+import { CalendarContextPanel } from "./CalendarContextPanel";
 import { StartDayPanel } from "./StartDayPanel";
 
 export type GettingStartedStage = "capture" | "decide" | null;
@@ -15,6 +21,14 @@ interface TodaySurfaceProps {
   readyAgainCount: number;
   inboxCount: number;
   duePeopleCount: number;
+  calendar: CalendarState;
+  calendarAwareness: CalendarAwareness;
+  suggestedFocusRoomMinutes: number | null;
+  onImportCalendar: (
+    source: string,
+    sourceLabel: string,
+  ) => { eventCount: number; warnings: string[] };
+  onClearCalendar: () => void;
   onCapture: () => void;
   onOpenInbox: () => void;
   onOpenPeople: () => void;
@@ -36,6 +50,11 @@ export function TodaySurface({
   readyAgainCount,
   inboxCount,
   duePeopleCount,
+  calendar,
+  calendarAwareness,
+  suggestedFocusRoomMinutes,
+  onImportCalendar,
+  onClearCalendar,
   onCapture,
   onOpenInbox,
   onOpenPeople,
@@ -81,9 +100,19 @@ export function TodaySurface({
           inboxCount={inboxCount}
           duePeopleCount={duePeopleCount}
           top3Count={top3.length}
+          suggestedFocusRoomMinutes={suggestedFocusRoomMinutes}
           onOpenInbox={onOpenInbox}
           onOpenPeople={onOpenPeople}
           onStartDay={onStartDay}
+        />
+      ) : null}
+
+      {gettingStartedStage === null ? (
+        <CalendarContextPanel
+          calendar={calendar}
+          awareness={calendarAwareness}
+          onImport={onImportCalendar}
+          onClear={onClearCalendar}
         />
       ) : null}
 

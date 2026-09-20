@@ -120,6 +120,70 @@ export function dayDockReducer(
   action: DayDockAction,
 ): DayDockState {
   switch (action.type) {
+    case "calendar/replaced": {
+      if (
+        action.events.length > 1_500 ||
+        action.sourceLabel.trim().length === 0 ||
+        action.sourceLabel.length > 180 ||
+        parseTime(action.importedAt) <= 0
+      ) {
+        return state;
+      }
+
+      const seen = new Set<string>();
+      const events = [];
+
+      for (const event of action.events) {
+        const start = parseTime(event.startAt);
+        const end = parseTime(event.endAt);
+        const title = event.title.trim();
+
+        if (
+          !event.id ||
+          seen.has(event.id) ||
+          !title ||
+          title.length > 280 ||
+          start <= 0 ||
+          end <= start ||
+          event.source !== "ics"
+        ) {
+          return state;
+        }
+
+        seen.add(event.id);
+        events.push({ ...event, title });
+      }
+
+      events.sort(
+        (left, right) =>
+          parseTime(left.startAt) - parseTime(right.startAt) ||
+          left.title.localeCompare(right.title),
+      );
+
+      return {
+        ...state,
+        calendar: {
+          events,
+          importedAt: action.importedAt,
+          sourceLabel: action.sourceLabel.trim(),
+        },
+      };
+    }
+
+    case "calendar/cleared":
+      return state.calendar.events.length === 0 &&
+        state.calendar.importedAt === null &&
+        state.calendar.sourceLabel === null
+        ? state
+        : {
+            ...state,
+            calendar: {
+              events: [],
+              importedAt: null,
+              sourceLabel: null,
+            },
+          };
+
     case "day/started": {
       const { plan } = action;
 

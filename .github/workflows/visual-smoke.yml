@@ -150,13 +150,31 @@ jobs:
                   },
                 ],
               },
-              dayPlan: null,
+              dayPlan: {
+                dateKey,
+                focusRoomMinutes: 150,
+                startedAt: iso(-30),
+              },
+              calendar: {
+                events: [
+                  {
+                    id: "calendar-design",
+                    title: "Design sync",
+                    startAt: iso(45),
+                    endAt: iso(90),
+                    allDay: false,
+                    source: "ics",
+                  },
+                ],
+                importedAt: iso(-20),
+                sourceLabel: "work-calendar.ics",
+              },
             };
 
             localStorage.setItem(
               "daydock:workspace",
               JSON.stringify({
-                schemaVersion: 4,
+                schemaVersion: 5,
                 updatedAt: iso(),
                 data: state,
               }),

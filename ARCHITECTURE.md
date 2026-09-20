@@ -234,3 +234,10 @@ store.replaceState
   APIs and is never uploaded.
 - The data-safety surface uses the native HTML Popover API as progressive
   enhancement in the app shell.
+
+
+## Calendar awareness boundary
+
+Calendar import is an input adapter, not a second source of task truth. Standard `.ics` data is parsed into bounded, normalized `CalendarBusyEvent` records. The canonical workspace stores only the local snapshot and import metadata. Availability is derived from those records at render time; React components do not parse calendar formats or calculate recurrence rules.
+
+This keeps a future Google Calendar or Microsoft Graph adapter replaceable: provider authentication can produce the same normalized busy-event model without changing Today or Start Day UX.

@@ -55,6 +55,21 @@ export interface DayPlan {
   startedAt: string;
 }
 
+export interface CalendarBusyEvent {
+  id: string;
+  title: string;
+  startAt: string;
+  endAt: string;
+  allDay: boolean;
+  source: "ics";
+}
+
+export interface CalendarState {
+  events: CalendarBusyEvent[];
+  importedAt: string | null;
+  sourceLabel: string | null;
+}
+
 export interface DayDockState {
   tasks: Record<string, Task>;
   taskOrder: string[];
@@ -63,6 +78,7 @@ export interface DayDockState {
   personOrder: string[];
   focus: FocusState;
   dayPlan: DayPlan | null;
+  calendar: CalendarState;
 }
 
 export function createInitialDayDockState(): DayDockState {
@@ -77,5 +93,10 @@ export function createInitialDayDockState(): DayDockState {
       history: [],
     },
     dayPlan: null,
+    calendar: {
+      events: [],
+      importedAt: null,
+      sourceLabel: null,
+    },
   };
 }
