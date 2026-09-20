@@ -6,8 +6,8 @@
   "description": "A calm, local-first workday command center built with modern React and the web platform.",
   "scripts": {
     "dev": "vite",
-    "build": "npm run typecheck && vite build",
-    "build:pages": "npm run typecheck && vite build --mode pages",
+    "build": "npm run typecheck && vite build && node scripts/finalize-service-worker.mjs",
+    "build:pages": "npm run typecheck && vite build --mode pages && node scripts/finalize-service-worker.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings=0",
