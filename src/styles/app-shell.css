@@ -1482,13 +1482,17 @@
 
   @container (max-width: 760px) {
     .command-trigger > span {
+      display: inline;
+    }
+
+    .command-trigger kbd {
       display: none;
     }
 
     .command-trigger {
-      min-width: 2.35rem;
+      min-width: auto;
       justify-content: center;
-      padding-inline: 0.42rem;
+      padding-inline: 0.68rem;
     }
 
     .command-palette {
@@ -2483,6 +2487,61 @@
   @media (prefers-reduced-motion: reduce) {
     .first-run-action:hover {
       transform: none;
+    }
+  }
+}
+
+
+@layer components {
+  @container (max-width: 760px) {
+    .app-shell.is-getting-started .surface-content {
+      padding-top: 1.35rem;
+    }
+
+    .app-shell.is-getting-started .surface-stack {
+      gap: 1.55rem;
+    }
+
+    .app-shell.is-getting-started .intro-copy {
+      margin-top: var(--space-4);
+    }
+
+    .app-shell.is-getting-started .quick-capture-trigger {
+      display: none;
+    }
+
+    .first-run-guide {
+      gap: var(--space-3);
+      padding: 1rem;
+    }
+
+    .first-run-copy > p:not(.section-kicker) {
+      margin-top: var(--space-3);
+      line-height: 1.55;
+    }
+
+    .first-run-action {
+      margin-top: var(--space-4);
+    }
+
+    .first-run-copy > small {
+      margin-top: var(--space-2);
+    }
+
+    .first-run-steps {
+      gap: 0.3rem;
+    }
+
+    .first-run-step {
+      padding: 0.68rem 0.72rem;
+    }
+
+    .first-run-step:not(.is-current) {
+      align-items: center;
+    }
+
+    .first-run-step:not(.is-current) p {
+      display: none;
     }
   }
 }
