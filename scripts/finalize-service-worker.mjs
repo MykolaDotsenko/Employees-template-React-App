@@ -1,9 +1,10 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const DIST = new URL("../dist/", import.meta.url);
-const SW = new URL("../dist/sw.js", import.meta.url);
+const DIST = fileURLToPath(new URL("../dist/", import.meta.url));
+const SW = join(DIST, "sw.js");
 
 async function collectFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -27,7 +28,7 @@ async function collectFiles(directory) {
 
 const files = await collectFiles(DIST);
 const relativeFiles = files
-  .map((absolute) => relative(DIST.pathname, absolute).split(sep).join("/"))
+  .map((absolute) => relative(DIST, absolute).split(sep).join("/"))
   .filter((path) => path !== "index.html")
   .sort();
 
