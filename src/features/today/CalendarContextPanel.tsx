@@ -99,7 +99,9 @@ export function CalendarContextPanel({
             type="file"
             accept=".ics,text/calendar"
             aria-label="Import calendar file"
-            onChange={importFile}
+            onChange={(event) => {
+              void importFile(event);
+            }}
           />
           <button
             type="button"
