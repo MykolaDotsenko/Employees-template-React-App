@@ -97,6 +97,7 @@ describe("DayDock core daily flow", () => {
 
     await user.click(screen.getByRole("button", { name: "Inbox" }));
     expect(screen.getByText("Finish PR review")).toBeInTheDocument();
+    expect(screen.queryByText("No estimate")).not.toBeInTheDocument();
 
     await user.click(
       screen.getByRole("button", { name: "Move Finish PR review to Today" }),
@@ -139,6 +140,24 @@ describe("DayDock core daily flow", () => {
     expect(store.getSnapshot().tasks.a?.status).toBe("done");
     expect(store.getSnapshot().focus.active).toBeNull();
     expect(store.getSnapshot().focus.history[0]?.outcome).toBe("completed");
+  });
+
+  it("lets the user choose a shorter focus block before starting", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+    addTodayPriority(store);
+
+    render(<App store={store} />);
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Focus duration" }),
+      "25",
+    );
+    await user.click(screen.getByRole("button", { name: /Start focus/i }));
+
+    expect(store.getSnapshot().focus.active?.durationMinutes).toBe(25);
+    expect(screen.getByText("25 min session · saved locally")).toBeInTheDocument();
+    expect(document.querySelector(".focus-topbar .brand-mark svg")).not.toBeNull();
   });
 
   it("stops focus without completing the task", async () => {
@@ -239,7 +258,7 @@ describe("DayDock core daily flow", () => {
 
     const palette = screen.getByRole("dialog", { name: "Command palette" });
     const search = within(palette).getByRole("textbox", {
-      name: "Search commands, tasks and people",
+      name: "Search commands, open tasks and people",
     });
 
     await user.type(search, "Anna");
@@ -248,6 +267,42 @@ describe("DayDock core daily flow", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "People" }),
     ).toBeInTheDocument();
+  });
+
+  it("does not surface completed history as an actionable search result", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+
+    store.dispatch({
+      type: "task/captured",
+      task: {
+        id: "completed-search",
+        title: "Archived release note",
+        status: "done",
+        estimateMinutes: null,
+        personId: null,
+        createdAt: "2026-09-18T09:00:00.000Z",
+        completedAt: "2026-09-18T10:00:00.000Z",
+      },
+    });
+
+    render(<App store={store} />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Open command palette" }),
+    );
+    const palette = screen.getByRole("dialog", { name: "Command palette" });
+    await user.type(
+      within(palette).getByRole("textbox", {
+        name: "Search commands, open tasks and people",
+      }),
+      "Archived release note",
+    );
+
+    expect(
+      within(palette).queryByText("Archived release note"),
+    ).not.toBeInTheDocument();
+    expect(within(palette).getByText("No match")).toBeInTheDocument();
   });
 
   it("starts focus from the contextual command palette", async () => {
@@ -526,7 +581,7 @@ describe("DayDock core daily flow", () => {
     const palette = screen.getByRole("dialog", { name: "Command palette" });
     await user.type(
       within(palette).getByRole("textbox", {
-        name: "Search commands, tasks and people",
+        name: "Search commands, open tasks and people",
       }),
       "offline analytics",
     );
