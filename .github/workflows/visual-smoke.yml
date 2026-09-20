@@ -222,6 +222,10 @@ jobs:
           })();
           JS
 
+          # Surface-specific screenshots navigate immediately after boot. Disable the
+          # native View Transition compositor only inside those visual fixtures;
+          # production DayDock keeps View Transitions enabled.
+          sed -i 's#</head>#<script>if(new URLSearchParams(location.search).has("__visualSurface")){Object.defineProperty(document,"startViewTransition",{value:undefined,configurable:true});}</script></head>#' dist/index.html
           sed -i 's#</body>#<script src="./__visual-nav.js"></script></body>#' dist/index.html
 
           npm run preview -- --host 127.0.0.1 --port 4173 > visual-smoke/preview.log 2>&1 &
