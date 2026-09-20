@@ -1,3 +1,4 @@
+/* global self, caches, fetch, Response, URL */
 const CACHE = "daydock-shell-v2";
 const APP_BASE = new URL("./", self.registration.scope).pathname;
 
