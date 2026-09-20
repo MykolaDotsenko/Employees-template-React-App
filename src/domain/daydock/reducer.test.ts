@@ -651,4 +651,42 @@ describe("dayDockReducer", () => {
     expect(unchanged).toBe(state);
   });
 
+
+  it("stores Ready again alert preference and deduplicates notification dates", () => {
+    let state = createInitialDayDockState();
+
+    state = dayDockReducer(state, {
+      type: "notifications/readyAgainChanged",
+      enabled: true,
+    });
+
+    expect(state.notifications.readyAgain).toBe(true);
+
+    state = dayDockReducer(state, {
+      type: "notifications/readyAgainNotified",
+      dateKey: "2026-09-20",
+    });
+
+    expect(state.notifications.lastReadyAgainNotifiedDate).toBe("2026-09-20");
+
+    const unchanged = dayDockReducer(state, {
+      type: "notifications/readyAgainNotified",
+      dateKey: "2026-09-20",
+    });
+
+    expect(unchanged).toBe(state);
+
+    state = dayDockReducer(state, {
+      type: "notifications/readyAgainChanged",
+      enabled: false,
+    });
+
+    const disabled = dayDockReducer(state, {
+      type: "notifications/readyAgainNotified",
+      dateKey: "2026-09-21",
+    });
+
+    expect(disabled).toBe(state);
+  });
+
 });
