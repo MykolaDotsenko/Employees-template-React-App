@@ -440,6 +440,68 @@ jobs:
           test -s visual-smoke/focus-desktop.png
           test -s visual-smoke/focus-mobile.png
 
+          # Warm a real production profile so the generated service worker can
+          # install and precache the built app shell before the network is removed.
+          dump_dom \
+            /tmp/daydock-offline \
+            http://127.0.0.1:4173/ \
+            visual-smoke/offline-warm-dom.html
+
+          capture_screenshot \
+            /tmp/daydock-offline \
+            390,844 \
+            "$GITHUB_WORKSPACE/visual-smoke/offline-warm-mobile.png" \
+            http://127.0.0.1:4173/
+
+          grep -q "DayDock" visual-smoke/offline-warm-dom.html
+          test -s visual-smoke/offline-warm-mobile.png
+
+          kill "${preview_pid}" 2>/dev/null || true
+          wait "${preview_pid}" 2>/dev/null || true
+          trap - EXIT
+
+          # Reopen the same warmed browser profile with the preview server
+          # stopped. If hashed JS/CSS were not precached this becomes a browser
+          # error or an incomplete shell and the assertions below fail.
+          rm -f visual-smoke/offline-mobile.png visual-smoke/offline-dom.html
+
+          offline_status=0
+          if timeout 15s "${browser}" "${common_flags[@]}" \
+            --user-data-dir=/tmp/daydock-offline \
+            --window-size=390,844 \
+            --screenshot="$GITHUB_WORKSPACE/visual-smoke/offline-mobile.png" \
+            http://127.0.0.1:4173/; then
+            offline_status=0
+          else
+            offline_status=$?
+          fi
+
+          if [ "${offline_status}" -ne 0 ] && [ "${offline_status}" -ne 124 ]; then
+            echo "::error::Offline Chromium screenshot failed with status ${offline_status}."
+            exit "${offline_status}"
+          fi
+
+          test -s visual-smoke/offline-mobile.png
+
+          offline_dom_status=0
+          if timeout 15s "${browser}" "${common_flags[@]}" \
+            --user-data-dir=/tmp/daydock-offline \
+            --dump-dom \
+            http://127.0.0.1:4173/ > visual-smoke/offline-dom.html; then
+            offline_dom_status=0
+          else
+            offline_dom_status=$?
+          fi
+
+          if [ "${offline_dom_status}" -ne 0 ] && [ "${offline_dom_status}" -ne 124 ]; then
+            echo "::error::Offline Chromium DOM render failed with status ${offline_dom_status}."
+            exit "${offline_dom_status}"
+          fi
+
+          grep -q "DayDock" visual-smoke/offline-dom.html
+          grep -q "Capture your first item" visual-smoke/offline-dom.html
+          test -s visual-smoke/offline-dom.html
+
       - name: Upload visual smoke evidence
         if: always()
         uses: actions/upload-artifact@v4
