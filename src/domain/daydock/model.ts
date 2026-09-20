@@ -49,6 +49,12 @@ export interface FocusState {
   history: FocusSessionRecord[];
 }
 
+export interface DayPlan {
+  dateKey: string;
+  focusRoomMinutes: number;
+  startedAt: string;
+}
+
 export interface DayDockState {
   tasks: Record<string, Task>;
   taskOrder: string[];
@@ -56,6 +62,7 @@ export interface DayDockState {
   people: Record<string, Person>;
   personOrder: string[];
   focus: FocusState;
+  dayPlan: DayPlan | null;
 }
 
 export function createInitialDayDockState(): DayDockState {
@@ -69,5 +76,6 @@ export function createInitialDayDockState(): DayDockState {
       active: null,
       history: [],
     },
+    dayPlan: null,
   };
 }
