@@ -36,7 +36,9 @@ describe("DataSafetyPopover", () => {
         state={createInitialDayDockState()}
         persistenceStatus="durable"
         notificationPermission="default"
-        onReadyAgainNotificationsChange={async () => ({ status: "disabled" })}
+        onReadyAgainNotificationsChange={() =>
+          Promise.resolve({ status: "disabled" })
+        }
         onRestore={onRestore}
       />,
     );
@@ -79,7 +81,9 @@ describe("DataSafetyPopover", () => {
         state={createInitialDayDockState()}
         persistenceStatus="durable"
         notificationPermission="default"
-        onReadyAgainNotificationsChange={async () => ({ status: "disabled" })}
+        onReadyAgainNotificationsChange={() =>
+          Promise.resolve({ status: "disabled" })
+        }
         onRestore={vi.fn()}
       />,
     );
@@ -111,7 +115,9 @@ describe("DataSafetyPopover", () => {
         state={createInitialDayDockState()}
         persistenceStatus="memory"
         notificationPermission="default"
-        onReadyAgainNotificationsChange={async () => ({ status: "disabled" })}
+        onReadyAgainNotificationsChange={() =>
+          Promise.resolve({ status: "disabled" })
+        }
         onRestore={vi.fn()}
       />,
     );
@@ -131,9 +137,9 @@ describe("DataSafetyPopover", () => {
         state={createInitialDayDockState()}
         persistenceStatus="durable"
         notificationPermission="default"
-        onReadyAgainNotificationsChange={async (enabled) => {
+        onReadyAgainNotificationsChange={(enabled) => {
           changes.push(enabled);
-          return { status: "enabled" };
+          return Promise.resolve({ status: "enabled" });
         }}
         onRestore={vi.fn()}
       />,
