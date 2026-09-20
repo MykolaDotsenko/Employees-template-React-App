@@ -1010,6 +1010,96 @@ describe("DayDock core daily flow", () => {
   });
 
 
+  it("starts the workday once with attention signals and a realistic focus room", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+    const now = new Date();
+    const todayKey = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, "0"),
+      String(now.getDate()).padStart(2, "0"),
+    ].join("-");
+
+    store.dispatch({
+      type: "task/captured",
+      task: {
+        id: "day-priority",
+        title: "Ship the release",
+        status: "today",
+        estimateMinutes: 50,
+        personId: null,
+        deferUntil: null,
+        recurrence: null,
+        createdAt: now.toISOString(),
+        completedAt: null,
+      },
+    });
+    store.dispatch({ type: "top3/added", taskId: "day-priority" });
+    store.dispatch({
+      type: "task/captured",
+      task: {
+        id: "ready-again",
+        title: "Recheck launch notes",
+        status: "later",
+        estimateMinutes: null,
+        personId: null,
+        deferUntil: todayKey,
+        recurrence: null,
+        createdAt: now.toISOString(),
+        completedAt: null,
+      },
+    });
+    store.dispatch({
+      type: "person/added",
+      person: {
+        id: "day-person",
+        name: "Anna",
+        context: "Release feedback",
+        nextFollowUpDate: todayKey,
+        createdAt: now.toISOString(),
+      },
+    });
+
+    render(<App store={store} />);
+
+    const planner = await screen.findByRole("heading", {
+      name: "Give today a shape",
+    });
+    const panel = planner.closest("section");
+    expect(panel).not.toBeNull();
+    expect(
+      within(panel as HTMLElement).getByText("ready again"),
+    ).toBeInTheDocument();
+    expect(
+      within(panel as HTMLElement).getByText("people due"),
+    ).toBeInTheDocument();
+    expect(
+      within(panel as HTMLElement).getByText("1 / 3"),
+    ).toBeInTheDocument();
+
+    await user.selectOptions(
+      within(panel as HTMLElement).getByRole("combobox", {
+        name: "Available focus room",
+      }),
+      "210",
+    );
+    await user.click(
+      within(panel as HTMLElement).getByRole("button", {
+        name: /Start my day/i,
+      }),
+    );
+
+    expect(store.getSnapshot().dayPlan).toMatchObject({
+      dateKey: todayKey,
+      focusRoomMinutes: 210,
+    });
+    expect(screen.getByText("Day started")).toBeInTheDocument();
+    expect(screen.getByText("3h 30m of focus room")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Give today a shape" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("automatically brings due Later work back as Ready again and lets it snooze", async () => {
     const user = userEvent.setup();
     const store = createDayDockStore();
