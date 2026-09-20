@@ -22,6 +22,7 @@ It started as an employee-management React exercise and was rebuilt into a compl
 - portable JSON backup, validation preview, and explicit restore
 - responsive mobile navigation
 - reduced-motion and forced-colors support
+- installable PWA shell with project-scoped offline navigation fallback
 - no account, analytics, ads, or cloud dependency
 
 ## Why DayDock is different
@@ -38,12 +39,14 @@ The product also keeps private work data local to the browser by default.
 
 - React 19.3
 - strict TypeScript 6
+- Zod 4
 - Vite 8.3
 - semantic HTML
 - modern CSS with OKLCH, container queries and progressive View Transitions
 - Web Storage API
 - BroadcastChannel
 - native Dialog and Popover APIs
+- Service Worker + Web App Manifest
 
 ### Verification
 
@@ -53,7 +56,7 @@ The product also keeps private work data local to the browser by default.
 - TypeScript compiler
 - GitHub Actions
 
-The runtime intentionally has only React and React DOM as package dependencies.
+Runtime package dependencies are intentionally small: React, React DOM, and Zod.
 
 ## Architecture
 
@@ -111,7 +114,7 @@ The visual rule is simple: **hierarchy over decoration**. Motion communicates co
 ## Run locally
 
 ```bash
-npm ci
+npm install
 npm run dev
 ```
 
@@ -133,6 +136,7 @@ For a fast technical review:
 6. `src/features/data-safety/DataSafetyPopover.tsx` — backup/recovery product boundary
 7. `src/App.test.tsx` — end-to-end component journeys
 8. `.github/workflows/quality.yml` — automated quality gate
+9. `.github/workflows/pages.yml` — release deployment gate
 
 ## Privacy
 
