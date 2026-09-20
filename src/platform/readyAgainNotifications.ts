@@ -49,7 +49,6 @@ export async function showReadyAgainNotification(
       icon: `${import.meta.env.BASE_URL}daydock-192.png`,
       badge: `${import.meta.env.BASE_URL}daydock-192.png`,
       tag: "daydock-ready-again",
-      renotify: false,
       data: {
         url: import.meta.env.BASE_URL,
       },
