@@ -124,11 +124,13 @@ export function dayDockReducer(
       const { startHour, endHour } = action;
 
       if (
-        !Number.isInteger(startHour) ||
-        !Number.isInteger(endHour) ||
+        !Number.isFinite(startHour) ||
+        !Number.isFinite(endHour) ||
+        !Number.isInteger(startHour * 2) ||
+        !Number.isInteger(endHour * 2) ||
         startHour < 0 ||
-        startHour > 23 ||
-        endHour < 1 ||
+        startHour > 23.5 ||
+        endHour < 0.5 ||
         endHour > 24 ||
         startHour >= endHour
       ) {
