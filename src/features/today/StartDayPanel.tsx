@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { DayPlan } from "../../domain/daydock/model";
 
 interface StartDayPanelProps {
@@ -41,6 +41,19 @@ export function StartDayPanel({
   const [focusRoomMinutes, setFocusRoomMinutes] = useState(
     existingPlan?.focusRoomMinutes ?? suggestedFocusRoomMinutes ?? 150,
   );
+  const [focusRoomWasAdjusted, setFocusRoomWasAdjusted] = useState(false);
+
+  useEffect(() => {
+    if (
+      alreadyStarted ||
+      focusRoomWasAdjusted ||
+      suggestedFocusRoomMinutes === null
+    ) {
+      return;
+    }
+
+    setFocusRoomMinutes(suggestedFocusRoomMinutes);
+  }, [alreadyStarted, focusRoomWasAdjusted, suggestedFocusRoomMinutes]);
 
   if (alreadyStarted) {
     return (
@@ -102,8 +115,9 @@ export function StartDayPanel({
           <select
             aria-label="Available focus room"
             value={focusRoomMinutes}
-            onChange={(event) =>
-              setFocusRoomMinutes(Number(event.currentTarget.value))
+            onChange={(event) => {
+              setFocusRoomWasAdjusted(true);
+              setFocusRoomMinutes(Number(event.currentTarget.value));
             }
           >
             {FOCUS_ROOM_OPTIONS.map((minutes) => (
