@@ -7,6 +7,7 @@
 - unit and component tests pass
 - production build succeeds
 - GitHub Pages build uses the repository subpath
+- the Pages artifact verifier rejects asset URLs outside `/daydock/` and any stale `/Employees-template-React-App/` reference
 - service worker precache is generated from the production build and repository-scope aware
 - a warmed production profile reopens successfully after the preview server is stopped
 - persisted and imported state is validated
@@ -23,6 +24,18 @@ The repository owner must enable the Pages site once before the first publicatio
 3. Rerun the **Deploy Pages** workflow.
 
 The workflow deliberately does not try to create the Pages site with `GITHUB_TOKEN`: GitHub does not grant that token the repository-administration permission required for first-time Pages enablement. Until the one-time setting is enabled, the workflow still verifies the Pages build and exits successfully with an explicit warning instead of leaving `main` red.
+
+### Repository rename safety
+
+The Pages base in `vite.config.ts` must match the deployed repository path. For the current repository the production scope is `/daydock/`.
+
+`npm run build:pages` is not considered successful merely because Vite emits files. After the service worker is finalized, `scripts/verify-pages-build.mjs` inspects the emitted artifact and fails the build when:
+
+- an absolute `src` or `href` in `dist/index.html` escapes `/daydock/`
+- the emitted JavaScript or CSS bundle references do not resolve inside `dist`
+- the old `/Employees-template-React-App/` deployment path survives anywhere in emitted text assets
+
+If the repository is renamed again, update the Pages base and this explicit release contract together.
 
 ## Production smoke test
 
@@ -53,7 +66,7 @@ Then verify:
 7. A second tab receives synchronized state.
 8. Reload preserves the workspace, including the configured working window.
 9. Export/restore preserves that working window and zero-focus day plans.
-10. Manifest, favicon, and service worker resolve under the GitHub Pages subpath.
+10. Manifest, favicon, JavaScript, CSS, and service worker resolve under `https://mykoladotsenko.github.io/daydock/`.
 11. Reload once, disable the network, and confirm the installed shell still opens with its JS/CSS assets.
 12. On a supporting installed-PWA platform, Share → DayDock opens prefilled Quick Capture and does not save until confirmed.
 13. Reload after a share launch does not reopen the one-time shared content.
