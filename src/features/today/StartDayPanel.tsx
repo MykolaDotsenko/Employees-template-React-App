@@ -120,6 +120,9 @@ export function StartDayPanel({
           onClick={() => onStartDay(focusRoomMinutes)}
         >
           Start my day
+          <span className="start-day-action-time">
+            {formatMinutes(focusRoomMinutes)}
+          </span>
           <span aria-hidden="true">→</span>
         </button>
       </div>

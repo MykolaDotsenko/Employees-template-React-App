@@ -26,7 +26,14 @@ The workflow deliberately does not try to create the Pages site with `GITHUB_TOK
 
 ## Production smoke test
 
-After each release deployment, verify:
+After each release deployment, verify the user-critical hierarchy before feature depth:
+
+- **Now** appears before detailed calendar context on a mature Today view.
+- Calendar detail is collapsed by default and remains keyboard-expandable.
+- Start Day exposes the selected focus-room value on the primary action.
+- The first mobile viewport prioritizes current work over calendar analytics.
+
+Then verify:
 
 1. Today loads without console errors.
 2. Capture → Inbox → Today → Top 3 works.
