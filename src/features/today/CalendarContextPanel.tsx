@@ -1,5 +1,8 @@
 import { useRef, useState, type ChangeEvent } from "react";
-import type { CalendarState, WorkdayPreferences } from "../../domain/daydock/model";
+import type {
+  CalendarState,
+  WorkdayPreferences,
+} from "../../domain/daydock/model";
 import type { CalendarAwareness } from "../../domain/calendar/availability";
 
 interface CalendarContextPanelProps {
