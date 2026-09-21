@@ -148,8 +148,15 @@ describe("DayDock persistence", () => {
   it("migrates schema v4 to the current schema with empty calendar context", () => {
     const storage = new MemoryStorage();
     const state = createInitialDayDockState();
-    const { calendar, ...v4Data } = state;
+    const {
+      calendar,
+      notifications,
+      workday,
+      ...v4Data
+    } = state;
     void calendar;
+    void notifications;
+    void workday;
 
     storage.setItem(
       DAYDOCK_STORAGE_KEY,
