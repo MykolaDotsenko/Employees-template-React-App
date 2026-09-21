@@ -4,6 +4,7 @@ import type {
   CalendarState,
   DayPlan,
   Task,
+  WorkdayPreferences,
 } from "../../domain/daydock/model";
 import type { CalendarAwareness } from "../../domain/calendar/availability";
 import { TaskRow } from "../tasks/TaskRow";
@@ -23,12 +24,14 @@ interface TodaySurfaceProps {
   duePeopleCount: number;
   calendar: CalendarState;
   calendarAwareness: CalendarAwareness;
+  workday: WorkdayPreferences;
   suggestedFocusRoomMinutes: number | null;
   onImportCalendar: (
     source: string,
     sourceLabel: string,
   ) => { eventCount: number; warnings: string[] };
   onClearCalendar: () => void;
+  onWorkdayChange: (startHour: number, endHour: number) => void;
   onCapture: () => void;
   onOpenInbox: () => void;
   onOpenPeople: () => void;
@@ -52,9 +55,11 @@ export function TodaySurface({
   duePeopleCount,
   calendar,
   calendarAwareness,
+  workday,
   suggestedFocusRoomMinutes,
   onImportCalendar,
   onClearCalendar,
+  onWorkdayChange,
   onCapture,
   onOpenInbox,
   onOpenPeople,
@@ -331,8 +336,10 @@ export function TodaySurface({
         <CalendarContextPanel
           calendar={calendar}
           awareness={calendarAwareness}
+          workday={workday}
           onImport={onImportCalendar}
           onClear={onClearCalendar}
+          onWorkdayChange={onWorkdayChange}
         />
       ) : null}
     </div>
