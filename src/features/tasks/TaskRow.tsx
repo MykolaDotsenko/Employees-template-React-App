@@ -168,7 +168,7 @@ export function TaskRow({
             <form className="task-editor-form" onSubmit={saveTask}>
               <div>
                 <p className="section-kicker">Task details</p>
-                <h2 id={titleId}>Keep the wording useful</h2>
+                <h2 id={titleId}>Keep the task useful</h2>
               </div>
 
               {onRename !== undefined ? (
