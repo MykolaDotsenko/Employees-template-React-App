@@ -1044,7 +1044,8 @@ describe("DayDock core daily flow", () => {
   });
 
 
-  it("shows imported calendar constraints and focus windows without becoming a calendar editor", () => {
+  it("shows compact calendar context and reveals detail on demand", async () => {
+    const user = userEvent.setup();
     const store = createDayDockStore();
     const now = new Date();
     const start = new Date(now);
@@ -1081,13 +1082,63 @@ describe("DayDock core daily flow", () => {
     render(<App store={store} />);
 
     expect(
-      screen.getByRole("heading", { name: "Room around the meetings" }),
+      screen.getByRole("heading", { name: /1 timed event · \d+m focus room/ }),
     ).toBeInTheDocument();
+
+    const details = screen.getByText("View day shape").closest("details");
+    expect(details).not.toBeNull();
+    expect(details).not.toHaveAttribute("open");
+
+    await user.click(screen.getByText("View day shape"));
+
+    expect(details).toHaveAttribute("open");
     expect(screen.getByText("Release review")).toBeInTheDocument();
     expect(screen.getByText(/work\.ics/)).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /create calendar event/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("keeps the current priority ahead of calendar context on Today", () => {
+    const store = createDayDockStore();
+    const now = new Date();
+
+    store.dispatch({
+      type: "task/captured",
+      task: {
+        id: "priority-before-calendar",
+        title: "Ship the release",
+        status: "today",
+        estimateMinutes: 50,
+        personId: null,
+        deferUntil: null,
+        recurrence: null,
+        createdAt: now.toISOString(),
+        completedAt: null,
+      },
+    });
+    store.dispatch({
+      type: "top3/added",
+      taskId: "priority-before-calendar",
+    });
+    store.dispatch({
+      type: "calendar/replaced",
+      events: [],
+      importedAt: now.toISOString(),
+      sourceLabel: "work.ics",
+    });
+
+    render(<App store={store} />);
+
+    const nowHeading = screen.getByRole("heading", { name: "Ship the release" });
+    const calendarHeading = screen.getByRole("heading", {
+      name: /0 timed events · \d+m focus room/,
+    });
+
+    expect(
+      nowHeading.compareDocumentPosition(calendarHeading) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("starts the workday once with attention signals and a realistic focus room", async () => {
