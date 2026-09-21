@@ -2,9 +2,13 @@
 
 **Make room for what matters.**
 
-DayDock is a calm, local-first workday command center for turning loose commitments into a deliberate daily rhythm:
+DayDock is a calm, local-first workday command center for knowledge workers juggling tasks, meetings, and people without turning productivity into a score.
 
 **Capture → Decide → Focus → Follow up → Close the day**
+
+**Live demo:** https://mykoladotsenko.github.io/daydock/
+
+The core promise is simple: get commitments out of your head, decide when they deserve attention, protect up to three outcomes, and end the day with unfinished work safely parked instead of mentally carried.
 
 It started as an employee-management React exercise and was rebuilt into a complete product and frontend-architecture case study.
 
