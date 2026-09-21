@@ -59,6 +59,20 @@ describe("calendar availability", () => {
     expect(awareness.availableMinutes).toBe(290);
   });
 
+  it("suggests zero when no focus room remains", () => {
+    const awareness = buildCalendarAwareness(
+      [
+        event("late-review", "2026-09-20T17:00:00.000Z", "2026-09-20T18:00:00.000Z"),
+      ],
+      new Date("2026-09-20T18:30:00.000Z"),
+      8,
+      18,
+    );
+
+    expect(awareness.availableMinutes).toBe(0);
+    expect(suggestedFocusRoomMinutes(awareness)).toBe(0);
+  });
+
   it("does not count all-day context as blocked focus time", () => {
     const allDay: CalendarBusyEvent = {
       id: "holiday",
