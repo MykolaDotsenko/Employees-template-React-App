@@ -8,7 +8,7 @@ interface InboxSurfaceProps {
   laterTasks: Task[];
   todayKey: string;
   revealedTaskId: string | null;
-  revealToken?: number;
+  revealToken?: number | undefined;
   onMoveInbox: (taskId: string) => void;
   onMoveToday: (taskId: string) => void;
   onSchedule: (

@@ -13,7 +13,7 @@ interface TaskRowProps {
   leading?: ReactNode;
   metadata?: ReactNode;
   actions?: ReactNode;
-  revealToken?: number;
+  revealToken?: number | undefined;
   onRename?: (taskId: string, title: string) => void;
   onEstimateChange?: (
     taskId: string,
