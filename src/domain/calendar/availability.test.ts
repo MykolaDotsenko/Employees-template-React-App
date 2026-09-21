@@ -41,6 +41,24 @@ describe("calendar availability", () => {
     expect(suggestedFocusRoomMinutes(awareness)).toBe(300);
   });
 
+  it("calculates focus room inside a custom workday window", () => {
+    const awareness = buildCalendarAwareness(
+      [
+        event("review", "2026-09-20T11:00:00.000Z", "2026-09-20T12:00:00.000Z"),
+      ],
+      new Date("2026-09-20T10:00:00.000Z"),
+      10,
+      16,
+    );
+
+    expect(awareness.focusWindows.map((window) => window.minutes)).toEqual([
+      55,
+      235,
+    ]);
+    expect(awareness.busyMinutes).toBe(70);
+    expect(awareness.availableMinutes).toBe(290);
+  });
+
   it("does not count all-day context as blocked focus time", () => {
     const allDay: CalendarBusyEvent = {
       id: "holiday",
