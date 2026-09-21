@@ -14,7 +14,7 @@ It started as an employee-management React exercise and was rebuilt into a compl
 
 ## Product capabilities
 
-- 60-second **Start Day** ritual with attention signals and a realistic focus-room estimate
+- 60-second **Start Day** ritual with attention signals and a calendar-derived focus-room estimate that can honestly be zero
 - one-field Quick Capture with keyboard shortcut, installed-app shortcut, and Android/PWA Share Target
 - Inbox triage into Today, Done, or calm **Later** scheduling with automatic resurfacing
 - Tomorrow / Next week / custom-date / Someday resurfacing
@@ -23,7 +23,7 @@ It started as an employee-management React exercise and was rebuilt into a compl
 - resilient Focus Mode with pause/resume and timestamp-derived timing
 - People context with scheduled follow-ups and linked tasks
 - command palette and local search with **Ctrl/Cmd + K**
-- local read-only **Calendar Awareness** from standard `.ics` files with meeting constraints and derived focus windows
+- local read-only **Calendar Awareness** from standard `.ics` files with meeting constraints, derived focus windows, and a persisted 30-minute-granularity workday window
 - Daily Review with completed work, unresolved work, and seven-day focus rhythm
 - versioned local-first persistence and legacy migration
 - validated cross-tab synchronization with BroadcastChannel
