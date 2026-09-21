@@ -16,6 +16,19 @@ const baseProps = {
 };
 
 describe("StartDayPanel", () => {
+  it("shows a truthful zero-focus plan instead of inventing available time", () => {
+    render(
+      <StartDayPanel {...baseProps} suggestedFocusRoomMinutes={0} />,
+    );
+
+    expect(
+      screen.getByRole("combobox", { name: "Available focus room" }),
+    ).toHaveValue("0");
+    expect(screen.getByRole("button", { name: /Start my day/i })).toHaveTextContent(
+      "0 min",
+    );
+  });
+
   it("follows a changing calendar suggestion until the user adjusts it", async () => {
     const user = userEvent.setup();
     const { rerender } = render(
