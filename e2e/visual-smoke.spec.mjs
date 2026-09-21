@@ -304,7 +304,14 @@ test.describe("DayDock visual and release smoke", () => {
       if (surface === "People") {
         await expect(page.getByText("Anna", { exact: true })).toBeVisible();
       } else if (surface === "Review") {
-        await expect(page.getByText("Review release checklist")).toBeVisible();
+        const completedToday = page.locator(
+          'section[aria-labelledby="completed-title"]',
+        );
+        await expect(
+          completedToday.getByText("Review release checklist", {
+            exact: true,
+          }),
+        ).toBeVisible();
       } else {
         const readyAgain = page.locator(
           'section[aria-labelledby="ready-again-title"]',
