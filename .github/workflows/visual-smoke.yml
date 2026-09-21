@@ -551,6 +551,39 @@ jobs:
             "$GITHUB_WORKSPACE/visual-smoke/focus-mobile.png" \
             "http://127.0.0.1:4173/__visual-seed.html?mode=focus"
 
+          capture_screenshot \
+            /tmp/daydock-task-editor-mobile \
+            390,844 \
+            "$GITHUB_WORKSPACE/visual-smoke/task-editor-mobile.png" \
+            "http://127.0.0.1:4173/__visual-seed.html?mode=mature&action=task-editor"
+
+          dump_dom \
+            /tmp/daydock-task-editor-mobile \
+            "http://127.0.0.1:4173/__visual-seed.html?mode=mature&action=task-editor" \
+            visual-smoke/task-editor-dom.html
+
+          capture_screenshot \
+            /tmp/daydock-undo-mobile \
+            390,844 \
+            "$GITHUB_WORKSPACE/visual-smoke/undo-mobile.png" \
+            "http://127.0.0.1:4173/__visual-seed.html?mode=mature&action=undo"
+
+          dump_dom \
+            /tmp/daydock-undo-mobile \
+            "http://127.0.0.1:4173/__visual-seed.html?mode=mature&action=undo" \
+            visual-smoke/undo-dom.html
+
+          capture_screenshot \
+            /tmp/daydock-notification-mismatch-mobile \
+            390,844 \
+            "$GITHUB_WORKSPACE/visual-smoke/notification-mismatch-mobile.png" \
+            "http://127.0.0.1:4173/__visual-seed.html?mode=notification-mismatch&action=data-controls"
+
+          dump_dom \
+            /tmp/daydock-notification-mismatch-mobile \
+            "http://127.0.0.1:4173/__visual-seed.html?mode=notification-mismatch&action=data-controls" \
+            visual-smoke/notification-mismatch-dom.html
+
           dump_dom \
             /tmp/daydock-mature-dom \
             "http://127.0.0.1:4173/__visual-seed.html?mode=mature" \
@@ -589,6 +622,18 @@ jobs:
           grep -q "Ship DayDock release" visual-smoke/focus-dom.html
           grep -q "End session" visual-smoke/focus-dom.html
 
+          grep -q 'data-visual-action-ready="task-editor"' visual-smoke/task-editor-dom.html
+          grep -q "Keep the task useful" visual-smoke/task-editor-dom.html
+          grep -q "Optional minutes" visual-smoke/task-editor-dom.html
+
+          grep -q 'data-visual-action-ready="undo"' visual-smoke/undo-dom.html
+          grep -q "Undo removal" visual-smoke/undo-dom.html
+          grep -q "Task removed" visual-smoke/undo-dom.html
+
+          grep -q 'data-visual-action-ready="data-controls"' visual-smoke/notification-mismatch-dom.html
+          grep -q "Ready again alerts" visual-smoke/notification-mismatch-dom.html
+          grep -q "Ready again is enabled in this workspace, but" visual-smoke/notification-mismatch-dom.html
+
           test -s visual-smoke/desktop.png
           test -s visual-smoke/mobile.png
           test -s visual-smoke/small-mobile.png
@@ -600,6 +645,12 @@ jobs:
           test -s visual-smoke/review-mobile.png
           test -s visual-smoke/focus-desktop.png
           test -s visual-smoke/focus-mobile.png
+          test -s visual-smoke/task-editor-mobile.png
+          test -s visual-smoke/undo-mobile.png
+          test -s visual-smoke/notification-mismatch-mobile.png
+          test -s visual-smoke/task-editor-dom.html
+          test -s visual-smoke/undo-dom.html
+          test -s visual-smoke/notification-mismatch-dom.html
 
           # Warm a real production profile so the generated service worker can
           # install and precache the built app shell before the network is removed.
