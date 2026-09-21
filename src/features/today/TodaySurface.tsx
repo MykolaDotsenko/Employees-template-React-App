@@ -257,6 +257,9 @@ export function TodaySurface({
                 <TaskRow
                   key={task.id}
                   task={task}
+                  revealToken={
+                    revealedTaskId === task.id ? revealToken : undefined
+                  }
                   onRename={onRename}
                   onRemove={onRemove}
                   leading={<span className="priority-index">{index + 1}</span>}
