@@ -138,7 +138,7 @@ function UndoRemovalBar({
   const label = removal.kind === "task" ? removal.task.title : removal.person.name;
 
   return (
-    <aside className="undo-removal-bar" aria-label="Undo removal">
+    <aside className="undo-removal-bar" role="region" aria-label="Undo removal">
       <p className="undo-removal-message" role="status" aria-live="polite">
         <strong>{removal.kind === "task" ? "Task removed" : "Person removed"}</strong>
         <span>{label}</span>
@@ -554,7 +554,7 @@ export function App({ store = dayDockStore }: AppProps) {
     const removal: Exclude<UndoRemoval, null> = {
       kind: "task",
       task,
-      orderIndex: state.taskOrder.indexOf(taskId),
+      orderIndex: Math.max(0, state.taskOrder.indexOf(taskId)),
       top3Before: [...state.top3],
       focusHistoryBefore: [...state.focus.history],
     };
@@ -613,7 +613,7 @@ export function App({ store = dayDockStore }: AppProps) {
     const removal: Exclude<UndoRemoval, null> = {
       kind: "person",
       person,
-      orderIndex: state.personOrder.indexOf(personId),
+      orderIndex: Math.max(0, state.personOrder.indexOf(personId)),
       linkedTaskIds: state.taskOrder.filter(
         (taskId) => state.tasks[taskId]?.personId === personId,
       ),
