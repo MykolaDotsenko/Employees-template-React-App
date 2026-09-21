@@ -18,6 +18,7 @@ interface InboxSurfaceProps {
   ) => void;
   onComplete: (taskId: string) => void;
   onRename: (taskId: string, title: string) => void;
+  onEstimateChange: (taskId: string, estimateMinutes: number | null) => void;
   onRemove: (taskId: string) => void;
 }
 
@@ -68,6 +69,7 @@ export function InboxSurface({
   onSchedule,
   onComplete,
   onRename,
+  onEstimateChange,
   onRemove,
 }: InboxSurfaceProps) {
   const readyTasks = inboxTasks.filter(
@@ -136,6 +138,7 @@ export function InboxSurface({
                     }
                     metadata={<TimingMeta task={task} ready />}
                     onRename={onRename}
+                    onEstimateChange={onEstimateChange}
                     onRemove={onRemove}
                     actions={
                       <>
@@ -206,6 +209,7 @@ export function InboxSurface({
                       revealedTaskId === task.id ? revealToken : undefined
                     }
                     onRename={onRename}
+                    onEstimateChange={onEstimateChange}
                     onRemove={onRemove}
                     actions={
                       <>
@@ -268,6 +272,7 @@ export function InboxSurface({
                       }
                       metadata={<TimingMeta task={task} />}
                       onRename={onRename}
+                      onEstimateChange={onEstimateChange}
                       onRemove={onRemove}
                       actions={
                         <>
