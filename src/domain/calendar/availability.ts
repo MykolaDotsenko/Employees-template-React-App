@@ -26,6 +26,21 @@ function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(maximum, Math.max(minimum, value));
 }
 
+function timeOnLocalDay(date: Date, decimalHour: number): Date {
+  const hour = Math.floor(decimalHour);
+  const minute = Math.round((decimalHour - hour) * 60);
+
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    hour,
+    minute,
+    0,
+    0,
+  );
+}
+
 export function buildCalendarAwareness(
   events: readonly CalendarBusyEvent[],
   now: Date,
@@ -55,24 +70,8 @@ export function buildCalendarAwareness(
     .filter((event) => event.allDay)
     .sort((a, b) => a.title.localeCompare(b.title));
 
-  const workdayStart = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-    workdayStartHour,
-    0,
-    0,
-    0,
-  );
-  const workdayEnd = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-    workdayEndHour,
-    0,
-    0,
-    0,
-  );
+  const workdayStart = timeOnLocalDay(now, workdayStartHour);
+  const workdayEnd = timeOnLocalDay(now, workdayEndHour);
   const effectiveStart = new Date(
     Math.max(workdayStart.getTime(), now.getTime()),
   );
