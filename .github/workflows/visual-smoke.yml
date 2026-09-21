@@ -170,7 +170,7 @@ jobs:
                 sourceLabel: "work-calendar.ics",
               },
               notifications: {
-                readyAgain: false,
+                readyAgain: mode === "notification-mismatch",
                 lastReadyAgainNotifiedDate: null,
               },
               workday: {
@@ -187,11 +187,15 @@ jobs:
                 data: state,
               }),
             );
-            const surface =
-              new URLSearchParams(location.search).get("surface");
-            location.replace(
-              surface ? `/?__visualSurface=${encodeURIComponent(surface)}` : "/",
-            );
+            const params = new URLSearchParams(location.search);
+            const surface = params.get("surface");
+            const action = params.get("action");
+            const target = new URLSearchParams();
+
+            if (surface) target.set("__visualSurface", surface);
+            if (action) target.set("__visualAction", action);
+
+            location.replace(target.size > 0 ? `/?${target.toString()}` : "/");
           </script>
           HTML
 
@@ -230,11 +234,114 @@ jobs:
           })();
           JS
 
+          cat > dist/__visual-action.js <<'JS'
+          (() => {
+            const action = new URLSearchParams(location.search).get(
+              "__visualAction",
+            );
+            if (!action) return;
+
+            let attempts = 0;
+            let stage = 0;
+            let clicked = false;
+
+            const markReady = () => {
+              document.documentElement.dataset.visualActionReady = action;
+            };
+
+            const findButtonByText = (text) =>
+              [...document.querySelectorAll("button")].find(
+                (button) => button.textContent?.trim() === text,
+              );
+
+            const run = () => {
+              attempts += 1;
+
+              if (action === "data-controls") {
+                const popover = document.getElementById("daydock-data-safety");
+
+                if (popover?.matches(":popover-open")) {
+                  markReady();
+                  return;
+                }
+
+                if (!clicked) {
+                  const trigger = document.querySelector(
+                    'button[aria-label^="Open data and recovery"]',
+                  );
+                  if (trigger instanceof HTMLButtonElement) {
+                    trigger.click();
+                    clicked = true;
+                  }
+                }
+              }
+
+              if (action === "task-editor") {
+                const dialog = document.querySelector(
+                  "dialog.task-editor-dialog[open]",
+                );
+                if (dialog instanceof HTMLDialogElement) {
+                  markReady();
+                  return;
+                }
+
+                if (!clicked) {
+                  const trigger = document.querySelector(
+                    'button[aria-label="Edit or remove Ship DayDock release"]',
+                  );
+                  if (trigger instanceof HTMLButtonElement) {
+                    trigger.click();
+                    clicked = true;
+                  }
+                }
+              }
+
+              if (action === "undo") {
+                const undo = document.querySelector(
+                  '[role="region"][aria-label="Undo removal"]',
+                );
+                if (undo) {
+                  markReady();
+                  return;
+                }
+
+                if (stage === 0) {
+                  const trigger = document.querySelector(
+                    'button[aria-label="Edit or remove Ship DayDock release"]',
+                  );
+                  if (trigger instanceof HTMLButtonElement) {
+                    trigger.click();
+                    stage = 1;
+                  }
+                } else if (stage === 1) {
+                  const removeLink = findButtonByText("Remove…");
+                  if (removeLink instanceof HTMLButtonElement) {
+                    removeLink.click();
+                    stage = 2;
+                  }
+                } else if (stage === 2) {
+                  const removeTask = findButtonByText("Remove task");
+                  if (removeTask instanceof HTMLButtonElement) {
+                    removeTask.click();
+                    stage = 3;
+                  }
+                }
+              }
+
+              if (attempts < 100) {
+                window.setTimeout(run, 40);
+              }
+            };
+
+            window.addEventListener("DOMContentLoaded", run, { once: true });
+          })();
+          JS
+
           # Surface-specific screenshots navigate immediately after boot. Disable the
           # native View Transition compositor only inside those visual fixtures;
           # production DayDock keeps View Transitions enabled.
           sed -i 's#</head>#<script>if(new URLSearchParams(location.search).has("__visualSurface")){Object.defineProperty(document,"startViewTransition",{value:undefined,configurable:true});}</script></head>#' dist/index.html
-          sed -i 's#</body>#<script src="./__visual-nav.js"></script></body>#' dist/index.html
+          sed -i 's#</body>#<script src="./__visual-nav.js"></script><script src="./__visual-action.js"></script></body>#' dist/index.html
 
           npm run preview -- --host 127.0.0.1 --port 4173 > visual-smoke/preview.log 2>&1 &
           preview_pid=$!
@@ -444,6 +551,39 @@ jobs:
             "$GITHUB_WORKSPACE/visual-smoke/focus-mobile.png" \
             "http://127.0.0.1:4173/__visual-seed.html?mode=focus"
 
+          capture_screenshot \
+            /tmp/daydock-task-editor-mobile \
+            390,844 \
+            "$GITHUB_WORKSPACE/visual-smoke/task-editor-mobile.png" \
+            "http://127.0.0.1:4173/__visual-seed.html?mode=mature&action=task-editor"
+
+          dump_dom \
+            /tmp/daydock-task-editor-mobile \
+            "http://127.0.0.1:4173/__visual-seed.html?mode=mature&action=task-editor" \
+            visual-smoke/task-editor-dom.html
+
+          capture_screenshot \
+            /tmp/daydock-undo-mobile \
+            390,844 \
+            "$GITHUB_WORKSPACE/visual-smoke/undo-mobile.png" \
+            "http://127.0.0.1:4173/__visual-seed.html?mode=mature&action=undo"
+
+          dump_dom \
+            /tmp/daydock-undo-mobile \
+            "http://127.0.0.1:4173/__visual-seed.html?mode=mature&action=undo" \
+            visual-smoke/undo-dom.html
+
+          capture_screenshot \
+            /tmp/daydock-notification-mismatch-mobile \
+            390,844 \
+            "$GITHUB_WORKSPACE/visual-smoke/notification-mismatch-mobile.png" \
+            "http://127.0.0.1:4173/__visual-seed.html?mode=notification-mismatch&action=data-controls"
+
+          dump_dom \
+            /tmp/daydock-notification-mismatch-mobile \
+            "http://127.0.0.1:4173/__visual-seed.html?mode=notification-mismatch&action=data-controls" \
+            visual-smoke/notification-mismatch-dom.html
+
           dump_dom \
             /tmp/daydock-mature-dom \
             "http://127.0.0.1:4173/__visual-seed.html?mode=mature" \
@@ -482,6 +622,18 @@ jobs:
           grep -q "Ship DayDock release" visual-smoke/focus-dom.html
           grep -q "End session" visual-smoke/focus-dom.html
 
+          grep -q 'data-visual-action-ready="task-editor"' visual-smoke/task-editor-dom.html
+          grep -q "Keep the task useful" visual-smoke/task-editor-dom.html
+          grep -q "Optional minutes" visual-smoke/task-editor-dom.html
+
+          grep -q 'data-visual-action-ready="undo"' visual-smoke/undo-dom.html
+          grep -q "Undo removal" visual-smoke/undo-dom.html
+          grep -q "Task removed" visual-smoke/undo-dom.html
+
+          grep -q 'data-visual-action-ready="data-controls"' visual-smoke/notification-mismatch-dom.html
+          grep -q "Ready again alerts" visual-smoke/notification-mismatch-dom.html
+          grep -q "Ready again is enabled in this workspace, but" visual-smoke/notification-mismatch-dom.html
+
           test -s visual-smoke/desktop.png
           test -s visual-smoke/mobile.png
           test -s visual-smoke/small-mobile.png
@@ -493,6 +645,12 @@ jobs:
           test -s visual-smoke/review-mobile.png
           test -s visual-smoke/focus-desktop.png
           test -s visual-smoke/focus-mobile.png
+          test -s visual-smoke/task-editor-mobile.png
+          test -s visual-smoke/undo-mobile.png
+          test -s visual-smoke/notification-mismatch-mobile.png
+          test -s visual-smoke/task-editor-dom.html
+          test -s visual-smoke/undo-dom.html
+          test -s visual-smoke/notification-mismatch-dom.html
 
           # Warm a real production profile so the generated service worker can
           # install and precache the built app shell before the network is removed.

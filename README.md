@@ -162,7 +162,7 @@ For a fast technical review:
 8. `src/App.test.tsx` — end-to-end component journeys
 9. `scripts/finalize-service-worker.mjs` — build-derived offline shell manifest
 10. `.github/workflows/quality.yml` — automated quality gate
-11. `.github/workflows/visual-smoke.yml` — desktop/mobile, mature-state, focus and offline release evidence
+11. `.github/workflows/visual-smoke.yml` — desktop/mobile, mature-state, critical overlay, focus and offline release evidence
 12. `.github/workflows/pages.yml` — release deployment gate
 
 ## Privacy
