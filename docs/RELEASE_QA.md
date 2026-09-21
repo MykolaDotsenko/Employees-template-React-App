@@ -40,6 +40,7 @@ After each release deployment, verify the user-critical hierarchy before feature
 - A 30-minute workday boundary (for example 08:30–17:30) persists and immediately changes derived focus room.
 - A day with no remaining 25+ minute focus window suggests **0 min**, never invented availability.
 - The visual fixture uses the current persisted schema rather than relying on a migration side effect.
+- Visual smoke captures task editing, destructive-action Undo, and restored-notification permission mismatch as opened interactive states rather than hidden DOM-only fixtures.
 
 Then verify:
 
