@@ -117,7 +117,7 @@ export function StartDayPanel({
             value={focusRoomMinutes}
             onChange={(event) => {
               setManualFocusRoomMinutes(Number(event.currentTarget.value));
-            }
+            }}
           >
             {focusRoomOptions.map((minutes) => (
               <option key={minutes} value={minutes}>
