@@ -51,6 +51,14 @@ export default tseslint.config(
     },
   },
   {
+    files: ["public/sw.js"],
+    languageOptions: {
+      globals: {
+        __DAYDOCK_PRECACHE__: "readonly",
+      },
+    },
+  },
+  {
     files: ["playwright.config.mjs", "e2e/**/*.mjs", "scripts/**/*.mjs"],
     languageOptions: {
       globals: {
