@@ -195,11 +195,13 @@ Calendar context is deliberately read-only. The user can import a standard `.ics
 Today uses that snapshot to show:
 - timed constraints for the current day
 - all-day context without automatically blocking the whole day
-- 25+ minute focus windows inside an 08:00–18:00 working-day frame
+- 25+ minute focus windows inside the user's persisted working-day frame (08:00–18:00 by default)
 - five-minute breathing room around timed events
 - a realistic suggested Focus Room for Start Day
 
 DayDock does not edit calendar events and does not pretend a local snapshot is live sync. The UI labels the source and import time and asks the user to refresh the file when the external calendar changes.
+
+The working window is user-configurable. Changing its start or end time immediately recalculates focus windows and the Start Day focus-room suggestion, and the preference is persisted with the workspace and included in portable backups.
 
 
 ## Capture from other apps
