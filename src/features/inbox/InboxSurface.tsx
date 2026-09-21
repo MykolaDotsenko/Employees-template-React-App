@@ -7,6 +7,8 @@ interface InboxSurfaceProps {
   inboxTasks: Task[];
   laterTasks: Task[];
   todayKey: string;
+  revealedTaskId: string | null;
+  revealToken?: number;
   onMoveInbox: (taskId: string) => void;
   onMoveToday: (taskId: string) => void;
   onSchedule: (
@@ -59,6 +61,8 @@ export function InboxSurface({
   inboxTasks,
   laterTasks,
   todayKey,
+  revealedTaskId,
+  revealToken,
   onMoveInbox,
   onMoveToday,
   onSchedule,
@@ -127,6 +131,9 @@ export function InboxSurface({
                   <TaskRow
                     key={task.id}
                     task={task}
+                    revealToken={
+                      revealedTaskId === task.id ? revealToken : undefined
+                    }
                     metadata={<TimingMeta task={task} ready />}
                     onRename={onRename}
                     onRemove={onRemove}
@@ -195,6 +202,9 @@ export function InboxSurface({
                   <TaskRow
                     key={task.id}
                     task={task}
+                    revealToken={
+                      revealedTaskId === task.id ? revealToken : undefined
+                    }
                     onRename={onRename}
                     onRemove={onRemove}
                     actions={
