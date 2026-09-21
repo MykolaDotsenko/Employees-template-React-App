@@ -944,6 +944,54 @@ describe("DayDock core daily flow", () => {
     expect(
       screen.queryByText("Publish release announcement"),
     ).not.toBeInTheDocument();
+
+    const undoRegion = screen.getByRole("region", { name: "Undo removal" });
+    expect(
+      within(undoRegion).getByText("Publish release announcement"),
+    ).toBeInTheDocument();
+
+    await user.click(within(undoRegion).getByRole("button", { name: "Undo" }));
+
+    expect(store.getSnapshot().tasks["editable-task"]?.title).toBe(
+      "Publish release announcement",
+    );
+    const restoredTask = screen.getByText("Publish release announcement", {
+      selector: "strong",
+    });
+    expect(restoredTask).toBeInTheDocument();
+    await waitFor(() => expect(restoredTask.closest("li")).toHaveFocus());
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Edit or remove Publish release announcement",
+      }),
+    );
+    const restoredEditor = screen.getByRole("dialog", {
+      name: "Keep the wording useful",
+    });
+    await user.click(
+      within(restoredEditor).getByRole("button", { name: "Remove…" }),
+    );
+    const restoredConfirmation = screen.getByRole("dialog", {
+      name: "Remove “Publish release announcement”?",
+    });
+    await user.click(
+      within(restoredConfirmation).getByRole("button", {
+        name: "Remove task",
+      }),
+    );
+
+    const finalUndoRegion = screen.getByRole("region", {
+      name: "Undo removal",
+    });
+    await user.click(
+      within(finalUndoRegion).getByRole("button", { name: "Dismiss undo" }),
+    );
+
+    expect(store.getSnapshot().tasks["editable-task"]).toBeUndefined();
+    expect(
+      screen.queryByRole("region", { name: "Undo removal" }),
+    ).not.toBeInTheDocument();
   });
 
   it("lets a user recover an accidentally completed task from Review", async () => {
@@ -1112,6 +1160,43 @@ describe("DayDock core daily flow", () => {
 
     await user.click(
       within(confirmation).getByRole("button", { name: "Remove person" }),
+    );
+
+    expect(store.getSnapshot().people["anna-remove"]).toBeUndefined();
+    expect(store.getSnapshot().tasks["safe-linked-task"]?.personId).toBeNull();
+
+    const undoRegion = screen.getByRole("region", { name: "Undo removal" });
+    await user.click(within(undoRegion).getByRole("button", { name: "Undo" }));
+
+    expect(store.getSnapshot().people["anna-remove"]?.name).toBe("Anna");
+    expect(store.getSnapshot().tasks["safe-linked-task"]?.personId).toBe(
+      "anna-remove",
+    );
+    const restoredPerson = screen.getByRole("heading", { name: "Anna" });
+    const restoredCard = restoredPerson.closest("article");
+    expect(restoredCard).not.toBeNull();
+    await waitFor(() => expect(restoredCard).toHaveFocus());
+
+    await user.click(screen.getByRole("button", { name: "Edit Anna" }));
+    const restoredEditDialog = screen.getByRole("dialog", {
+      name: "Keep the context current",
+    });
+    await user.click(
+      within(restoredEditDialog).getByRole("button", { name: "Remove…" }),
+    );
+    const restoredConfirmation = screen.getByRole("dialog", {
+      name: "Remove Anna?",
+    });
+    await user.click(
+      within(restoredConfirmation).getByRole("button", {
+        name: "Remove person",
+      }),
+    );
+    const finalUndoRegion = screen.getByRole("region", {
+      name: "Undo removal",
+    });
+    await user.click(
+      within(finalUndoRegion).getByRole("button", { name: "Dismiss undo" }),
     );
 
     expect(store.getSnapshot().people["anna-remove"]).toBeUndefined();
