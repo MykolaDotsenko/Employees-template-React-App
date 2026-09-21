@@ -49,8 +49,8 @@ versioned envelope
         v
 Zod validation
         |
-        +--> current schema v3 → normalize
-        +--> v0/v1/v2 → migrate → write v3
+        +--> current schema v6 → normalize
+        +--> v0…v5 → migrate → write v6
         +--> corrupt/future → safe recovery
         |
         v
@@ -66,7 +66,7 @@ Persistence is deliberately outside the reducer. Stored data is untrusted input 
 
 ```text
 {
-  schemaVersion: 3,
+  schemaVersion: 6,
   updatedAt: ISO date-time,
   data: DayDockState
 }
@@ -151,7 +151,7 @@ pure reducer
     v
 external store
     |
-    +--> persist normalized v3 workspace to localStorage
+    +--> persist normalized v6 workspace to localStorage
     |
     +--> revisioned BroadcastChannel snapshot
               |
@@ -169,6 +169,8 @@ external store
 ```
 
 ### Ordering and safety
+
+Cross-tab synchronization is intentionally **last-write-wins at the workspace snapshot level**, not a CRDT or field-level merge. It is designed for one person using a small number of tabs on the same device. Concurrent edits in separate tabs are deterministically ordered, but the later complete snapshot can replace an earlier concurrent snapshot.
 
 - Each tab has a unique source id.
 - Revisions order first by timestamp and then by source id for deterministic
