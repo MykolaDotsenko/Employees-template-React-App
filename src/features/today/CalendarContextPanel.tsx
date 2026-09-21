@@ -76,18 +76,29 @@ export function CalendarContextPanel({
   const meetingCount = awareness.timedEvents.length;
   const nextMeetings = awareness.timedEvents.slice(0, 4);
   const focusWindows = awareness.focusWindows.slice(0, 3);
+  const nextFocusWindow = focusWindows[0] ?? null;
+
+  const dayShapeSummary =
+    nextFocusWindow === null
+      ? "No 25+ minute focus window remains in the current workday."
+      : `Next focus window ${formatWindow(nextFocusWindow.startAt, nextFocusWindow.endAt)} · ${nextFocusWindow.minutes} min`;
 
   return (
-    <section className="calendar-context" aria-labelledby="calendar-context-title">
+    <section
+      className={hasCalendar ? "calendar-context is-compact" : "calendar-context"}
+      aria-labelledby="calendar-context-title"
+    >
       <div className="calendar-context-heading">
         <div>
-          <p className="section-kicker">Calendar awareness</p>
+          <p className="section-kicker">Calendar context</p>
           <h2 id="calendar-context-title">
-            {hasCalendar ? "Room around the meetings" : "Know what the day can hold"}
+            {hasCalendar
+              ? `${meetingCount} timed ${meetingCount === 1 ? "event" : "events"} · ${awareness.availableMinutes}m focus room`
+              : "Know what the day can hold"}
           </h2>
           <p>
             {hasCalendar
-              ? "DayDock treats calendar events as constraints, not another task list."
+              ? dayShapeSummary
               : "Import a read-only .ics file. It stays in this workspace and is used only to reveal realistic focus room."}
           </p>
         </div>
@@ -126,74 +137,78 @@ export function CalendarContextPanel({
       </div>
 
       {hasCalendar ? (
-        <>
-          <div className="calendar-context-metrics">
-            <div>
-              <strong>{meetingCount}</strong>
-              <span>timed {meetingCount === 1 ? "event" : "events"} today</span>
+        <details className="calendar-context-details">
+          <summary>View day shape</summary>
+
+          <div className="calendar-context-details-body">
+            <div className="calendar-context-metrics">
+              <div>
+                <strong>{meetingCount}</strong>
+                <span>timed {meetingCount === 1 ? "event" : "events"} today</span>
+              </div>
+              <div>
+                <strong>{Math.round(awareness.busyMinutes / 5) * 5}m</strong>
+                <span>busy + breathing room</span>
+              </div>
+              <div>
+                <strong>{awareness.availableMinutes}m</strong>
+                <span>open focus windows</span>
+              </div>
             </div>
-            <div>
-              <strong>{Math.round(awareness.busyMinutes / 5) * 5}m</strong>
-              <span>busy + breathing room</span>
+
+            <div className="calendar-context-grid">
+              <div>
+                <p className="section-kicker">Today’s constraints</p>
+                {nextMeetings.length > 0 ? (
+                  <ol className="calendar-event-list">
+                    {nextMeetings.map((event) => (
+                      <li key={event.id}>
+                        <span>{formatWindow(event.startAt, event.endAt)}</span>
+                        <strong>{event.title}</strong>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="calendar-empty-copy">
+                    No timed events in the imported calendar today.
+                  </p>
+                )}
+                {awareness.allDayEvents.length > 0 ? (
+                  <p className="calendar-all-day-note">
+                    {awareness.allDayEvents.length} all-day{" "}
+                    {awareness.allDayEvents.length === 1 ? "item" : "items"} shown
+                    for context but not counted as busy time.
+                  </p>
+                ) : null}
+              </div>
+
+              <div>
+                <p className="section-kicker">Focus windows</p>
+                {focusWindows.length > 0 ? (
+                  <ol className="focus-window-list">
+                    {focusWindows.map((window) => (
+                      <li key={window.startAt}>
+                        <strong>{formatWindow(window.startAt, window.endAt)}</strong>
+                        <span>{window.minutes} min available</span>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="calendar-empty-copy">
+                    No 25+ minute focus window remains inside the current
+                    workday.
+                  </p>
+                )}
+              </div>
             </div>
-            <div>
-              <strong>{awareness.availableMinutes}m</strong>
-              <span>open focus windows</span>
-            </div>
+
+            <p className="calendar-source-note">
+              {calendar.sourceLabel} · imported{" "}
+              {formatImportedAt(calendar.importedAt ?? "")} · local snapshot,
+              refresh manually when your calendar changes.
+            </p>
           </div>
-
-          <div className="calendar-context-grid">
-            <div>
-              <p className="section-kicker">Today’s constraints</p>
-              {nextMeetings.length > 0 ? (
-                <ol className="calendar-event-list">
-                  {nextMeetings.map((event) => (
-                    <li key={event.id}>
-                      <span>{formatWindow(event.startAt, event.endAt)}</span>
-                      <strong>{event.title}</strong>
-                    </li>
-                  ))}
-                </ol>
-              ) : (
-                <p className="calendar-empty-copy">
-                  No timed events in the imported calendar today.
-                </p>
-              )}
-              {awareness.allDayEvents.length > 0 ? (
-                <p className="calendar-all-day-note">
-                  {awareness.allDayEvents.length} all-day{" "}
-                  {awareness.allDayEvents.length === 1 ? "item" : "items"} shown
-                  for context but not counted as busy time.
-                </p>
-              ) : null}
-            </div>
-
-            <div>
-              <p className="section-kicker">Focus windows</p>
-              {focusWindows.length > 0 ? (
-                <ol className="focus-window-list">
-                  {focusWindows.map((window) => (
-                    <li key={window.startAt}>
-                      <strong>{formatWindow(window.startAt, window.endAt)}</strong>
-                      <span>{window.minutes} min available</span>
-                    </li>
-                  ))}
-                </ol>
-              ) : (
-                <p className="calendar-empty-copy">
-                  No 25+ minute focus window remains inside the 08:00–18:00
-                  workday.
-                </p>
-              )}
-            </div>
-          </div>
-
-          <p className="calendar-source-note">
-            {calendar.sourceLabel} · imported{" "}
-            {formatImportedAt(calendar.importedAt ?? "")} · local snapshot,
-            refresh manually when your calendar changes.
-          </p>
-        </>
+        </details>
       ) : null}
 
       {message ? (
