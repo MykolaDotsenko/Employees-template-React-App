@@ -156,8 +156,8 @@ export function suggestedFocusRoomMinutes(
   }
 
   const available = awareness.availableMinutes;
-  if (available <= 0) return 60;
+  if (available <= 0) return 0;
 
-  const capped = Math.min(300, Math.max(60, available));
-  return Math.max(60, Math.floor(capped / 30) * 30);
+  const capped = Math.min(300, available);
+  return Math.max(0, Math.floor(capped / 30) * 30);
 }
