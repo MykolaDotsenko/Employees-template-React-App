@@ -37,14 +37,17 @@ function formatImportedAt(value: string): string {
 function formatHour(hour: number): string {
   if (hour === 24) return "24:00";
 
+  const wholeHour = Math.floor(hour);
+  const minute = Math.round((hour - wholeHour) * 60);
+
   return new Intl.DateTimeFormat(undefined, {
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(2026, 0, 1, hour, 0, 0, 0));
+  }).format(new Date(2026, 0, 1, wholeHour, minute, 0, 0));
 }
 
-const START_HOURS = Array.from({ length: 24 }, (_, hour) => hour);
-const END_HOURS = Array.from({ length: 24 }, (_, index) => index + 1);
+const START_HOURS = Array.from({ length: 48 }, (_, index) => index / 2);
+const END_HOURS = Array.from({ length: 48 }, (_, index) => (index + 1) / 2);
 
 export function CalendarContextPanel({
   calendar,
