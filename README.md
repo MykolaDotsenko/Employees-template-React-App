@@ -28,6 +28,7 @@ It started as an employee-management React exercise and was rebuilt into a compl
 - versioned local-first persistence and legacy migration
 - validated cross-tab synchronization with BroadcastChannel
 - portable JSON backup, validation preview, and explicit restore
+- recoverable task/person removal with structural one-step Undo instead of whole-workspace rollback
 - responsive mobile navigation
 - reduced-motion and forced-colors support
 - installable PWA shell with build-generated, versioned offline precache
