@@ -159,6 +159,7 @@ export function TodaySurface({
           </div>
           <span className="now-orbit" aria-hidden="true" />
         </section>
+      ) : null}
 
       {gettingStartedStage ? (
         <section className="first-run-guide" aria-labelledby="first-run-title">
@@ -325,8 +326,6 @@ export function TodaySurface({
           ) : null}
         </section>
       )}
-
-      ) : null}
 
       {gettingStartedStage === null ? (
         <CalendarContextPanel
