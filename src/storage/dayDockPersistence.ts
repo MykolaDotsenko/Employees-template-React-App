@@ -99,12 +99,15 @@ const notificationPreferencesSchema = z.object({
 
 const workdayPreferencesSchema = z
   .object({
-    startHour: z.number().int().min(0).max(23),
-    endHour: z.number().int().min(1).max(24),
+    startHour: z.number().min(0).max(23.5),
+    endHour: z.number().min(0.5).max(24),
   })
   .refine(
-    (workday) => workday.startHour < workday.endHour,
-    "Workday end must be after start",
+    (workday) =>
+      Number.isInteger(workday.startHour * 2) &&
+      Number.isInteger(workday.endHour * 2) &&
+      workday.startHour < workday.endHour,
+    "Workday must use 30-minute increments with end after start",
   );
 
 const personSchema = z.object({
