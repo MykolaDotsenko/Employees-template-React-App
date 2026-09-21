@@ -7,9 +7,13 @@
 
 # testing
 /coverage
+/playwright-report
+/test-results
+/visual-smoke
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
