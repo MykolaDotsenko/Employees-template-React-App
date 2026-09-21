@@ -201,7 +201,7 @@ Today uses that snapshot to show:
 
 DayDock does not edit calendar events and does not pretend a local snapshot is live sync. The UI labels the source and import time and asks the user to refresh the file when the external calendar changes.
 
-The working window is user-configurable. Changing its start or end time immediately recalculates focus windows and the Start Day focus-room suggestion, and the preference is persisted with the workspace and included in portable backups.
+The working window is user-configurable in 30-minute increments. Changing its start or end time immediately recalculates focus windows and the Start Day focus-room suggestion, and the preference is persisted with the workspace and included in portable backups.
 
 
 ## Capture from other apps
