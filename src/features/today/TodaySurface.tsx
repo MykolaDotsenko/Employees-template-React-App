@@ -27,7 +27,7 @@ interface TodaySurfaceProps {
   workday: WorkdayPreferences;
   suggestedFocusRoomMinutes: number | null;
   revealedTaskId: string | null;
-  revealToken?: number;
+  revealToken?: number | undefined;
   onImportCalendar: (
     source: string,
     sourceLabel: string,
