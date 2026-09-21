@@ -61,10 +61,12 @@ source = source
   );
 
 if (
-  source.includes("__DAYDOCK_CACHE__") ||
-  source.includes("__DAYDOCK_PRECACHE__")
+  source.includes(CACHE_ASSIGNMENT) ||
+  source.includes(PRECACHE_ASSIGNMENT)
 ) {
-  throw new Error("Service worker build placeholders remain after finalization.");
+  throw new Error(
+    "Service worker build placeholder assignments remain after finalization.",
+  );
 }
 
 // Compile without executing. This catches malformed generated JavaScript before
