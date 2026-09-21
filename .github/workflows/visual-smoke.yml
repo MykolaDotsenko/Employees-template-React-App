@@ -169,12 +169,20 @@ jobs:
                 importedAt: iso(-20),
                 sourceLabel: "work-calendar.ics",
               },
+              notifications: {
+                readyAgain: false,
+                lastReadyAgainNotifiedDate: null,
+              },
+              workday: {
+                startHour: 8,
+                endHour: 18,
+              },
             };
 
             localStorage.setItem(
               "daydock:workspace",
               JSON.stringify({
-                schemaVersion: 5,
+                schemaVersion: 7,
                 updatedAt: iso(),
                 data: state,
               }),
@@ -451,6 +459,25 @@ jobs:
           grep -q "DayDock getting started" visual-smoke/dom.html
           grep -q "Ship DayDock release" visual-smoke/mature-dom.html
           grep -q "Top 3" visual-smoke/mature-dom.html
+          grep -q "Calendar context" visual-smoke/mature-dom.html
+          grep -q 'class="calendar-context-details"' visual-smoke/mature-dom.html
+
+          node <<'NODE'
+          const fs = require("fs");
+          const html = fs.readFileSync("visual-smoke/mature-dom.html", "utf8");
+          const nowIndex = html.indexOf("Ship DayDock release");
+          const calendarIndex = html.indexOf("Calendar context");
+          const detailsMatch = html.match(/<details[^>]*class="calendar-context-details"[^>]*>/);
+
+          if (nowIndex < 0 || calendarIndex < 0 || nowIndex >= calendarIndex) {
+            throw new Error("Today hierarchy regression: current priority must appear before calendar context.");
+          }
+
+          if (!detailsMatch || /\sopen(?:\s|=|>)/.test(detailsMatch[0])) {
+            throw new Error("Calendar detail must be collapsed by default.");
+          }
+          NODE
+
           grep -q "Ship DayDock release" visual-smoke/focus-dom.html
           grep -q "End session" visual-smoke/focus-dom.html
 
