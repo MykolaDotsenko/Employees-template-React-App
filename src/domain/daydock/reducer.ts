@@ -120,6 +120,37 @@ export function dayDockReducer(
   action: DayDockAction,
 ): DayDockState {
   switch (action.type) {
+    case "workday/changed": {
+      const { startHour, endHour } = action;
+
+      if (
+        !Number.isInteger(startHour) ||
+        !Number.isInteger(endHour) ||
+        startHour < 0 ||
+        startHour > 23 ||
+        endHour < 1 ||
+        endHour > 24 ||
+        startHour >= endHour
+      ) {
+        return state;
+      }
+
+      if (
+        state.workday.startHour === startHour &&
+        state.workday.endHour === endHour
+      ) {
+        return state;
+      }
+
+      return {
+        ...state,
+        workday: {
+          startHour,
+          endHour,
+        },
+      };
+    }
+
     case "calendar/replaced": {
       if (
         action.events.length > 1_500 ||
