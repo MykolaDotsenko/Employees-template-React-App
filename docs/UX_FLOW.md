@@ -160,6 +160,20 @@ Choosing a task or person does not merely open its broad surface. DayDock naviga
 
 The palette never becomes the only way to use a feature. Every command remains available through visible mouse/touch UI; the palette is an acceleration layer for power users.
 
+## Safe destructive actions
+
+Task and person removal still requires explicit confirmation, but confirmation is not the only safety mechanism. After a successful removal DayDock shows a persistent one-step Undo bar with explicit **Undo** and **Dismiss** controls.
+
+Undo is implemented as a compensating domain action rather than restoring an old workspace snapshot:
+
+- task restore can recover its prior list position, Top 3 membership and focus history
+- if Top 3 changed after removal, the newer current-priority choice wins and the restored task is appended only when capacity remains
+- person restore reconnects only tasks that are still unassigned
+- a task deliberately reassigned to another person after removal is never stolen back
+- Undo itself is transient UI state, while the restored canonical workspace is persisted and synchronized normally
+
+This keeps recovery local to the mistake instead of erasing unrelated work performed after it.
+
 
 ## Review and seven-day rhythm
 
