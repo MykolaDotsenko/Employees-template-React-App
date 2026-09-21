@@ -108,13 +108,57 @@ export function TodaySurface({
       ) : null}
 
       {gettingStartedStage === null ? (
-        <CalendarContextPanel
-          calendar={calendar}
-          awareness={calendarAwareness}
-          onImport={onImportCalendar}
-          onClear={onClearCalendar}
-        />
-      ) : null}
+        <section className="now-card" aria-labelledby="now-title">
+          <div>
+            <p className="section-kicker">Now</p>
+            {currentTask ? (
+              <ViewTransition name={`focus-task-${currentTask.id}`}>
+                <h2 id="now-title">{currentTask.title}</h2>
+              </ViewTransition>
+            ) : (
+              <h2 id="now-title">One thing at a time</h2>
+            )}
+            <p>
+              {currentTask
+                ? "Your first priority is ready. Give it a protected block of attention."
+                : "Choose a Top 3 priority and DayDock will make the next action obvious."}
+            </p>
+            {currentTask ? (
+              <div className="focus-launch-controls">
+                <label className="focus-duration-field">
+                  <span>Focus block</span>
+                  <select
+                    aria-label="Focus duration"
+                    value={focusDuration}
+                    onChange={(event) => {
+                      const nextDuration = Number(event.currentTarget.value);
+                      setFocusDurations((current) => ({
+                        ...current,
+                        [currentTask.id]: nextDuration,
+                      }));
+                    }}
+                  >
+                    {focusOptions.map((minutes) => (
+                      <option key={minutes} value={minutes}>
+                        {minutes} min
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <button
+                  type="button"
+                  className="start-focus-button"
+                  onClick={() => onStartFocus(currentTask.id, focusDuration)}
+                >
+                  Start focus
+                  <span aria-hidden="true">{focusDuration} min</span>
+                </button>
+              </div>
+            ) : null}
+          </div>
+          <span className="now-orbit" aria-hidden="true" />
+        </section>
 
       {gettingStartedStage ? (
         <section className="first-run-guide" aria-labelledby="first-run-title">
@@ -282,58 +326,15 @@ export function TodaySurface({
         </section>
       )}
 
-      {gettingStartedStage === null ? (
-        <section className="now-card" aria-labelledby="now-title">
-          <div>
-            <p className="section-kicker">Now</p>
-            {currentTask ? (
-              <ViewTransition name={`focus-task-${currentTask.id}`}>
-                <h2 id="now-title">{currentTask.title}</h2>
-              </ViewTransition>
-            ) : (
-              <h2 id="now-title">One thing at a time</h2>
-            )}
-            <p>
-              {currentTask
-                ? "Your first priority is ready. Give it a protected block of attention."
-                : "Choose a Top 3 priority and DayDock will make the next action obvious."}
-            </p>
-            {currentTask ? (
-              <div className="focus-launch-controls">
-                <label className="focus-duration-field">
-                  <span>Focus block</span>
-                  <select
-                    aria-label="Focus duration"
-                    value={focusDuration}
-                    onChange={(event) => {
-                      const nextDuration = Number(event.currentTarget.value);
-                      setFocusDurations((current) => ({
-                        ...current,
-                        [currentTask.id]: nextDuration,
-                      }));
-                    }}
-                  >
-                    {focusOptions.map((minutes) => (
-                      <option key={minutes} value={minutes}>
-                        {minutes} min
-                      </option>
-                    ))}
-                  </select>
-                </label>
+      ) : null}
 
-                <button
-                  type="button"
-                  className="start-focus-button"
-                  onClick={() => onStartFocus(currentTask.id, focusDuration)}
-                >
-                  Start focus
-                  <span aria-hidden="true">{focusDuration} min</span>
-                </button>
-              </div>
-            ) : null}
-          </div>
-          <span className="now-orbit" aria-hidden="true" />
-        </section>
+      {gettingStartedStage === null ? (
+        <CalendarContextPanel
+          calendar={calendar}
+          awareness={calendarAwareness}
+          onImport={onImportCalendar}
+          onClear={onClearCalendar}
+        />
       ) : null}
     </div>
   );
