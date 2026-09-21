@@ -1,0 +1,51 @@
+name: Branch Hygiene
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Delete fully merged branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
+
+          mapfile -t merged_branches < <(
+            git branch -r --merged origin/main |
+              sed 's/^[[:space:]]*//' |
+              grep '^origin/' |
+              grep -v -- ' -> ' |
+              sed 's#^origin/##' |
+              grep -v '^main$' || true
+          )
+
+          if [ "${#merged_branches[@]}" -eq 0 ]; then
+            echo "No fully merged branches to remove."
+            exit 0
+          fi
+
+          for branch in "${merged_branches[@]}"; do
+            echo "Deleting fully merged branch: ${branch}"
+            gh api               --method DELETE               "repos/${GH_REPOSITORY}/git/refs/heads/${branch}"
+          done
+
+          echo "Removed ${#merged_branches[@]} fully merged branch(es)."
