@@ -30,6 +30,7 @@ After each release deployment, verify the user-critical hierarchy before feature
 
 - **Now** appears before detailed calendar context on a mature Today view.
 - Promoting another Top 3 outcome immediately changes **Now** without removing or duplicating any priority.
+- Command Palette task/person results reveal and focus the exact canonical row/card; selecting the same result twice still works without adding it to the normal tab order.
 - Calendar detail is collapsed by default and remains keyboard-expandable.
 - Start Day exposes the selected focus-room value on the primary action.
 - The first mobile viewport prioritizes current work over calendar analytics.
