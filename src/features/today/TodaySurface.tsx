@@ -301,8 +301,8 @@ export function TodaySurface({
                   <TaskRow
                     key={task.id}
                     task={task}
-                  onRename={onRename}
-                  onRemove={onRemove}
+                    onRename={onRename}
+                    onRemove={onRemove}
                     actions={
                       <>
                         <button
