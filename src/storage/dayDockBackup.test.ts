@@ -131,10 +131,32 @@ describe("DayDock portable backups", () => {
     });
   });
 
+  it("restores a v6 backup with the default workday", () => {
+    const current = workspace();
+    const { workday, ...v6Data } = current;
+    void workday;
+
+    const backup = parseDayDockBackup(
+      JSON.stringify({
+        format: DAYDOCK_BACKUP_FORMAT,
+        formatVersion: DAYDOCK_BACKUP_FORMAT_VERSION,
+        exportedAt: "2026-09-20T12:00:00.000Z",
+        appSchemaVersion: 6,
+        data: v6Data,
+      }),
+    );
+
+    expect(backup?.state.workday).toEqual({
+      startHour: 8,
+      endHour: 18,
+    });
+  });
+
   it("restores a v5 backup with notifications disabled by default", () => {
     const current = workspace();
-    const { notifications, ...v5Data } = current;
+    const { notifications, workday, ...v5Data } = current;
     void notifications;
+    void workday;
 
     const backup = parseDayDockBackup(
       JSON.stringify({
