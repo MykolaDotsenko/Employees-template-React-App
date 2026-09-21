@@ -128,6 +128,65 @@ describe("DataSafetyPopover", () => {
     ).toBeInTheDocument();
   });
 
+  it("treats a restored alert preference as inactive until this browser grants permission", async () => {
+    const user = userEvent.setup();
+    const state = createInitialDayDockState();
+    state.notifications.readyAgain = true;
+    const changes: boolean[] = [];
+
+    render(
+      <DataSafetyPopover
+        state={state}
+        persistenceStatus="durable"
+        notificationPermission="default"
+        onReadyAgainNotificationsChange={(enabled) => {
+          changes.push(enabled);
+          return Promise.resolve({ status: "enabled" });
+        }}
+        onRestore={vi.fn()}
+      />,
+    );
+
+    const enable = screen.getByRole("button", { name: "Enable", hidden: true });
+    expect(enable).toHaveAttribute("aria-pressed", "false");
+    expect(
+      screen.getByText(/this browser still needs notification permission/i),
+    ).toBeInTheDocument();
+
+    await user.click(enable);
+
+    expect(changes).toEqual([true]);
+    expect(
+      await screen.findByText(
+        "Ready again alerts are enabled for this browser.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("shows when a restored alert preference is blocked by browser permission", () => {
+    const state = createInitialDayDockState();
+    state.notifications.readyAgain = true;
+
+    render(
+      <DataSafetyPopover
+        state={state}
+        persistenceStatus="durable"
+        notificationPermission="denied"
+        onReadyAgainNotificationsChange={() =>
+          Promise.resolve({ status: "denied" })
+        }
+        onRestore={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Enable", hidden: true }),
+    ).toHaveAttribute("aria-pressed", "false");
+    expect(
+      screen.getByText(/notifications are blocked in this browser/i),
+    ).toBeInTheDocument();
+  });
+
   it("enables Ready again alerts only through the explicit control", async () => {
     const user = userEvent.setup();
     const changes: boolean[] = [];

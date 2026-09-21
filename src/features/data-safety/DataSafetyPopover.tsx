@@ -94,6 +94,16 @@ export function DataSafetyPopover({
 
   const summary =
     candidate === null ? null : summarizeDayDockBackup(candidate.state);
+  const readyAgainAlertsActive =
+    state.notifications.readyAgain && notificationPermission === "granted";
+  const readyAgainPermissionMessage =
+    state.notifications.readyAgain && !readyAgainAlertsActive
+      ? notificationPermission === "denied"
+        ? "Ready again is enabled in this workspace, but notifications are blocked in this browser."
+        : notificationPermission === "unsupported"
+          ? "Ready again is enabled in this workspace, but this browser cannot show DayDock notifications."
+          : "Ready again is enabled in this workspace, but this browser still needs notification permission."
+      : null;
 
   function resetImport() {
     setCandidate(null);
@@ -246,31 +256,31 @@ export function DataSafetyPopover({
           <button
             type="button"
             className={
-              state.notifications.readyAgain
+              readyAgainAlertsActive
                 ? "notification-toggle is-on"
                 : "notification-toggle"
             }
             disabled={
               notificationBusy || notificationPermission === "unsupported"
             }
-            aria-pressed={state.notifications.readyAgain}
+            aria-pressed={readyAgainAlertsActive}
             onClick={() => {
-              void changeReadyAgainNotifications(
-                !state.notifications.readyAgain,
-              );
+              void changeReadyAgainNotifications(!readyAgainAlertsActive);
             }}
           >
             {notificationBusy
               ? "Updating…"
-              : state.notifications.readyAgain
-                ? "Turn off"
-                : "Enable"}
+              : notificationPermission === "unsupported"
+                ? "Unavailable"
+                : readyAgainAlertsActive
+                  ? "Turn off"
+                  : "Enable"}
           </button>
         </section>
 
-        {notificationMessage ? (
+        {notificationMessage || readyAgainPermissionMessage ? (
           <p className="notification-status" role="status" aria-live="polite">
-            {notificationMessage}
+            {notificationMessage ?? readyAgainPermissionMessage}
           </p>
         ) : null}
 
@@ -338,7 +348,8 @@ export function DataSafetyPopover({
             <div className="backup-restore-note">
               <p>
                 Restoring replaces the current workspace on this browser and
-                syncs the restored state to other open DayDock tabs.
+                syncs the restored state to other open DayDock tabs. Notification
+                permission is browser-specific and is never restored automatically.
               </p>
               <button
                 type="button"

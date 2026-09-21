@@ -33,6 +33,7 @@ It started as an employee-management React exercise and was rebuilt into a compl
 - responsive mobile navigation
 - reduced-motion and forced-colors support
 - installable PWA shell with build-generated, versioned offline precache
+- optional Ready again system alerts with browser-local permission truthfulness across backup/restore
 - no account, analytics, ads, or cloud dependency
 
 ## Why DayDock is different

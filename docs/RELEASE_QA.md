@@ -35,6 +35,7 @@ After each release deployment, verify the user-critical hierarchy before feature
 - Calendar detail is collapsed by default and remains keyboard-expandable.
 - Start Day exposes the selected focus-room value on the primary action.
 - Editing a task estimate immediately updates its row metadata and the default Focus block for the current task; clearing the estimate returns to the Focus fallback without adding fields to Quick Capture.
+- A restored workspace with Ready again preference enabled but no granted permission on the current browser must show alerts as inactive, explain the permission mismatch, and require an explicit Enable action.
 - The first mobile viewport prioritizes current work over calendar analytics.
 - A 30-minute workday boundary (for example 08:30–17:30) persists and immediately changes derived focus room.
 - A day with no remaining 25+ minute focus window suggests **0 min**, never invented availability.
