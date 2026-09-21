@@ -3,10 +3,14 @@ name: Branch Hygiene
 on:
   push:
     branches: [main]
+  pull_request:
+    paths:
+      - .github/workflows/branch-hygiene.yml
   workflow_dispatch:
 
 permissions:
   contents: write
+  pull-requests: read
 
 jobs:
   cleanup:
@@ -14,38 +18,107 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - name: Checkout full history
+      - name: Checkout
         uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
 
-      - name: Delete fully merged branches
+      - name: Delete only safe merged PR branches
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPOSITORY: ${{ github.repository }}
+          DRY_RUN: ${{ github.event_name == 'pull_request' }}
         shell: bash
         run: |
           set -euo pipefail
 
-          git fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
+          declare -A open_branches=()
+          declare -A seen_candidates=()
 
-          mapfile -t merged_branches < <(
-            git branch -r --merged origin/main |
-              sed 's/^[[:space:]]*//' |
-              grep '^origin/' |
-              grep -v -- ' -> ' |
-              sed 's#^origin/##' |
-              grep -v '^main$' || true
+          deleted=0
+          preserved_open=0
+          preserved_changed=0
+          already_gone=0
+          delete_failures=0
+          dry_run_candidates=0
+
+          while IFS= read -r branch; do
+            if [ -n "${branch}" ]; then
+              open_branches["${branch}"]=1
+            fi
+          done < <(
+            gh api --paginate \
+              "repos/${GH_REPOSITORY}/pulls?state=open&per_page=100" \
+              --jq '.[] | select(.head.repo != null and .head.repo.full_name == env.GH_REPOSITORY) | .head.ref'
           )
 
-          if [ "${#merged_branches[@]}" -eq 0 ]; then
-            echo "No fully merged branches to remove."
-            exit 0
+          while IFS=$'\t' read -r branch merged_head_sha; do
+            if [ -z "${branch}" ] || [ -z "${merged_head_sha}" ] || [ "${branch}" = "main" ]; then
+              continue
+            fi
+
+            candidate_key="${branch}"$'\t'"${merged_head_sha}"
+            if [[ ${seen_candidates[$candidate_key]+_} ]]; then
+              continue
+            fi
+            seen_candidates["${candidate_key}"]=1
+
+            if [[ ${open_branches[$branch]+_} ]]; then
+              echo "Preserving ${branch}: it currently has an open pull request."
+              preserved_open=$((preserved_open + 1))
+              continue
+            fi
+
+            current_sha="$(
+              git ls-remote --heads origin "refs/heads/${branch}" |
+                awk 'NR == 1 { print $1 }'
+            )"
+
+            if [ -z "${current_sha}" ]; then
+              already_gone=$((already_gone + 1))
+              continue
+            fi
+
+            if [ "${current_sha}" != "${merged_head_sha}" ]; then
+              echo "Preserving ${branch}: current tip ${current_sha} differs from merged PR head ${merged_head_sha}."
+              preserved_changed=$((preserved_changed + 1))
+              continue
+            fi
+
+            if [ "${DRY_RUN}" = "true" ]; then
+              echo "[dry-run] Would delete merged PR branch ${branch} at verified head ${current_sha}."
+              dry_run_candidates=$((dry_run_candidates + 1))
+              continue
+            fi
+
+            echo "Deleting merged PR branch ${branch} at verified head ${current_sha}."
+
+            if gh api \
+              --method DELETE \
+              "repos/${GH_REPOSITORY}/git/refs/heads/${branch}"; then
+              deleted=$((deleted + 1))
+            else
+              echo "::warning::Could not delete verified merged branch ${branch}."
+              delete_failures=$((delete_failures + 1))
+            fi
+          done < <(
+            gh api --paginate \
+              "repos/${GH_REPOSITORY}/pulls?state=closed&per_page=100" \
+              --jq '.[] | select(.merged_at != null and .head.repo != null and .head.repo.full_name == env.GH_REPOSITORY) | [.head.ref, .head.sha] | @tsv'
+          )
+
+          {
+            echo "### Branch hygiene"
+            echo
+            echo "- Mode: ${DRY_RUN}"
+            echo "- Deleted verified merged PR branches: ${deleted}"
+            echo "- Dry-run deletion candidates: ${dry_run_candidates}"
+            echo "- Preserved because an open PR exists: ${preserved_open}"
+            echo "- Preserved because the branch moved after merge: ${preserved_changed}"
+            echo "- Already absent: ${already_gone}"
+            echo "- Delete failures: ${delete_failures}"
+            echo
+            echo "Deletion requires both: no open PR for the branch and an exact current-tip match with a merged PR head SHA."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          if [ "${delete_failures}" -gt 0 ]; then
+            echo "::warning::Branch hygiene completed with ${delete_failures} deletion failure(s)."
           fi
-
-          for branch in "${merged_branches[@]}"; do
-            echo "Deleting fully merged branch: ${branch}"
-            gh api               --method DELETE               "repos/${GH_REPOSITORY}/git/refs/heads/${branch}"
-          done
-
-          echo "Removed ${#merged_branches[@]} fully merged branch(es)."
