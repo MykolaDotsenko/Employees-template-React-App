@@ -2725,6 +2725,13 @@
       color-mix(in oklch, var(--color-accent-soft) 62%, transparent);
   }
 
+  .task-editor-field-help {
+    color: var(--color-text-faint);
+    font-size: 0.66rem;
+    font-weight: 520;
+    line-height: 1.45;
+  }
+
   .task-remove-confirmation > p:not(.section-kicker) {
     color: var(--color-text-soft);
     font-size: 0.8rem;
