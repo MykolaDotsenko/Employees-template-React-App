@@ -16,7 +16,7 @@ import {
 } from "../store/dayDockStore";
 
 export const DAYDOCK_STORAGE_KEY = "daydock:workspace";
-export const DAYDOCK_SCHEMA_VERSION = 6 as const;
+export const DAYDOCK_SCHEMA_VERSION = 7 as const;
 
 export interface StorageLike {
   getItem(key: string): string | null;
@@ -97,6 +97,16 @@ const notificationPreferencesSchema = z.object({
   lastReadyAgainNotifiedDate: isoDateSchema.nullable(),
 });
 
+const workdayPreferencesSchema = z
+  .object({
+    startHour: z.number().int().min(0).max(23),
+    endHour: z.number().int().min(1).max(24),
+  })
+  .refine(
+    (workday) => workday.startHour < workday.endHour,
+    "Workday end must be after start",
+  );
+
 const personSchema = z.object({
   id: z.string().min(1),
   name: z.string().trim().min(1).max(120),
@@ -143,14 +153,24 @@ const v5StateSchema = v4StateSchema.extend({
   calendar: calendarStateSchema,
 });
 
-const dayDockStateSchema = v5StateSchema.extend({
+const v6StateSchema = v5StateSchema.extend({
   notifications: notificationPreferencesSchema,
 });
 
-const v6EnvelopeSchema = z.object({
+const dayDockStateSchema = v6StateSchema.extend({
+  workday: workdayPreferencesSchema,
+});
+
+const v7EnvelopeSchema = z.object({
   schemaVersion: z.literal(DAYDOCK_SCHEMA_VERSION),
   updatedAt: isoDateTimeSchema,
   data: dayDockStateSchema,
+});
+
+const v6EnvelopeSchema = z.object({
+  schemaVersion: z.literal(6),
+  updatedAt: isoDateTimeSchema,
+  data: v6StateSchema,
 });
 
 const v5EnvelopeSchema = z.object({
@@ -326,12 +346,28 @@ export function normalizeDayDockState(state: DayDockState): DayDockState {
       lastReadyAgainNotifiedDate:
         state.notifications.lastReadyAgainNotifiedDate,
     },
+    workday: {
+      startHour: state.workday.startHour,
+      endHour: state.workday.endHour,
+    },
   };
 }
 
 export function parseDayDockState(value: unknown): DayDockState | null {
   const parsed = dayDockStateSchema.safeParse(value);
   return parsed.success ? normalizeDayDockState(parsed.data) : null;
+}
+
+function withDefaultWorkday(
+  state: z.infer<typeof v6StateSchema>,
+): DayDockState {
+  return {
+    ...state,
+    workday: {
+      startHour: 8,
+      endHour: 18,
+    },
+  };
 }
 
 function withDefaultNotifications(
@@ -342,6 +378,10 @@ function withDefaultNotifications(
     notifications: {
       readyAgain: false,
       lastReadyAgainNotifiedDate: null,
+    },
+    workday: {
+      startHour: 8,
+      endHour: 18,
     },
   };
 }
@@ -360,6 +400,10 @@ function withEmptyCalendar(
       readyAgain: false,
       lastReadyAgainNotifiedDate: null,
     },
+    workday: {
+      startHour: 8,
+      endHour: 18,
+    },
   };
 }
 
@@ -377,6 +421,10 @@ function withEmptyDayPlan(
     notifications: {
       readyAgain: false,
       lastReadyAgainNotifiedDate: null,
+    },
+    workday: {
+      startHour: 8,
+      endHour: 18,
     },
   };
 }
@@ -399,6 +447,10 @@ function withEmptyFocus(
     notifications: {
       readyAgain: false,
       lastReadyAgainNotifiedDate: null,
+    },
+    workday: {
+      startHour: 8,
+      endHour: 18,
     },
   };
 }
@@ -459,13 +511,21 @@ export function loadDayDockWorkspace(
     };
   }
 
-  const current = v6EnvelopeSchema.safeParse(parsed);
+  const current = v7EnvelopeSchema.safeParse(parsed);
 
   if (current.success) {
     return {
       state: normalizeDayDockState(current.data.data),
       source: "stored",
     };
+  }
+
+  const v6 = v6EnvelopeSchema.safeParse(parsed);
+
+  if (v6.success) {
+    const state = normalizeDayDockState(withDefaultWorkday(v6.data.data));
+    saveDayDockWorkspace(state, storage, now);
+    return { state, source: "migrated" };
   }
 
   const v5 = v5EnvelopeSchema.safeParse(parsed);
