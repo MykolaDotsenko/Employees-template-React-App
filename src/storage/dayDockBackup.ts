@@ -88,6 +88,16 @@ function upgradeBackupData(data: unknown, schemaVersion: number): unknown {
     };
   }
 
+  if (schemaVersion <= 6 && !("workday" in upgraded)) {
+    upgraded = {
+      ...upgraded,
+      workday: {
+        startHour: 8,
+        endHour: 18,
+      },
+    };
+  }
+
   return upgraded;
 }
 

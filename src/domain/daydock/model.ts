@@ -75,6 +75,11 @@ export interface NotificationPreferences {
   lastReadyAgainNotifiedDate: string | null;
 }
 
+export interface WorkdayPreferences {
+  startHour: number;
+  endHour: number;
+}
+
 export interface DayDockState {
   tasks: Record<string, Task>;
   taskOrder: string[];
@@ -85,6 +90,7 @@ export interface DayDockState {
   dayPlan: DayPlan | null;
   calendar: CalendarState;
   notifications: NotificationPreferences;
+  workday: WorkdayPreferences;
 }
 
 export function createInitialDayDockState(): DayDockState {
@@ -107,6 +113,10 @@ export function createInitialDayDockState(): DayDockState {
     notifications: {
       readyAgain: false,
       lastReadyAgainNotifiedDate: null,
+    },
+    workday: {
+      startHour: 8,
+      endHour: 18,
     },
   };
 }

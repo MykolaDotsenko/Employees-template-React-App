@@ -41,6 +41,52 @@ describe("calendar availability", () => {
     expect(suggestedFocusRoomMinutes(awareness)).toBe(300);
   });
 
+  it("calculates focus room inside a custom workday window", () => {
+    const awareness = buildCalendarAwareness(
+      [
+        event("review", "2026-09-20T11:00:00.000Z", "2026-09-20T12:00:00.000Z"),
+      ],
+      new Date("2026-09-20T10:30:00.000Z"),
+      10.5,
+      16.5,
+    );
+
+    expect(awareness.focusWindows.map((window) => window.minutes)).toEqual([
+      25,
+      265,
+    ]);
+    expect(awareness.busyMinutes).toBe(70);
+    expect(awareness.availableMinutes).toBe(290);
+  });
+
+  it("preserves a valid 25-minute focus window in the suggestion", () => {
+    const awareness = buildCalendarAwareness(
+      [
+        event("meeting", "2026-09-20T10:00:00.000Z", "2026-09-20T10:30:00.000Z"),
+      ],
+      new Date("2026-09-20T09:30:00.000Z"),
+      9.5,
+      10,
+    );
+
+    expect(awareness.availableMinutes).toBe(25);
+    expect(suggestedFocusRoomMinutes(awareness)).toBe(25);
+  });
+
+  it("suggests zero when no focus room remains", () => {
+    const awareness = buildCalendarAwareness(
+      [
+        event("late-review", "2026-09-20T17:00:00.000Z", "2026-09-20T18:00:00.000Z"),
+      ],
+      new Date("2026-09-20T18:30:00.000Z"),
+      8,
+      18,
+    );
+
+    expect(awareness.availableMinutes).toBe(0);
+    expect(suggestedFocusRoomMinutes(awareness)).toBe(0);
+  });
+
   it("does not count all-day context as blocked focus time", () => {
     const allDay: CalendarBusyEvent = {
       id: "holiday",

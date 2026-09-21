@@ -49,8 +49,8 @@ versioned envelope
         v
 Zod validation
         |
-        +--> current schema v6 → normalize
-        +--> v0…v5 → migrate → write v6
+        +--> current schema v7 → normalize
+        +--> v0…v6 → migrate → write v7
         +--> corrupt/future → safe recovery
         |
         v
@@ -66,13 +66,13 @@ Persistence is deliberately outside the reducer. Stored data is untrusted input 
 
 ```text
 {
-  schemaVersion: 6,
+  schemaVersion: 7,
   updatedAt: ISO date-time,
   data: DayDockState
 }
 ```
 
-Relational normalization repairs ordering and removes broken references after structural validation. Unknown future schemas fail safe rather than being silently downgraded.
+Relational normalization repairs ordering and removes broken references after structural validation. Unknown future schemas fail safe rather than being silently downgraded. Schema v7 adds persisted workday preferences so calendar-derived focus room reflects the user's actual working window instead of assuming 08:00–18:00.
 
 ## Target local-first boundary
 
@@ -151,7 +151,7 @@ pure reducer
     v
 external store
     |
-    +--> persist normalized v6 workspace to localStorage
+    +--> persist normalized v7 workspace to localStorage
     |
     +--> revisioned BroadcastChannel snapshot
               |

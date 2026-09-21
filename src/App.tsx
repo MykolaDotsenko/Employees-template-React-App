@@ -190,6 +190,8 @@ export function App({ store = dayDockStore }: AppProps) {
   const calendarAwareness = buildCalendarAwareness(
     state.calendar.events,
     today,
+    state.workday.startHour,
+    state.workday.endHour,
   );
   const calendarFocusSuggestion =
     state.calendar.importedAt === null
@@ -465,6 +467,10 @@ export function App({ store = dayDockStore }: AppProps) {
 
   function clearCalendar() {
     store.dispatch({ type: "calendar/cleared" });
+  }
+
+  function changeWorkday(startHour: number, endHour: number) {
+    store.dispatch({ type: "workday/changed", startHour, endHour });
   }
 
   function startDay(focusRoomMinutes: number) {
@@ -852,9 +858,11 @@ export function App({ store = dayDockStore }: AppProps) {
                   duePeopleCount={duePeople.length}
                   calendar={state.calendar}
                   calendarAwareness={calendarAwareness}
+                  workday={state.workday}
                   suggestedFocusRoomMinutes={calendarFocusSuggestion}
                   onImportCalendar={importCalendar}
                   onClearCalendar={clearCalendar}
+                  onWorkdayChange={changeWorkday}
                   onCapture={openCapture}
                   onOpenInbox={() => navigateTo("inbox")}
                   onOpenPeople={() => navigateTo("people")}

@@ -14,7 +14,7 @@ interface StartDayPanelProps {
   onStartDay: (focusRoomMinutes: number) => void;
 }
 
-const FOCUS_ROOM_OPTIONS = [60, 90, 120, 150, 180, 210, 240, 270, 300] as const;
+const FOCUS_ROOM_OPTIONS = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300] as const;
 
 function formatMinutes(minutes: number): string {
   const hours = Math.floor(minutes / 60);
@@ -38,9 +38,22 @@ export function StartDayPanel({
   onStartDay,
 }: StartDayPanelProps) {
   const alreadyStarted = existingPlan?.dateKey === todayKey;
-  const [focusRoomMinutes, setFocusRoomMinutes] = useState(
-    existingPlan?.focusRoomMinutes ?? suggestedFocusRoomMinutes ?? 150,
-  );
+  const [manualFocusRoomMinutes, setManualFocusRoomMinutes] = useState<
+    number | null
+  >(null);
+  const focusRoomMinutes =
+    existingPlan?.focusRoomMinutes ??
+    manualFocusRoomMinutes ??
+    suggestedFocusRoomMinutes ??
+    150;
+  const focusRoomOptions = Array.from(
+    new Set([
+      ...FOCUS_ROOM_OPTIONS,
+      ...(suggestedFocusRoomMinutes === null
+        ? []
+        : [suggestedFocusRoomMinutes]),
+    ]),
+  ).sort((left, right) => left - right);
 
   if (alreadyStarted) {
     return (
@@ -102,11 +115,11 @@ export function StartDayPanel({
           <select
             aria-label="Available focus room"
             value={focusRoomMinutes}
-            onChange={(event) =>
-              setFocusRoomMinutes(Number(event.currentTarget.value))
+            onChange={(event) => {
+              setManualFocusRoomMinutes(Number(event.currentTarget.value));
             }
           >
-            {FOCUS_ROOM_OPTIONS.map((minutes) => (
+            {focusRoomOptions.map((minutes) => (
               <option key={minutes} value={minutes}>
                 {formatMinutes(minutes)}
               </option>

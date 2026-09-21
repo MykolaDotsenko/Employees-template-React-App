@@ -37,6 +37,11 @@ function workspace(): DayDockState {
   };
   state.taskOrder.push("a");
 
+  state.workday = {
+    startHour: 8.5,
+    endHour: 17.5,
+  };
+
   state.focus.history.push({
     id: "focus-a",
     taskId: "a",
@@ -76,6 +81,10 @@ describe("DayDock portable backups", () => {
     expect(backup?.state.people.anna?.name).toBe("Anna");
     expect(backup?.state.tasks.a?.title).toBe("Review mobile flow");
     expect(backup?.state.tasks.a?.personId).toBe("anna");
+    expect(backup?.state.workday).toEqual({
+      startHour: 8.5,
+      endHour: 17.5,
+    });
   });
 
   it("rejects malformed, foreign and structurally invalid backups", () => {
@@ -111,8 +120,15 @@ describe("DayDock portable backups", () => {
 
   it("restores a pre-calendar schema backup with an empty calendar", () => {
     const current = createInitialDayDockState();
-    const { calendar, ...v4Data } = current;
+    const {
+      calendar,
+      notifications,
+      workday,
+      ...v4Data
+    } = current;
     void calendar;
+    void notifications;
+    void workday;
 
     const parsed = parseDayDockBackup(
       JSON.stringify({
@@ -131,10 +147,32 @@ describe("DayDock portable backups", () => {
     });
   });
 
-  it("restores a v5 backup with notifications disabled by default", () => {
+  it("restores a v6 backup with the default workday", () => {
     const current = workspace();
-    const { notifications, ...v5Data } = current;
+    const { workday, ...v6Data } = current;
+    void workday;
+
+    const backup = parseDayDockBackup(
+      JSON.stringify({
+        format: DAYDOCK_BACKUP_FORMAT,
+        formatVersion: DAYDOCK_BACKUP_FORMAT_VERSION,
+        exportedAt: "2026-09-20T12:00:00.000Z",
+        appSchemaVersion: 6,
+        data: v6Data,
+      }),
+    );
+
+    expect(backup?.state.workday).toEqual({
+      startHour: 8,
+      endHour: 18,
+    });
+  });
+
+  it("restores a v5 backup into the current schema with notifications disabled by default", () => {
+    const current = workspace();
+    const { notifications, workday, ...v5Data } = current;
     void notifications;
+    void workday;
 
     const backup = parseDayDockBackup(
       JSON.stringify({

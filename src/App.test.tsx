@@ -1094,6 +1094,20 @@ describe("DayDock core daily flow", () => {
     expect(details).toHaveAttribute("open");
     expect(screen.getByText("Release review")).toBeInTheDocument();
     expect(screen.getByText(/work\.ics/)).toBeInTheDocument();
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Workday starts" }),
+      "9.5",
+    );
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Workday ends" }),
+      "17.5",
+    );
+
+    expect(store.getSnapshot().workday).toEqual({
+      startHour: 9.5,
+      endHour: 17.5,
+    });
     expect(
       screen.queryByRole("button", { name: /create calendar event/i }),
     ).not.toBeInTheDocument();

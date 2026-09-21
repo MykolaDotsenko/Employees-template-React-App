@@ -120,6 +120,39 @@ export function dayDockReducer(
   action: DayDockAction,
 ): DayDockState {
   switch (action.type) {
+    case "workday/changed": {
+      const { startHour, endHour } = action;
+
+      if (
+        !Number.isFinite(startHour) ||
+        !Number.isFinite(endHour) ||
+        !Number.isInteger(startHour * 2) ||
+        !Number.isInteger(endHour * 2) ||
+        startHour < 0 ||
+        startHour > 23.5 ||
+        endHour < 0.5 ||
+        endHour > 24 ||
+        startHour >= endHour
+      ) {
+        return state;
+      }
+
+      if (
+        state.workday.startHour === startHour &&
+        state.workday.endHour === endHour
+      ) {
+        return state;
+      }
+
+      return {
+        ...state,
+        workday: {
+          startHour,
+          endHour,
+        },
+      };
+    }
+
     case "calendar/replaced": {
       if (
         action.events.length > 1_500 ||
@@ -218,7 +251,7 @@ export function dayDockReducer(
       if (
         !isDateKey(plan.dateKey) ||
         !Number.isInteger(plan.focusRoomMinutes) ||
-        plan.focusRoomMinutes < 30 ||
+        plan.focusRoomMinutes < 0 ||
         plan.focusRoomMinutes > 480 ||
         parseTime(plan.startedAt) <= 0
       ) {
