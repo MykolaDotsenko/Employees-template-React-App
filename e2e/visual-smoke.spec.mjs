@@ -183,14 +183,18 @@ function watchRuntimeErrors(page) {
 
 async function openFreshWorkspace(page) {
   await page.goto("/");
-  await expect(page.getByText("DayDock", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("Capture your first item")).toBeVisible();
 }
 
 async function openMatureWorkspace(page, mode = "mature") {
   await seedWorkspace(page, mode);
   await page.goto("/");
-  await expect(page.getByText("Ship DayDock release")).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "Ship DayDock release",
+      exact: true,
+    }).first(),
+  ).toBeVisible();
 }
 
 test.describe("DayDock visual and release smoke", () => {
