@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { App } from "./App";
@@ -359,6 +359,11 @@ describe("DayDock core daily flow", () => {
     expect(
       await screen.findByRole("heading", { level: 1, name: "People" }),
     ).toBeInTheDocument();
+
+    const annaHeading = screen.getByRole("heading", { name: "Anna" });
+    const annaCard = annaHeading.closest("article");
+    expect(annaCard).not.toBeNull();
+    await waitFor(() => expect(annaCard).toHaveFocus());
   });
 
   it("does not surface completed history as an actionable search result", async () => {
@@ -728,11 +733,34 @@ describe("DayDock core daily flow", () => {
       .getByRole("heading", { name: "Later" })
       .closest("section");
     expect(laterSection).not.toBeNull();
-    expect(
-      within(laterSection as HTMLElement).getByText(
-        "Investigate offline analytics",
-      ),
-    ).toBeInTheDocument();
+    const revealedTask = within(laterSection as HTMLElement).getByText(
+      "Investigate offline analytics",
+    );
+    expect(revealedTask).toBeInTheDocument();
+
+    const revealedRow = revealedTask.closest("li");
+    expect(revealedRow).not.toBeNull();
+    await waitFor(() => expect(revealedRow).toHaveFocus());
+
+    await user.click(
+      screen.getByRole("button", { name: "Open command palette" }),
+    );
+    const repeatedPalette = screen.getByRole("dialog", {
+      name: "Command palette",
+    });
+    await user.type(
+      within(repeatedPalette).getByRole("textbox", {
+        name: "Search commands, open tasks and people",
+      }),
+      "offline analytics",
+    );
+    await user.click(
+      within(repeatedPalette).getByRole("button", {
+        name: /Investigate offline analytics/,
+      }),
+    );
+
+    await waitFor(() => expect(revealedRow).toHaveFocus());
   });
 
   it("lets a user choose which Top 3 outcome is current without rebuilding the list", async () => {
