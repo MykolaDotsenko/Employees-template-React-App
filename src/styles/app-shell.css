@@ -319,6 +319,21 @@
     border-bottom: 1px solid var(--color-border);
   }
 
+  .task-row.is-revealed:focus {
+    outline: 2px solid color-mix(
+      in oklch,
+      var(--color-accent) 62%,
+      var(--color-border)
+    );
+    outline-offset: 3px;
+    border-radius: 0.7rem;
+    background: color-mix(
+      in oklch,
+      var(--color-accent-soft) 46%,
+      transparent
+    );
+  }
+
   .task-leading {
     width: 1.6rem;
     display: grid;
@@ -1100,6 +1115,20 @@
         color-mix(in oklch, var(--color-surface-peach) 48%, white),
         var(--color-surface)
       );
+  }
+
+  .person-card.is-revealed:focus {
+    outline: 2px solid color-mix(
+      in oklch,
+      var(--color-accent) 62%,
+      var(--color-border)
+    );
+    outline-offset: 3px;
+    border-color: color-mix(
+      in oklch,
+      var(--color-accent) 42%,
+      var(--color-border)
+    );
   }
 
   .person-card-header {
