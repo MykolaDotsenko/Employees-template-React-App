@@ -26,6 +26,8 @@ interface TodaySurfaceProps {
   calendarAwareness: CalendarAwareness;
   workday: WorkdayPreferences;
   suggestedFocusRoomMinutes: number | null;
+  revealedTaskId: string | null;
+  revealToken?: number;
   onImportCalendar: (
     source: string,
     sourceLabel: string,
@@ -58,6 +60,8 @@ export function TodaySurface({
   calendarAwareness,
   workday,
   suggestedFocusRoomMinutes,
+  revealedTaskId,
+  revealToken,
   onImportCalendar,
   onClearCalendar,
   onWorkdayChange,
@@ -313,6 +317,9 @@ export function TodaySurface({
                   <TaskRow
                     key={task.id}
                     task={task}
+                    revealToken={
+                      revealedTaskId === task.id ? revealToken : undefined
+                    }
                     onRename={onRename}
                     onRemove={onRemove}
                     actions={
