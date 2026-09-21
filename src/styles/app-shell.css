@@ -2617,7 +2617,7 @@
   @container (max-width: 520px) {
     .focus-launch-controls {
       display: grid;
-      grid-template-columns: minmax(7.6rem, 0.9fr) minmax(0, 1.1fr);
+      grid-template-columns: minmax(8.1rem, 0.92fr) minmax(0, 1.08fr);
       align-items: end;
       gap: var(--space-2);
     }
@@ -2626,6 +2626,10 @@
     .focus-launch-controls .start-focus-button {
       width: 100%;
       min-height: 3rem;
+    }
+
+    .focus-duration-field select {
+      padding-right: 1.75rem;
     }
 
     .focus-launch-controls .start-focus-button {
