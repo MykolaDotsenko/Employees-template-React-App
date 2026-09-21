@@ -138,8 +138,19 @@ describe("dayDockReducer", () => {
       startedAt: "2026-09-20T07:00:00.000Z",
     });
 
+    const zeroFocusPlan = dayDockReducer(planned, {
+      type: "day/started",
+      plan: {
+        dateKey: "2026-09-21",
+        focusRoomMinutes: 0,
+        startedAt: "2026-09-21T07:00:00.000Z",
+      },
+    });
+
+    expect(zeroFocusPlan.dayPlan?.focusRoomMinutes).toBe(0);
+
     expect(
-      dayDockReducer(planned, {
+      dayDockReducer(zeroFocusPlan, {
         type: "day/started",
         plan: {
           dateKey: "2026-09-20",
@@ -147,7 +158,7 @@ describe("dayDockReducer", () => {
           startedAt: "2026-09-20T07:00:00.000Z",
         },
       }),
-    ).toBe(planned);
+    ).toBe(zeroFocusPlan);
   });
 
   it("captures a task without accepting a duplicate id", () => {
