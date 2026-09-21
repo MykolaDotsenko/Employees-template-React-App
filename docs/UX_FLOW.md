@@ -234,6 +234,8 @@ The one-time share parameters are removed from the URL immediately after launch 
 Ready again notifications are optional and off by default.
 
 - Permission is requested only after the user presses **Enable** in Data controls.
+- The workspace can remember that Ready again alerts were wanted, but browser notification permission is device/browser-specific. Restoring a backup never restores permission or makes alerts appear active until the current browser actually reports `granted`.
+- If a restored preference meets `default`, `denied`, or unsupported permission, Data controls show the real browser state instead of pretending notifications are active.
 - DayDock uses the active service worker for persistent/mobile-compatible notifications.
 - Alerts are shown only when parked work has resurfaced into Inbox.
 - A successful alert records the local date in workspace state, so tabs and reloads share once-per-day deduplication.
