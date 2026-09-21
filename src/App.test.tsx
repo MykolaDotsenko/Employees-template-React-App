@@ -86,7 +86,7 @@ describe("DayDock core daily flow", () => {
     await user.click(screen.getByRole("button", { name: "Open Inbox" }));
 
     expect(
-      screen.getByRole("heading", { level: 1, name: "Inbox" }),
+      await screen.findByRole("heading", { level: 1, name: "Inbox" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Prepare release checklist")).toBeInTheDocument();
   });
@@ -154,6 +154,9 @@ describe("DayDock core daily flow", () => {
     expect(store.getSnapshot().taskOrder).toHaveLength(1);
 
     await user.click(screen.getByRole("button", { name: "Inbox" }));
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Inbox" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Finish PR review")).toBeInTheDocument();
     expect(screen.queryByText("No estimate")).not.toBeInTheDocument();
 
@@ -163,6 +166,7 @@ describe("DayDock core daily flow", () => {
 
     await user.click(screen.getByRole("button", { name: "Today" }));
 
+    await screen.findByRole("heading", { level: 1, name: "Today" });
     const todaySection = screen
       .getByRole("heading", { name: "What matters today" })
       .closest("section");
@@ -284,6 +288,7 @@ describe("DayDock core daily flow", () => {
     render(<App store={store} />);
 
     await user.click(screen.getByRole("button", { name: "People" }));
+    await screen.findByRole("heading", { level: 1, name: "People" });
     await user.click(screen.getByRole("button", { name: "Add person" }));
 
     await user.type(screen.getByLabelText("Name"), "Anna");
@@ -454,7 +459,7 @@ describe("DayDock core daily flow", () => {
     await user.click(screen.getByRole("button", { name: "Review" }));
 
     expect(
-      screen.getByRole("heading", { name: "Before you close the day" }),
+      await screen.findByRole("heading", { name: "Before you close the day" }),
     ).toBeInTheDocument();
     expect(screen.queryByText(/productivity score/i)).not.toBeInTheDocument();
 
@@ -541,6 +546,7 @@ describe("DayDock core daily flow", () => {
 
     render(<App store={store} />);
     await user.click(screen.getByRole("button", { name: "Review" }));
+    await screen.findByRole("heading", { level: 1, name: "Review" });
 
     const focusSection = screen
       .getByRole("heading", { name: "Focus blocks" })
@@ -568,7 +574,7 @@ describe("DayDock core daily flow", () => {
     );
 
     expect(
-      screen.getByRole("heading", { level: 1, name: "Inbox" }),
+      await screen.findByRole("heading", { level: 1, name: "Inbox" }),
     ).toBeInTheDocument();
   });
 
@@ -590,16 +596,18 @@ describe("DayDock core daily flow", () => {
     render(<App store={store} />);
 
     await user.click(screen.getByRole("button", { name: "People" }));
+    await screen.findByRole("heading", { level: 1, name: "People" });
     const draft = screen.getByRole("textbox", {
       name: "Follow-up task for Anna",
     });
     await user.type(draft, "Check final mobile flow");
 
     await user.click(screen.getByRole("button", { name: "Review" }));
+    await screen.findByRole("heading", { level: 1, name: "Review" });
     await user.click(screen.getByRole("button", { name: "People" }));
 
     expect(
-      screen.getByRole("textbox", { name: "Follow-up task for Anna" }),
+      await screen.findByRole("textbox", { name: "Follow-up task for Anna" }),
     ).toHaveValue("Check final mobile flow");
   });
 
@@ -609,12 +617,12 @@ describe("DayDock core daily flow", () => {
 
     await user.click(screen.getByRole("button", { name: "People" }));
     expect(
-      screen.getByRole("heading", { level: 1, name: "People" }),
+      await screen.findByRole("heading", { level: 1, name: "People" }),
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Review" }));
     expect(
-      screen.getByRole("heading", { level: 1, name: "Review" }),
+      await screen.findByRole("heading", { level: 1, name: "Review" }),
     ).toBeInTheDocument();
 
     expect(screen.getByRole("link", { name: "Skip to content" })).toHaveAttribute(
@@ -644,6 +652,7 @@ describe("DayDock core daily flow", () => {
     render(<App store={store} />);
 
     await user.click(screen.getByRole("button", { name: "Inbox" }));
+    await screen.findByRole("heading", { level: 1, name: "Inbox" });
     await user.click(
       screen.getByRole("button", {
         name: "Choose when Revisit onboarding copy should return",
@@ -727,7 +736,7 @@ describe("DayDock core daily flow", () => {
     );
 
     expect(
-      screen.getByRole("heading", { level: 1, name: "Inbox" }),
+      await screen.findByRole("heading", { level: 1, name: "Inbox" }),
     ).toBeInTheDocument();
     const laterSection = screen
       .getByRole("heading", { name: "Later" })
@@ -974,6 +983,7 @@ describe("DayDock core daily flow", () => {
 
     render(<App store={store} />);
     await user.click(screen.getByRole("button", { name: "Inbox" }));
+    await screen.findByRole("heading", { level: 1, name: "Inbox" });
 
     await user.click(
       screen.getByRole("button", {
@@ -1099,6 +1109,7 @@ describe("DayDock core daily flow", () => {
 
     render(<App store={store} />);
     await user.click(screen.getByRole("button", { name: "Review" }));
+    await screen.findByRole("heading", { level: 1, name: "Review" });
 
     await user.click(
       screen.getByRole("button", {
@@ -1166,6 +1177,7 @@ describe("DayDock core daily flow", () => {
 
     render(<App store={store} />);
     await user.click(screen.getByRole("button", { name: "People" }));
+    await screen.findByRole("heading", { level: 1, name: "People" });
     await user.click(screen.getByRole("button", { name: "Edit Anna" }));
 
     const dialog = screen.getByRole("dialog", {
@@ -1282,6 +1294,7 @@ describe("DayDock core daily flow", () => {
     expect(store.getSnapshot().tasks["safe-linked-task"]?.personId).toBeNull();
 
     await user.click(screen.getByRole("button", { name: "Inbox" }));
+    await screen.findByRole("heading", { level: 1, name: "Inbox" });
     expect(
       screen.getByText("Keep the linked task", { selector: "strong" }),
     ).toBeInTheDocument();
