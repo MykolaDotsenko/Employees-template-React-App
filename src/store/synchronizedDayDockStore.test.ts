@@ -107,6 +107,18 @@ describe("cross-tab DayDock synchronization", () => {
     expect(second.store.getSnapshot().tasks.a?.title).toBe("Review architecture");
     expect(bus.posts).toBe(1);
 
+    first.store.dispatch({
+      type: "workday/changed",
+      startHour: 8.5,
+      endHour: 17.5,
+    });
+
+    expect(second.store.getSnapshot().workday).toEqual({
+      startHour: 8.5,
+      endHour: 17.5,
+    });
+    expect(bus.posts).toBe(2);
+
     second.store.dispatch({
       type: "task/renamed",
       taskId: "a",
@@ -116,10 +128,14 @@ describe("cross-tab DayDock synchronization", () => {
     expect(first.store.getSnapshot().tasks.a?.title).toBe(
       "Review final architecture",
     );
-    expect(bus.posts).toBe(2);
+    expect(bus.posts).toBe(3);
 
     const persisted = loadDayDockWorkspace(storage);
     expect(persisted.state.tasks.a?.title).toBe("Review final architecture");
+    expect(persisted.state.workday).toEqual({
+      startHour: 8.5,
+      endHour: 17.5,
+    });
 
     first.dispose();
     second.dispose();
