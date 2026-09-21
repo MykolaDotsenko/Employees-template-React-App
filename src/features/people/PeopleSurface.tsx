@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useId,
   useRef,
   useState,
@@ -10,6 +11,8 @@ interface PeopleSurfaceProps {
   people: Person[];
   tasksByPerson: Record<string, Task[]>;
   todayKey: string;
+  revealedPersonId: string | null;
+  revealToken?: number;
   onAddPerson: (
     name: string,
     context: string,
@@ -95,6 +98,8 @@ export function PeopleSurface({
   people,
   tasksByPerson,
   todayKey,
+  revealedPersonId,
+  revealToken,
   onAddPerson,
   onRenamePerson,
   onSetContext,
@@ -104,6 +109,7 @@ export function PeopleSurface({
 }: PeopleSurfaceProps) {
   const addDialogRef = useRef<HTMLDialogElement>(null);
   const editDialogRef = useRef<HTMLDialogElement>(null);
+  const personCardRefs = useRef(new Map<string, HTMLElement>());
   const addTitleId = useId();
   const editTitleId = useId();
   const [name, setName] = useState("");
@@ -126,6 +132,16 @@ export function PeopleSurface({
     editingPersonId === null
       ? null
       : people.find((person) => person.id === editingPersonId) ?? null;
+
+  useEffect(() => {
+    if (revealedPersonId === null || revealToken === undefined) return;
+
+    const card = personCardRefs.current.get(revealedPersonId);
+    if (!card) return;
+
+    card.scrollIntoView?.({ block: "center" });
+    card.focus();
+  }, [revealedPersonId, revealToken]);
 
   function openAddDialog() {
     const dialog = addDialogRef.current;
@@ -234,7 +250,21 @@ export function PeopleSurface({
             return (
               <article
                 key={person.id}
-                className={isDue ? "person-card is-due" : "person-card"}
+                ref={(node) => {
+                  if (node) {
+                    personCardRefs.current.set(person.id, node);
+                  } else {
+                    personCardRefs.current.delete(person.id);
+                  }
+                }}
+                className={[
+                  "person-card",
+                  isDue ? "is-due" : "",
+                  revealedPersonId === person.id ? "is-revealed" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                tabIndex={revealedPersonId === person.id ? -1 : undefined}
               >
                 <header className="person-card-header">
                   <span className="person-avatar" aria-hidden="true">
