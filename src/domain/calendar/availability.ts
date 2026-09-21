@@ -159,5 +159,5 @@ export function suggestedFocusRoomMinutes(
   if (available <= 0) return 0;
 
   const capped = Math.min(300, available);
-  return Math.max(0, Math.floor(capped / 30) * 30);
+  return Math.max(0, Math.floor(capped / 5) * 5);
 }
