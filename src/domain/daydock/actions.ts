@@ -42,6 +42,7 @@ export type DayDockAction =
   | { type: "task/reopened"; taskId: string; status: NonDoneTaskStatus }
   | { type: "task/personAttached"; taskId: string; personId: string | null }
   | { type: "top3/added"; taskId: string }
+  | { type: "top3/promoted"; taskId: string }
   | { type: "top3/removed"; taskId: string }
   | { type: "person/added"; person: Person }
   | { type: "person/renamed"; personId: string; name: string }

@@ -500,6 +500,10 @@ export function App({ store = dayDockStore }: AppProps) {
     store.dispatch({ type: "top3/added", taskId });
   }
 
+  function promoteTop3(taskId: string) {
+    store.dispatch({ type: "top3/promoted", taskId });
+  }
+
   function removeFromTop3(taskId: string) {
     store.dispatch({ type: "top3/removed", taskId });
   }
@@ -868,6 +872,7 @@ export function App({ store = dayDockStore }: AppProps) {
                   onOpenPeople={() => navigateTo("people")}
                   onStartDay={startDay}
                   onAddToTop3={addToTop3}
+                  onPromoteTop3={promoteTop3}
                   onRemoveFromTop3={removeFromTop3}
                   onComplete={completeTask}
                   onRename={renameTask}

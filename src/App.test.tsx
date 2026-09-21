@@ -735,6 +735,58 @@ describe("DayDock core daily flow", () => {
     ).toBeInTheDocument();
   });
 
+  it("lets a user choose which Top 3 outcome is current without rebuilding the list", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+
+    for (const entry of [
+      { id: "first-priority", title: "Write architecture notes" },
+      { id: "second-priority", title: "Review mobile release" },
+    ]) {
+      store.dispatch({
+        type: "task/captured",
+        task: {
+          id: entry.id,
+          title: entry.title,
+          status: "today",
+          estimateMinutes: 50,
+          personId: null,
+          deferUntil: null,
+          recurrence: null,
+          createdAt: "2026-09-20T09:00:00.000Z",
+          completedAt: null,
+        },
+      });
+      store.dispatch({
+        type: "top3/added",
+        taskId: entry.id,
+      });
+    }
+
+    render(<App store={store} />);
+
+    expect(
+      screen.getByRole("heading", { name: "Write architecture notes" }),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Make Review mobile release the current priority",
+      }),
+    );
+
+    expect(store.getSnapshot().top3).toEqual([
+      "second-priority",
+      "first-priority",
+    ]);
+    expect(
+      screen.getByRole("heading", { name: "Review mobile release" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Start focus/i }),
+    ).toBeInTheDocument();
+  });
+
   it("lets a user unpin a Top 3 item without losing it from Today", async () => {
     const user = userEvent.setup();
     const store = createDayDockStore();

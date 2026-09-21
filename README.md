@@ -19,7 +19,7 @@ It started as an employee-management React exercise and was rebuilt into a compl
 - Inbox triage into Today, Done, or calm **Later** scheduling with automatic resurfacing
 - Tomorrow / Next week / custom-date / Someday resurfacing
 - Daily, Weekdays, Weekly, and Monthly recurring work without rewriting completion history
-- protected **Top 3** daily priorities
+- protected **Top 3** daily priorities with an explicit current **Now** outcome that can be promoted without rebuilding the day
 - resilient Focus Mode with pause/resume and timestamp-derived timing
 - People context with scheduled follow-ups and linked tasks
 - command palette and local search with **Ctrl/Cmd + K**

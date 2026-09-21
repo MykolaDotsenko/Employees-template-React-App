@@ -530,6 +530,23 @@ export function dayDockReducer(
       };
     }
 
+    case "top3/promoted": {
+      if (
+        state.top3[0] === action.taskId ||
+        !state.top3.includes(action.taskId)
+      ) {
+        return state;
+      }
+
+      return {
+        ...state,
+        top3: [
+          action.taskId,
+          ...state.top3.filter((taskId) => taskId !== action.taskId),
+        ],
+      };
+    }
+
     case "top3/removed": {
       if (!state.top3.includes(action.taskId)) return state;
 

@@ -43,7 +43,7 @@ This separation matters:
 - Today = plausible work for the day
 - Top 3 = the outcomes that define success
 
-Top 3 is enforced by the domain reducer rather than only by disabled UI.
+Top 3 is enforced by the domain reducer rather than only by disabled UI. The first Top 3 item is the current **Now** outcome; any other pinned outcome can be promoted to Now without unpinning or rebuilding the list.
 
 ### Complete
 
