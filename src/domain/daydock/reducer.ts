@@ -421,7 +421,11 @@ export function dayDockReducer(
         expectedHistoryAfterRemoval.map((session) => session.id),
       )
         ? action.focusHistoryBefore
-        : [...state.focus.history, ...restoredHistory];
+        : [...state.focus.history, ...restoredHistory].sort(
+            (left, right) =>
+              Date.parse(left.endedAt) - Date.parse(right.endedAt) ||
+              left.id.localeCompare(right.id),
+          );
 
       return {
         ...state,
