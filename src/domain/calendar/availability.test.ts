@@ -59,6 +59,20 @@ describe("calendar availability", () => {
     expect(awareness.availableMinutes).toBe(290);
   });
 
+  it("preserves a valid 25-minute focus window in the suggestion", () => {
+    const awareness = buildCalendarAwareness(
+      [
+        event("meeting", "2026-09-20T10:00:00.000Z", "2026-09-20T10:30:00.000Z"),
+      ],
+      new Date("2026-09-20T09:30:00.000Z"),
+      9.5,
+      10,
+    );
+
+    expect(awareness.availableMinutes).toBe(25);
+    expect(suggestedFocusRoomMinutes(awareness)).toBe(25);
+  });
+
   it("suggests zero when no focus room remains", () => {
     const awareness = buildCalendarAwareness(
       [
