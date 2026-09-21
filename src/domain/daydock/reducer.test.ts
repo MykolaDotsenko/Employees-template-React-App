@@ -90,6 +90,37 @@ describe("dayDockReducer", () => {
       });
   });
 
+  it("stores valid half-hour workday preferences and rejects invalid ranges", () => {
+    const state = createInitialDayDockState();
+
+    const changed = dayDockReducer(state, {
+      type: "workday/changed",
+      startHour: 8.5,
+      endHour: 17.5,
+    });
+
+    expect(changed.workday).toEqual({
+      startHour: 8.5,
+      endHour: 17.5,
+    });
+
+    expect(
+      dayDockReducer(changed, {
+        type: "workday/changed",
+        startHour: 17.5,
+        endHour: 8.5,
+      }),
+    ).toBe(changed);
+
+    expect(
+      dayDockReducer(changed, {
+        type: "workday/changed",
+        startHour: 8.25,
+        endHour: 17.5,
+      }),
+    ).toBe(changed);
+  });
+
   it("stores one bounded daily focus plan", () => {
     const state = createInitialDayDockState();
     const planned = dayDockReducer(state, {
