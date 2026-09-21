@@ -63,6 +63,11 @@ interface AppProps {
   store?: DayDockStore;
 }
 
+type RevealTarget =
+  | { kind: "task"; id: string; token: number }
+  | { kind: "person"; id: string; token: number }
+  | null;
+
 type NavItem =
   | { id: Surface; label: string; hint: string }
   | { id: "capture"; label: "Capture"; hint: string };
@@ -151,6 +156,8 @@ function SurfaceIcon({ surface }: { surface: Surface }) {
 
 export function App({ store = dayDockStore }: AppProps) {
   const [surface, setSurface] = useState<Surface>("today");
+  const [revealTarget, setRevealTarget] = useState<RevealTarget>(null);
+  const revealSequenceRef = useRef(0);
   const captureDialogRef = useRef<HTMLDialogElement>(null);
   const commandDialogRef = useRef<HTMLDialogElement>(null);
   const captureLaunchHandledRef = useRef(false);
@@ -673,6 +680,7 @@ export function App({ store = dayDockStore }: AppProps) {
     }
 
     setFocusSnapshot(null);
+    setRevealTarget(null);
 
     startTransition(() => {
       setPresentationMode("workspace");
@@ -689,6 +697,8 @@ export function App({ store = dayDockStore }: AppProps) {
   }
 
   function navigateTo(nextSurface: Surface) {
+    setRevealTarget(null);
+
     startTransition(() => {
       setSurface(nextSurface);
     });
@@ -696,6 +706,33 @@ export function App({ store = dayDockStore }: AppProps) {
 
   function navigateFromPalette(nextSurface: PaletteSurface) {
     navigateTo(nextSurface);
+  }
+
+  function revealTaskFromPalette(taskId: string) {
+    const task = state.tasks[taskId];
+    if (!task || task.status === "done") return;
+
+    const nextSurface: Surface =
+      task.status === "inbox" || task.status === "later" ? "inbox" : "today";
+    const token = revealSequenceRef.current + 1;
+    revealSequenceRef.current = token;
+
+    startTransition(() => {
+      setRevealTarget({ kind: "task", id: taskId, token });
+      setSurface(nextSurface);
+    });
+  }
+
+  function revealPersonFromPalette(personId: string) {
+    if (!state.people[personId]) return;
+
+    const token = revealSequenceRef.current + 1;
+    revealSequenceRef.current = token;
+
+    startTransition(() => {
+      setRevealTarget({ kind: "person", id: personId, token });
+      setSurface("people");
+    });
   }
 
   const presentedFocus = activeFocus ?? focusSnapshot;
@@ -864,6 +901,14 @@ export function App({ store = dayDockStore }: AppProps) {
                   calendarAwareness={calendarAwareness}
                   workday={state.workday}
                   suggestedFocusRoomMinutes={calendarFocusSuggestion}
+                  revealedTaskId={
+                    revealTarget?.kind === "task" ? revealTarget.id : null
+                  }
+                  revealToken={
+                    revealTarget?.kind === "task"
+                      ? revealTarget.token
+                      : undefined
+                  }
                   onImportCalendar={importCalendar}
                   onClearCalendar={clearCalendar}
                   onWorkdayChange={changeWorkday}
@@ -886,6 +931,14 @@ export function App({ store = dayDockStore }: AppProps) {
                   inboxTasks={inboxTasks}
                   laterTasks={laterTasks}
                   todayKey={todayKey}
+                  revealedTaskId={
+                    revealTarget?.kind === "task" ? revealTarget.id : null
+                  }
+                  revealToken={
+                    revealTarget?.kind === "task"
+                      ? revealTarget.token
+                      : undefined
+                  }
                   onMoveInbox={(taskId) => moveTask(taskId, "inbox")}
                   onMoveToday={(taskId) => moveTask(taskId, "today")}
                   onSchedule={scheduleTask}
@@ -900,6 +953,14 @@ export function App({ store = dayDockStore }: AppProps) {
                   people={people}
                   tasksByPerson={tasksByPerson}
                   todayKey={todayKey}
+                  revealedPersonId={
+                    revealTarget?.kind === "person" ? revealTarget.id : null
+                  }
+                  revealToken={
+                    revealTarget?.kind === "person"
+                      ? revealTarget.token
+                      : undefined
+                  }
                   onAddPerson={addPerson}
                   onRenamePerson={renamePerson}
                   onSetContext={setPersonContext}
@@ -956,6 +1017,8 @@ export function App({ store = dayDockStore }: AppProps) {
         people={people}
         currentTask={currentTask}
         onNavigate={navigateFromPalette}
+        onRevealTask={revealTaskFromPalette}
+        onRevealPerson={revealPersonFromPalette}
         onQuickCapture={showCaptureDialog}
         onStartFocus={startFocus}
       />

@@ -22,7 +22,7 @@ It started as an employee-management React exercise and was rebuilt into a compl
 - protected **Top 3** daily priorities with an explicit current **Now** outcome that can be promoted without rebuilding the day
 - resilient Focus Mode with pause/resume and timestamp-derived timing
 - People context with scheduled follow-ups and linked tasks
-- command palette and local search with **Ctrl/Cmd + K**
+- command palette and local search with **Ctrl/Cmd + K**, including exact task/person reveal instead of dropping users onto a broad surface
 - local read-only **Calendar Awareness** from standard `.ics` files with meeting constraints, derived focus windows, and a persisted 30-minute-granularity workday window
 - Daily Review with completed work, unresolved work, and seven-day focus rhythm
 - versioned local-first persistence and legacy migration

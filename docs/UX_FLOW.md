@@ -156,6 +156,8 @@ The palette searches locally across:
 
 Search input stays urgent while result filtering uses React `useDeferredValue`, so larger local workspaces do not make typing feel sticky.
 
+Choosing a task or person does not merely open its broad surface. DayDock navigates to the canonical Today/Inbox/People surface, scrolls the exact result into view, and moves programmatic focus to it. The reveal target uses a monotonically increasing token so selecting the same result twice still works. Revealed rows/cards use `tabIndex=-1`, so search can focus them without adding permanent keyboard tab stops.
+
 The palette never becomes the only way to use a feature. Every command remains available through visible mouse/touch UI; the palette is an acceleration layer for power users.
 
 
