@@ -15,6 +15,8 @@ interface CommandPaletteProps {
   people: Person[];
   currentTask: Task | null;
   onNavigate: (surface: PaletteSurface) => void;
+  onRevealTask: (taskId: string) => void;
+  onRevealPerson: (personId: string) => void;
   onQuickCapture: () => void;
   onStartFocus: (taskId: string) => void;
 }
@@ -38,6 +40,8 @@ export function CommandPalette({
   people,
   currentTask,
   onNavigate,
+  onRevealTask,
+  onRevealPerson,
   onQuickCapture,
   onStartFocus,
 }: CommandPaletteProps) {
@@ -103,24 +107,19 @@ export function CommandPalette({
     const searchableTasks: PaletteItem[] = tasks
       .filter((task) => task.status !== "done")
       .map((task) => ({
-      id: `task-${task.id}`,
-      label: task.title,
-      meta: `Task · ${task.status}`,
-      keywords: `${task.status} task`,
-      run: () =>
-        onNavigate(
-          task.status === "inbox" || task.status === "later"
-            ? "inbox"
-            : "today",
-        ),
-    }));
+        id: `task-${task.id}`,
+        label: task.title,
+        meta: `Task · ${task.status}`,
+        keywords: `${task.status} task`,
+        run: () => onRevealTask(task.id),
+      }));
 
     const searchablePeople: PaletteItem[] = people.map((person) => ({
       id: `person-${person.id}`,
       label: person.name,
       meta: person.context ? `Person · ${person.context}` : "Person",
       keywords: `person follow up ${person.context}`,
-      run: () => onNavigate("people"),
+      run: () => onRevealPerson(person.id),
     }));
 
     return [...actions, ...navigation, ...searchableTasks, ...searchablePeople].filter(
@@ -131,6 +130,8 @@ export function CommandPalette({
     deferredQuery,
     onNavigate,
     onQuickCapture,
+    onRevealPerson,
+    onRevealTask,
     onStartFocus,
     people,
     tasks,
