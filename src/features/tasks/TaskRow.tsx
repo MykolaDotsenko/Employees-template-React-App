@@ -15,7 +15,10 @@ interface TaskRowProps {
   actions?: ReactNode;
   revealToken?: number;
   onRename?: (taskId: string, title: string) => void;
-  onEstimateChange?: (taskId: string, estimateMinutes: number | null) => void;
+  onEstimateChange?: (
+    taskId: string,
+    estimateMinutes: number | null,
+  ) => void;
   onRemove?: (taskId: string) => void;
 }
 
