@@ -14,7 +14,7 @@ interface StartDayPanelProps {
   onStartDay: (focusRoomMinutes: number) => void;
 }
 
-const FOCUS_ROOM_OPTIONS = [60, 90, 120, 150, 180, 210, 240, 270, 300] as const;
+const FOCUS_ROOM_OPTIONS = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300] as const;
 
 function formatMinutes(minutes: number): string {
   const hours = Math.floor(minutes / 60);
