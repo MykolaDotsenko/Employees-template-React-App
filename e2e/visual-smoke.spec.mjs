@@ -181,6 +181,46 @@ function watchRuntimeErrors(page) {
   };
 }
 
+
+async function createVisualContext(browser, options = {}) {
+  const context = await browser.newContext(options);
+
+  await context.addInitScript(() => {
+    const originalStartViewTransition = document.startViewTransition?.bind(document);
+
+    if (!originalStartViewTransition) return;
+
+    globalThis.__daydockLastViewTransition = Promise.resolve();
+
+    Object.defineProperty(document, "startViewTransition", {
+      configurable: true,
+      value: (...args) => {
+        const transition = originalStartViewTransition(...args);
+
+        globalThis.__daydockLastViewTransition = transition.finished.catch(
+          () => undefined,
+        );
+
+        return transition;
+      },
+    });
+  });
+
+  return context;
+}
+
+async function waitForViewTransition(page) {
+  await page.evaluate(async () => {
+    await (globalThis.__daydockLastViewTransition ?? Promise.resolve());
+
+    await new Promise((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(resolve);
+      });
+    });
+  });
+}
+
 async function openFreshWorkspace(page) {
   await page.goto("/");
   await expect(page.getByText("Capture your first item")).toBeVisible();
@@ -206,7 +246,7 @@ test.describe("DayDock visual and release smoke", () => {
       ["mobile", { width: 390, height: 844 }],
       ["small-mobile", { width: 360, height: 740 }],
     ]) {
-      const context = await browser.newContext({ viewport });
+      const context = await createVisualContext(browser, { viewport });
       const page = await context.newPage();
       const assertNoRuntimeErrors = watchRuntimeErrors(page);
 
@@ -229,7 +269,7 @@ test.describe("DayDock visual and release smoke", () => {
       ["mature-mobile", { width: 390, height: 844 }],
       ["mature-small-mobile", { width: 360, height: 740 }],
     ]) {
-      const context = await browser.newContext({ viewport });
+      const context = await createVisualContext(browser, { viewport });
       const page = await context.newPage();
       const assertNoRuntimeErrors = watchRuntimeErrors(page);
 
@@ -292,7 +332,7 @@ test.describe("DayDock visual and release smoke", () => {
       ["People", "people-mobile.png"],
       ["Review", "review-mobile.png"],
     ]) {
-      const context = await browser.newContext({
+      const context = await createVisualContext(browser, {
         viewport: { width: 390, height: 844 },
       });
       const page = await context.newPage();
@@ -300,6 +340,7 @@ test.describe("DayDock visual and release smoke", () => {
 
       await openMatureWorkspace(page);
       await page.getByRole("button", { name: surface, exact: true }).click();
+      await waitForViewTransition(page);
 
       if (surface === "People") {
         await expect(page.getByText("Anna", { exact: true })).toBeVisible();
@@ -340,7 +381,7 @@ test.describe("DayDock visual and release smoke", () => {
       ["focus-desktop", { width: 1440, height: 1100 }],
       ["focus-mobile", { width: 390, height: 844 }],
     ]) {
-      const context = await browser.newContext({ viewport });
+      const context = await createVisualContext(browser, { viewport });
       const page = await context.newPage();
       const assertNoRuntimeErrors = watchRuntimeErrors(page);
 
@@ -360,7 +401,7 @@ test.describe("DayDock visual and release smoke", () => {
   test("task editing and structural Undo open as real interaction states", async ({
     browser,
   }) => {
-    const context = await browser.newContext({
+    const context = await createVisualContext(browser, {
       viewport: { width: 390, height: 844 },
     });
 
@@ -431,7 +472,7 @@ test.describe("DayDock visual and release smoke", () => {
   test("notification preference mismatch is truthful after restore", async ({
     browser,
   }) => {
-    const context = await browser.newContext({
+    const context = await createVisualContext(browser, {
       viewport: { width: 390, height: 844 },
       permissions: [],
     });
@@ -460,7 +501,7 @@ test.describe("DayDock visual and release smoke", () => {
   });
 
   test("warmed production shell reopens offline", async ({ browser }) => {
-    const context = await browser.newContext({
+    const context = await createVisualContext(browser, {
       viewport: { width: 390, height: 844 },
     });
     const page = await context.newPage();
