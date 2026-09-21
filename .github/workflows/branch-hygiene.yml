@@ -45,7 +45,9 @@ jobs:
               open_branches["${branch}"]=1
             fi
           done < <(
-            gh api --paginate               "repos/${GH_REPOSITORY}/pulls?state=open&per_page=100"               --jq '.[] | select(.head.repo != null and .head.repo.full_name == env.GH_REPOSITORY) | .head.ref'
+            gh api --paginate \
+              "repos/${GH_REPOSITORY}/pulls?state=open&per_page=100" \
+              --jq '.[] | select(.head.repo != null and .head.repo.full_name == env.GH_REPOSITORY) | .head.ref'
           )
 
           while IFS=$'\t' read -r branch merged_head_sha; do
@@ -98,7 +100,9 @@ jobs:
               delete_failures=$((delete_failures + 1))
             fi
           done < <(
-            gh api --paginate               "repos/${GH_REPOSITORY}/pulls?state=closed&per_page=100"               --jq '.[] | select(.merged_at != null and .head.repo != null and .head.repo.full_name == env.GH_REPOSITORY) | [.head.ref, .head.sha] | @tsv'
+            gh api --paginate \
+              "repos/${GH_REPOSITORY}/pulls?state=closed&per_page=100" \
+              --jq '.[] | select(.merged_at != null and .head.repo != null and .head.repo.full_name == env.GH_REPOSITORY) | [.head.ref, .head.sha] | @tsv'
           )
 
           {
