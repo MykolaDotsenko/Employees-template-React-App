@@ -34,7 +34,7 @@ pure domain reducer
         +--> derived selectors
 ```
 
-The reducer does **not** create ids, read the clock, access storage, or call browser APIs. Commands carry those values into the reducer so state transitions stay deterministic and easy to verify.
+The reducer does **not** create ids, read the clock, access storage, or call browser APIs. Commands carry those values into the reducer so state transitions stay deterministic and easy to verify. Destructive UI actions use compensating `task/restored` / `person/restored` domain actions for one-step recovery; they never roll the entire workspace back to an earlier snapshot.
 
 ## PR3: local-first persistence boundary
 
@@ -107,6 +107,7 @@ external local-first store
 7. Mobile behavior is designed explicitly rather than produced by shrinking desktop UI.
 8. Domain commands are deterministic: ids and timestamps are created outside the reducer.
 9. Unknown persisted schemas fail safe rather than being silently downgraded.
+10. Recovery is a local compensating action, never a whole-workspace snapshot rollback.
 
 
 ## Resurface and recurrence boundary

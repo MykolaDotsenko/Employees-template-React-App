@@ -19,6 +19,7 @@ import { buildReviewInsights } from "./domain/daydock/insights";
 import type {
   ActiveFocusSession,
   DayDockState,
+  FocusSessionRecord,
   Person,
   Task,
   TaskRecurrence,
@@ -68,6 +69,22 @@ type RevealTarget =
   | { kind: "person"; id: string; token: number }
   | null;
 
+type UndoRemoval =
+  | {
+      kind: "task";
+      task: Task;
+      orderIndex: number;
+      top3Before: string[];
+      focusHistoryBefore: FocusSessionRecord[];
+    }
+  | {
+      kind: "person";
+      person: Person;
+      orderIndex: number;
+      linkedTaskIds: string[];
+    }
+  | null;
+
 type NavItem =
   | { id: Surface; label: string; hint: string }
   | { id: "capture"; label: "Capture"; hint: string };
@@ -106,6 +123,40 @@ function isEditableTarget(target: EventTarget | null): boolean {
   return (
     target instanceof HTMLElement &&
     target.closest("input, textarea, select, [contenteditable='true']") !== null
+  );
+}
+
+function UndoRemovalBar({
+  removal,
+  onUndo,
+  onDismiss,
+}: {
+  removal: Exclude<UndoRemoval, null>;
+  onUndo: () => void;
+  onDismiss: () => void;
+}) {
+  const label = removal.kind === "task" ? removal.task.title : removal.person.name;
+
+  return (
+    <aside className="undo-removal-bar" role="region" aria-label="Undo removal">
+      <p className="undo-removal-message" role="status" aria-live="polite">
+        <strong>{removal.kind === "task" ? "Task removed" : "Person removed"}</strong>
+        <span>{label}</span>
+      </p>
+      <div className="undo-removal-actions">
+        <button type="button" className="undo-removal-action" onClick={onUndo}>
+          Undo
+        </button>
+        <button
+          type="button"
+          className="undo-removal-dismiss"
+          aria-label="Dismiss undo"
+          onClick={onDismiss}
+        >
+          ×
+        </button>
+      </div>
+    </aside>
   );
 }
 
@@ -157,6 +208,7 @@ function SurfaceIcon({ surface }: { surface: Surface }) {
 export function App({ store = dayDockStore }: AppProps) {
   const [surface, setSurface] = useState<Surface>("today");
   const [revealTarget, setRevealTarget] = useState<RevealTarget>(null);
+  const [undoRemoval, setUndoRemoval] = useState<UndoRemoval>(null);
   const revealSequenceRef = useRef(0);
   const captureDialogRef = useRef<HTMLDialogElement>(null);
   const commandDialogRef = useRef<HTMLDialogElement>(null);
@@ -496,7 +548,22 @@ export function App({ store = dayDockStore }: AppProps) {
   }
 
   function removeTask(taskId: string) {
+    const task = state.tasks[taskId];
+    if (!task) return;
+
+    const removal: Exclude<UndoRemoval, null> = {
+      kind: "task",
+      task,
+      orderIndex: Math.max(0, state.taskOrder.indexOf(taskId)),
+      top3Before: [...state.top3],
+      focusHistoryBefore: [...state.focus.history],
+    };
+
     store.dispatch({ type: "task/removed", taskId });
+
+    if (!store.getSnapshot().tasks[taskId]) {
+      setUndoRemoval(removal);
+    }
   }
 
   function reopenTask(taskId: string) {
@@ -540,7 +607,23 @@ export function App({ store = dayDockStore }: AppProps) {
   }
 
   function removePerson(personId: string) {
+    const person = state.people[personId];
+    if (!person) return;
+
+    const removal: Exclude<UndoRemoval, null> = {
+      kind: "person",
+      person,
+      orderIndex: Math.max(0, state.personOrder.indexOf(personId)),
+      linkedTaskIds: state.taskOrder.filter(
+        (taskId) => state.tasks[taskId]?.personId === personId,
+      ),
+    };
+
     store.dispatch({ type: "person/removed", personId });
+
+    if (!store.getSnapshot().people[personId]) {
+      setUndoRemoval(removal);
+    }
   }
 
   function setPersonFollowUp(
@@ -668,6 +751,7 @@ export function App({ store = dayDockStore }: AppProps) {
 
   function restoreWorkspace(restoredState: DayDockState) {
     store.replaceState(restoredState);
+    setUndoRemoval(null);
 
     if (restoredState.focus.active !== null) {
       setFocusSnapshot(restoredState.focus.active);
@@ -735,6 +819,67 @@ export function App({ store = dayDockStore }: AppProps) {
     });
   }
 
+  function undoLastRemoval() {
+    if (undoRemoval === null) return;
+
+    if (undoRemoval.kind === "task") {
+      store.dispatch({
+        type: "task/restored",
+        task: undoRemoval.task,
+        orderIndex: undoRemoval.orderIndex,
+        top3Before: undoRemoval.top3Before,
+        focusHistoryBefore: undoRemoval.focusHistoryBefore,
+      });
+
+      if (store.getSnapshot().tasks[undoRemoval.task.id]) {
+        const token = revealSequenceRef.current + 1;
+        revealSequenceRef.current = token;
+        const nextSurface: Surface =
+          undoRemoval.task.status === "inbox" ||
+          undoRemoval.task.status === "later"
+            ? "inbox"
+            : "today";
+
+        if (presentationMode === "workspace") {
+          startTransition(() => {
+            setRevealTarget({
+              kind: "task",
+              id: undoRemoval.task.id,
+              token,
+            });
+            setSurface(nextSurface);
+          });
+        }
+      }
+    } else {
+      store.dispatch({
+        type: "person/restored",
+        person: undoRemoval.person,
+        orderIndex: undoRemoval.orderIndex,
+        linkedTaskIds: undoRemoval.linkedTaskIds,
+      });
+
+      if (
+        store.getSnapshot().people[undoRemoval.person.id] &&
+        presentationMode === "workspace"
+      ) {
+        const token = revealSequenceRef.current + 1;
+        revealSequenceRef.current = token;
+
+        startTransition(() => {
+          setRevealTarget({
+            kind: "person",
+            id: undoRemoval.person.id,
+            token,
+          });
+          setSurface("people");
+        });
+      }
+    }
+
+    setUndoRemoval(null);
+  }
+
   const presentedFocus = activeFocus ?? focusSnapshot;
   const presentedTask =
     presentedFocus === null
@@ -747,16 +892,25 @@ export function App({ store = dayDockStore }: AppProps) {
     presentedTask !== null
   ) {
     return (
-      <ViewTransition>
-        <FocusMode
-          session={presentedFocus}
-          task={presentedTask}
-          onPause={pauseFocus}
-          onResume={resumeFocus}
-          onStop={stopFocus}
-          onComplete={completeFocusedTask}
-        />
-      </ViewTransition>
+      <>
+        <ViewTransition>
+          <FocusMode
+            session={presentedFocus}
+            task={presentedTask}
+            onPause={pauseFocus}
+            onResume={resumeFocus}
+            onStop={stopFocus}
+            onComplete={completeFocusedTask}
+          />
+        </ViewTransition>
+        {undoRemoval !== null ? (
+          <UndoRemovalBar
+            removal={undoRemoval}
+            onUndo={undoLastRemoval}
+            onDismiss={() => setUndoRemoval(null)}
+          />
+        ) : null}
+      </>
     );
   }
 
@@ -991,6 +1145,14 @@ export function App({ store = dayDockStore }: AppProps) {
           </ViewTransition>
         </main>
       </div>
+
+      {undoRemoval !== null ? (
+        <UndoRemovalBar
+          removal={undoRemoval}
+          onUndo={undoLastRemoval}
+          onDismiss={() => setUndoRemoval(null)}
+        />
+      ) : null}
 
       <button
         type="button"

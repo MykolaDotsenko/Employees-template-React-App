@@ -427,6 +427,72 @@ describe("dayDockReducer", () => {
     expect(state.focus.history).toHaveLength(0);
   });
 
+  it("restores a removed task without overwriting newer Top 3 intent", () => {
+    let state = dayDockReducer(createInitialDayDockState(), {
+      type: "task/captured",
+      task: task("restore-me", "today"),
+    });
+    state = dayDockReducer(state, {
+      type: "top3/added",
+      taskId: "restore-me",
+    });
+    state = dayDockReducer(state, {
+      type: "focus/started",
+      session: focusSession("restore-me"),
+    });
+    state = dayDockReducer(state, {
+      type: "focus/finished",
+      endedAt: "2026-09-19T10:20:00.000Z",
+      outcome: "stopped",
+    });
+
+    const beforeRemoval = state;
+    state = dayDockReducer(state, {
+      type: "task/removed",
+      taskId: "restore-me",
+    });
+    state = dayDockReducer(state, {
+      type: "task/captured",
+      task: task("new-current", "today"),
+    });
+    state = dayDockReducer(state, {
+      type: "top3/added",
+      taskId: "new-current",
+    });
+    state = dayDockReducer(state, {
+      type: "focus/started",
+      session: {
+        id: "focus-new-current",
+        taskId: "new-current",
+        startedAt: "2026-09-19T11:00:00.000Z",
+        durationMinutes: 25,
+        pausedAt: null,
+        accumulatedPauseMs: 0,
+      },
+    });
+    state = dayDockReducer(state, {
+      type: "focus/finished",
+      endedAt: "2026-09-19T11:25:00.000Z",
+      outcome: "completed",
+    });
+
+    state = dayDockReducer(state, {
+      type: "task/restored",
+      task: beforeRemoval.tasks["restore-me"]!,
+      orderIndex: beforeRemoval.taskOrder.indexOf("restore-me"),
+      top3Before: beforeRemoval.top3,
+      focusHistoryBefore: beforeRemoval.focus.history,
+    });
+
+    expect(state.tasks["restore-me"]).toBeDefined();
+    expect(state.top3).toEqual(["new-current", "restore-me"]);
+    expect(state.focus.history).toHaveLength(2);
+    expect(state.focus.history.map((session) => session.taskId)).toEqual([
+      "restore-me",
+      "new-current",
+    ]);
+  });
+
   it("does not remove completed work or the task in an active focus session", () => {
     let doneState = dayDockReducer(createInitialDayDockState(), {
       type: "task/captured",
@@ -511,6 +577,56 @@ describe("dayDockReducer", () => {
     expect(state.tasks.linked?.personId).toBeNull();
   });
 
+
+  it("restores a removed person without stealing tasks reassigned later", () => {
+    let state = dayDockReducer(createInitialDayDockState(), {
+      type: "person/added",
+      person: person("anna", "2026-09-20"),
+    });
+    state = dayDockReducer(state, {
+      type: "person/added",
+      person: person("ben", null),
+    });
+    state = dayDockReducer(state, {
+      type: "task/captured",
+      task: {
+        ...task("stay-with-new-owner", "inbox"),
+        personId: "anna",
+      },
+    });
+    state = dayDockReducer(state, {
+      type: "task/captured",
+      task: {
+        ...task("restore-link", "inbox"),
+        personId: "anna",
+      },
+    });
+
+    const removedPerson = state.people.anna!;
+    const orderIndex = state.personOrder.indexOf("anna");
+    const linkedTaskIds = ["stay-with-new-owner", "restore-link"];
+
+    state = dayDockReducer(state, {
+      type: "person/removed",
+      personId: "anna",
+    });
+    state = dayDockReducer(state, {
+      type: "task/personAttached",
+      taskId: "stay-with-new-owner",
+      personId: "ben",
+    });
+    state = dayDockReducer(state, {
+      type: "person/restored",
+      person: removedPerson,
+      orderIndex,
+      linkedTaskIds,
+    });
+
+    expect(state.people.anna).toBeDefined();
+    expect(state.personOrder[0]).toBe("anna");
+    expect(state.tasks["restore-link"]?.personId).toBe("anna");
+    expect(state.tasks["stay-with-new-owner"]?.personId).toBe("ben");
+  });
 
   it("parks work with a return date and removes it from Top 3", () => {
     let state = dayDockReducer(createInitialDayDockState(), {

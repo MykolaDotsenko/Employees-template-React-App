@@ -3,6 +3,7 @@ import type {
   CalendarBusyEvent,
   DayPlan,
   FocusOutcome,
+  FocusSessionRecord,
   NonDoneTaskStatus,
   Person,
   Task,
@@ -24,6 +25,13 @@ export type DayDockAction =
   | { type: "task/captured"; task: Task }
   | { type: "task/renamed"; taskId: string; title: string }
   | { type: "task/removed"; taskId: string }
+  | {
+      type: "task/restored";
+      task: Task;
+      orderIndex: number;
+      top3Before: string[];
+      focusHistoryBefore: FocusSessionRecord[];
+    }
   | { type: "task/moved"; taskId: string; status: NonDoneTaskStatus }
   | {
       type: "task/deferred";
@@ -47,6 +55,12 @@ export type DayDockAction =
   | { type: "person/added"; person: Person }
   | { type: "person/renamed"; personId: string; name: string }
   | { type: "person/removed"; personId: string }
+  | {
+      type: "person/restored";
+      person: Person;
+      orderIndex: number;
+      linkedTaskIds: string[];
+    }
   | {
       type: "person/followUpChanged";
       personId: string;
