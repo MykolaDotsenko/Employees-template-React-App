@@ -2,10 +2,13 @@ import { createHash } from "node:crypto";
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 import process from "node:process";
+import { Script } from "node:vm";
 import { fileURLToPath, URL } from "node:url";
 
 const DIST = fileURLToPath(new URL("../dist/", import.meta.url));
 const SW = join(DIST, "sw.js");
+const CACHE_ASSIGNMENT = 'const CACHE = "__DAYDOCK_CACHE__";';
+const PRECACHE_ASSIGNMENT = "const PRECACHE = __DAYDOCK_PRECACHE__;";
 
 async function collectFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -38,19 +41,35 @@ const fingerprint = createHash("sha256")
   .update(JSON.stringify(precache))
   .digest("hex")
   .slice(0, 12);
+const cacheName = `daydock-shell-${fingerprint}`;
 
 let source = await readFile(SW, "utf8");
 
-if (
-  !source.includes("__DAYDOCK_CACHE__") ||
-  !source.includes("__DAYDOCK_PRECACHE__")
-) {
-  throw new Error("Service worker placeholders were not found.");
+if (!source.includes(CACHE_ASSIGNMENT)) {
+  throw new Error("Service worker cache placeholder assignment was not found.");
+}
+
+if (!source.includes(PRECACHE_ASSIGNMENT)) {
+  throw new Error("Service worker precache placeholder assignment was not found.");
 }
 
 source = source
-  .replace("__DAYDOCK_CACHE__", `daydock-shell-${fingerprint}`)
-  .replace("__DAYDOCK_PRECACHE__", JSON.stringify(precache, null, 2));
+  .replace(CACHE_ASSIGNMENT, `const CACHE = ${JSON.stringify(cacheName)};`)
+  .replace(
+    PRECACHE_ASSIGNMENT,
+    `const PRECACHE = ${JSON.stringify(precache, null, 2)};`,
+  );
+
+if (
+  source.includes("__DAYDOCK_CACHE__") ||
+  source.includes("__DAYDOCK_PRECACHE__")
+) {
+  throw new Error("Service worker build placeholders remain after finalization.");
+}
+
+// Compile without executing. This catches malformed generated JavaScript before
+// the browser sees the service worker.
+new Script(source, { filename: "dist/sw.js" });
 
 await writeFile(SW, source);
 
