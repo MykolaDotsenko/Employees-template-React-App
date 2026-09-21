@@ -68,7 +68,7 @@ const taskSchema = z
 
 const dayPlanSchema = z.object({
   dateKey: isoDateSchema,
-  focusRoomMinutes: z.number().int().min(30).max(480),
+  focusRoomMinutes: z.number().int().min(0).max(480),
   startedAt: isoDateTimeSchema,
 });
 
@@ -309,7 +309,7 @@ export function normalizeDayDockState(state: DayDockState): DayDockState {
           ...state.dayPlan,
           focusRoomMinutes: Math.min(
             480,
-            Math.max(30, Math.round(state.dayPlan.focusRoomMinutes)),
+            Math.max(0, Math.round(state.dayPlan.focusRoomMinutes)),
           ),
         };
 
