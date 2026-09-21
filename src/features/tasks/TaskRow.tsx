@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useId,
   useRef,
   useState,
@@ -12,6 +13,7 @@ interface TaskRowProps {
   leading?: ReactNode;
   metadata?: ReactNode;
   actions?: ReactNode;
+  revealToken?: number;
   onRename?: (taskId: string, title: string) => void;
   onRemove?: (taskId: string) => void;
 }
@@ -21,14 +23,26 @@ export function TaskRow({
   leading,
   metadata,
   actions,
+  revealToken,
   onRename,
   onRemove,
 }: TaskRowProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const rowRef = useRef<HTMLLIElement>(null);
   const titleId = useId();
   const [draftTitle, setDraftTitle] = useState(task.title);
   const [confirmingRemove, setConfirmingRemove] = useState(false);
   const canManage = onRename !== undefined || onRemove !== undefined;
+
+  useEffect(() => {
+    if (revealToken === undefined) return;
+
+    const row = rowRef.current;
+    if (!row) return;
+
+    row.scrollIntoView?.({ block: "center" });
+    row.focus();
+  }, [revealToken]);
 
   function openEditor() {
     const dialog = dialogRef.current;
@@ -60,7 +74,11 @@ export function TaskRow({
   }
 
   return (
-    <li className="task-row">
+    <li
+      ref={rowRef}
+      className={revealToken === undefined ? "task-row" : "task-row is-revealed"}
+      tabIndex={revealToken === undefined ? undefined : -1}
+    >
       <span className="task-leading" aria-hidden="true">
         {leading ?? <span className="task-dot" />}
       </span>
