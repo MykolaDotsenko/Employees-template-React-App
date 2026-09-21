@@ -10,6 +10,10 @@ DayDock is a calm, local-first workday command center for knowledge workers jugg
 
 The core promise is simple: get commitments out of your head, decide when they deserve attention, protect up to three outcomes, and end the day with unfinished work safely parked instead of mentally carried.
 
+![DayDock Today view showing the current Now outcome, Focus controls, and Top 3 priorities](./docs/assets/daydock-today.webp)
+
+<sub>Current mature Today workspace · captured from the release Visual Smoke suite.</sub>
+
 It started as an employee-management React exercise and was rebuilt into a complete product and frontend-architecture case study.
 
 ## Product capabilities
