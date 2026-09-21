@@ -4457,3 +4457,103 @@
     }
   }
 }
+
+
+@layer components {
+  .undo-removal-bar {
+    position: fixed;
+    z-index: 55;
+    left: 50%;
+    bottom: clamp(1rem, 3vw, 2rem);
+    width: min(calc(100vw - 2rem), 34rem);
+    min-height: 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: 0.7rem 0.72rem 0.7rem 1rem;
+    border: 1px solid color-mix(
+      in oklch,
+      var(--color-accent) 24%,
+      var(--color-border)
+    );
+    border-radius: 1rem;
+    color: var(--color-text);
+    background: color-mix(
+      in oklch,
+      var(--color-surface-raised) 96%,
+      var(--color-accent-soft)
+    );
+    box-shadow: 0 20px 55px oklch(32% 0.05 250 / 0.18);
+    transform: translateX(-50%);
+  }
+
+  .undo-removal-message {
+    min-width: 0;
+    display: grid;
+    gap: 0.12rem;
+  }
+
+  .undo-removal-message strong,
+  .undo-removal-message span {
+    display: block;
+  }
+
+  .undo-removal-message strong {
+    font-size: 0.78rem;
+    font-weight: 780;
+  }
+
+  .undo-removal-message span {
+    overflow: hidden;
+    color: var(--color-text-soft);
+    font-size: 0.72rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .undo-removal-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex: 0 0 auto;
+  }
+
+  .undo-removal-action,
+  .undo-removal-dismiss {
+    min-height: 2.6rem;
+    border-radius: 0.72rem;
+    font-weight: 760;
+  }
+
+  .undo-removal-action {
+    padding-inline: 0.82rem;
+    color: white;
+    background: var(--color-accent-strong);
+  }
+
+  .undo-removal-dismiss {
+    width: 2.6rem;
+    display: grid;
+    place-items: center;
+    color: var(--color-text-soft);
+    background: var(--color-canvas);
+    font-size: 1.05rem;
+  }
+
+  @media (max-width: 760px) {
+    .undo-removal-bar {
+      bottom: calc(9.25rem + env(safe-area-inset-bottom));
+      width: calc(100vw - 1.5rem);
+      padding-left: 0.85rem;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .undo-removal-bar,
+    .undo-removal-action,
+    .undo-removal-dismiss {
+      forced-color-adjust: auto;
+    }
+  }
+}
