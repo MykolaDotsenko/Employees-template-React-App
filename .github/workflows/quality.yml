@@ -28,3 +28,6 @@ jobs:
 
       - name: Quality gate
         run: npm run check
+
+      - name: GitHub Pages artifact gate
+        run: npm run build:pages
