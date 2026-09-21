@@ -189,14 +189,25 @@ export function TaskRow({
                     min="1"
                     max={24 * 60}
                     value={draftEstimate}
+                    aria-label="Estimate"
                     aria-describedby={estimateHelpId}
+                    aria-invalid={!estimateIsValid}
                     placeholder="No estimate"
                     onChange={(event) =>
                       setDraftEstimate(event.currentTarget.value)
                     }
                   />
-                  <small id={estimateHelpId} className="task-editor-field-help">
-                    Optional minutes · used to prefill Focus, never scored.
+                  <small
+                    id={estimateHelpId}
+                    className={
+                      estimateIsValid
+                        ? "task-editor-field-help"
+                        : "task-editor-field-help is-error"
+                    }
+                  >
+                    {estimateIsValid
+                      ? "Optional minutes · used to prefill Focus, never scored."
+                      : "Enter a whole number from 1 to 1440 minutes."}
                   </small>
                 </label>
               ) : null}
