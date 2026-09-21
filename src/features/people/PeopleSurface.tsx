@@ -425,7 +425,7 @@ export function PeopleSurface({
               </div>
               <p>
                 Their linked tasks will stay in DayDock and become unassigned.
-                Only the person and follow-up context will be removed.
+                You can undo immediately after removal.
               </p>
               <div className="person-edit-actions">
                 <button
