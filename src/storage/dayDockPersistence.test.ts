@@ -78,11 +78,45 @@ describe("DayDock persistence", () => {
     expect(result.state).toEqual(createInitialDayDockState());
   });
 
+  it("migrates schema v6 to v7 with the default 08:00–18:00 workday", () => {
+    const storage = new MemoryStorage();
+    const state = createInitialDayDockState();
+    const { workday, ...v6Data } = state;
+    void workday;
+
+    storage.setItem(
+      DAYDOCK_STORAGE_KEY,
+      JSON.stringify({
+        schemaVersion: 6,
+        updatedAt: "2026-09-20T08:00:00.000Z",
+        data: v6Data,
+      }),
+    );
+
+    const result = loadDayDockWorkspace(
+      storage,
+      () => "2026-09-20T09:00:00.000Z",
+    );
+
+    expect(result.source).toBe("migrated");
+    expect(result.state.workday).toEqual({
+      startHour: 8,
+      endHour: 18,
+    });
+
+    const upgraded = JSON.parse(
+      storage.getItem(DAYDOCK_STORAGE_KEY) ?? "{}",
+    ) as { schemaVersion?: number };
+
+    expect(upgraded.schemaVersion).toBe(DAYDOCK_SCHEMA_VERSION);
+  });
+
   it("migrates schema v5 to v6 with notifications disabled by default", () => {
     const storage = new MemoryStorage();
     const state = createInitialDayDockState();
-    const { notifications, ...v5Data } = state;
+    const { notifications, workday, ...v5Data } = state;
     void notifications;
+    void workday;
 
     storage.setItem(
       DAYDOCK_STORAGE_KEY,
@@ -288,6 +322,7 @@ describe("DayDock persistence", () => {
     expect(saved.updatedAt).toBe("2026-09-19T13:00:00.000Z");
     expect(saved.data?.focus).toEqual({ active: null, history: [] });
     expect(saved.data?.dayPlan).toBeNull();
+    expect(saved.data?.workday).toEqual({ startHour: 8, endHour: 18 });
   });
 
   it("persists external-store changes but ignores no-op actions", () => {
