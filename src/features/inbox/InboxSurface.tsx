@@ -263,6 +263,9 @@ export function InboxSurface({
                     <TaskRow
                       key={task.id}
                       task={task}
+                      revealToken={
+                        revealedTaskId === task.id ? revealToken : undefined
+                      }
                       metadata={<TimingMeta task={task} />}
                       onRename={onRename}
                       onRemove={onRemove}
