@@ -462,8 +462,8 @@ jobs:
           grep -q "Calendar context" visual-smoke/mature-dom.html
           grep -q 'class="calendar-context-details"' visual-smoke/mature-dom.html
 
-          node <<'NODE'
-          const fs = require("fs");
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
           const html = fs.readFileSync("visual-smoke/mature-dom.html", "utf8");
           const nowIndex = html.indexOf("Ship DayDock release");
           const calendarIndex = html.indexOf("Calendar context");
