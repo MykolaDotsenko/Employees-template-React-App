@@ -43,7 +43,10 @@ interface TodaySurfaceProps {
   onRemoveFromTop3: (taskId: string) => void;
   onComplete: (taskId: string) => void;
   onRename: (taskId: string, title: string) => void;
-  onEstimateChange: (taskId: string, estimateMinutes: number | null) => void;
+  onEstimateChange: (
+    taskId: string,
+    estimateMinutes: number | null,
+  ) => void;
   onRemove: (taskId: string) => void;
   onStartFocus: (taskId: string, durationMinutes: number) => void;
 }
