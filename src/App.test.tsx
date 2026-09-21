@@ -1097,16 +1097,16 @@ describe("DayDock core daily flow", () => {
 
     await user.selectOptions(
       screen.getByRole("combobox", { name: "Workday starts" }),
-      "9",
+      "9.5",
     );
     await user.selectOptions(
       screen.getByRole("combobox", { name: "Workday ends" }),
-      "17",
+      "17.5",
     );
 
     expect(store.getSnapshot().workday).toEqual({
-      startHour: 9,
-      endHour: 17,
+      startHour: 9.5,
+      endHour: 17.5,
     });
     expect(
       screen.queryByRole("button", { name: /create calendar event/i }),
