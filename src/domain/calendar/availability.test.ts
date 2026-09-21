@@ -46,14 +46,14 @@ describe("calendar availability", () => {
       [
         event("review", "2026-09-20T11:00:00.000Z", "2026-09-20T12:00:00.000Z"),
       ],
-      new Date("2026-09-20T10:00:00.000Z"),
-      10,
-      16,
+      new Date("2026-09-20T10:30:00.000Z"),
+      10.5,
+      16.5,
     );
 
     expect(awareness.focusWindows.map((window) => window.minutes)).toEqual([
-      55,
-      235,
+      25,
+      265,
     ]);
     expect(awareness.busyMinutes).toBe(70);
     expect(awareness.availableMinutes).toBe(290);
