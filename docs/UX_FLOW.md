@@ -43,6 +43,8 @@ This separation matters:
 - Today = plausible work for the day
 - Top 3 = the outcomes that define success
 
+Capture remains one-field and fast. Optional minute estimates live in the task editor rather than Quick Capture. An estimate is descriptive planning context: it prefills the task's Focus block, can be cleared at any time, and never contributes to a score, grade, or completion judgment.
+
 Top 3 is enforced by the domain reducer rather than only by disabled UI. The first Top 3 item is the current **Now** outcome; any other pinned outcome can be promoted to Now without unpinning or rebuilding the list.
 
 ### Complete

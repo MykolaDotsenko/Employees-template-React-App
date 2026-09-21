@@ -34,6 +34,7 @@ After each release deployment, verify the user-critical hierarchy before feature
 - Removing a task/person exposes a persistent Undo bar. Undo restores only the removed entity/relationships and must not overwrite newer Top 3 choices or later task reassignment; Dismiss leaves the removal final.
 - Calendar detail is collapsed by default and remains keyboard-expandable.
 - Start Day exposes the selected focus-room value on the primary action.
+- Editing a task estimate immediately updates its row metadata and the default Focus block for the current task; clearing the estimate returns to the Focus fallback without adding fields to Quick Capture.
 - The first mobile viewport prioritizes current work over calendar analytics.
 - A 30-minute workday boundary (for example 08:30–17:30) persists and immediately changes derived focus room.
 - A day with no remaining 25+ minute focus window suggests **0 min**, never invented availability.

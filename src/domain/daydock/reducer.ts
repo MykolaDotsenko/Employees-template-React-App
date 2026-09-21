@@ -332,6 +332,25 @@ export function dayDockReducer(
       );
     }
 
+    case "task/estimateChanged": {
+      const estimateMinutes = action.estimateMinutes;
+
+      if (
+        estimateMinutes !== null &&
+        (!Number.isInteger(estimateMinutes) ||
+          estimateMinutes <= 0 ||
+          estimateMinutes > 24 * 60)
+      ) {
+        return state;
+      }
+
+      return updateTask(state, action.taskId, (task) =>
+        task.estimateMinutes === estimateMinutes
+          ? task
+          : { ...task, estimateMinutes },
+      );
+    }
+
     case "task/removed": {
       const current = state.tasks[action.taskId];
       if (

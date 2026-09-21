@@ -845,6 +845,76 @@ describe("DayDock core daily flow", () => {
     ).toBeInTheDocument();
   });
 
+  it("lets task estimates drive the default Focus block without adding capture friction", async () => {
+    const user = userEvent.setup();
+    const store = createDayDockStore();
+    addTodayPriority(store);
+
+    render(<App store={store} />);
+
+    expect(
+      screen.getByRole("combobox", { name: "Focus duration" }),
+    ).toHaveValue("30");
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Edit or remove Write architecture notes",
+      }),
+    );
+
+    const editor = screen.getByRole("dialog", {
+      name: "Keep the task useful",
+    });
+    const estimate = within(editor).getByLabelText("Estimate");
+    await user.clear(estimate);
+    await user.type(estimate, "1441");
+
+    expect(estimate).toHaveAttribute("aria-invalid", "true");
+    expect(
+      within(editor).getByText("Enter a whole number from 1 to 1440 minutes."),
+    ).toBeInTheDocument();
+    expect(
+      within(editor).getByRole("button", { name: "Save changes" }),
+    ).toBeDisabled();
+
+    await user.clear(estimate);
+    await user.type(estimate, "90");
+    await user.click(
+      within(editor).getByRole("button", { name: "Save changes" }),
+    );
+
+    expect(store.getSnapshot().tasks.a?.estimateMinutes).toBe(90);
+    expect(
+      screen.getByRole("combobox", { name: "Focus duration" }),
+    ).toHaveValue("90");
+    const estimatedTaskRow = screen
+      .getByText("Write architecture notes", { selector: "strong" })
+      .closest("li");
+    expect(estimatedTaskRow).not.toBeNull();
+    expect(
+      within(estimatedTaskRow as HTMLElement).getByText("90 min"),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Edit or remove Write architecture notes",
+      }),
+    );
+    const clearedEditor = screen.getByRole("dialog", {
+      name: "Keep the task useful",
+    });
+    const clearedEstimate = within(clearedEditor).getByLabelText("Estimate");
+    await user.clear(clearedEstimate);
+    await user.click(
+      within(clearedEditor).getByRole("button", { name: "Save changes" }),
+    );
+
+    expect(store.getSnapshot().tasks.a?.estimateMinutes).toBeNull();
+    expect(
+      screen.getByRole("combobox", { name: "Focus duration" }),
+    ).toHaveValue("50");
+  });
+
   it("clamps oversized imported estimates before entering Focus Mode", async () => {
     const user = userEvent.setup();
     const store = createDayDockStore();
@@ -905,7 +975,7 @@ describe("DayDock core daily flow", () => {
     );
 
     const editor = screen.getByRole("dialog", {
-      name: "Keep the wording useful",
+      name: "Keep the task useful",
     });
     const title = within(editor).getByLabelText("Task title");
     await user.clear(title);
@@ -927,7 +997,7 @@ describe("DayDock core daily flow", () => {
       }),
     );
     const updatedEditor = screen.getByRole("dialog", {
-      name: "Keep the wording useful",
+      name: "Keep the task useful",
     });
     await user.click(
       within(updatedEditor).getByRole("button", { name: "Remove…" }),
@@ -967,7 +1037,7 @@ describe("DayDock core daily flow", () => {
       }),
     );
     const restoredEditor = screen.getByRole("dialog", {
-      name: "Keep the wording useful",
+      name: "Keep the task useful",
     });
     await user.click(
       within(restoredEditor).getByRole("button", { name: "Remove…" }),

@@ -15,6 +15,10 @@ interface TaskRowProps {
   actions?: ReactNode;
   revealToken?: number;
   onRename?: (taskId: string, title: string) => void;
+  onEstimateChange?: (
+    taskId: string,
+    estimateMinutes: number | null,
+  ) => void;
   onRemove?: (taskId: string) => void;
 }
 
@@ -25,14 +29,29 @@ export function TaskRow({
   actions,
   revealToken,
   onRename,
+  onEstimateChange,
   onRemove,
 }: TaskRowProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const rowRef = useRef<HTMLLIElement>(null);
   const titleId = useId();
+  const estimateHelpId = useId();
   const [draftTitle, setDraftTitle] = useState(task.title);
+  const [draftEstimate, setDraftEstimate] = useState(
+    task.estimateMinutes?.toString() ?? "",
+  );
   const [confirmingRemove, setConfirmingRemove] = useState(false);
-  const canManage = onRename !== undefined || onRemove !== undefined;
+  const canManage =
+    onRename !== undefined ||
+    onEstimateChange !== undefined ||
+    onRemove !== undefined;
+  const parsedEstimate =
+    draftEstimate.trim() === "" ? null : Number(draftEstimate);
+  const estimateIsValid =
+    parsedEstimate === null ||
+    (Number.isInteger(parsedEstimate) &&
+      parsedEstimate > 0 &&
+      parsedEstimate <= 24 * 60);
 
   useEffect(() => {
     if (revealToken === undefined) return;
@@ -49,6 +68,7 @@ export function TaskRow({
     if (!dialog || dialog.open) return;
 
     setDraftTitle(task.title);
+    setDraftEstimate(task.estimateMinutes?.toString() ?? "");
     setConfirmingRemove(false);
     dialog.showModal();
   }
@@ -58,12 +78,15 @@ export function TaskRow({
     dialogRef.current?.close();
   }
 
-  function saveTitle(event: FormEvent<HTMLFormElement>) {
+  function saveTask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const nextTitle = draftTitle.trim();
-    if (!nextTitle || onRename === undefined) return;
 
-    onRename(task.id, nextTitle);
+    const nextTitle = draftTitle.trim();
+    if (onRename !== undefined && !nextTitle) return;
+    if (!estimateIsValid) return;
+
+    onRename?.(task.id, nextTitle);
+    onEstimateChange?.(task.id, parsedEstimate);
     closeEditor();
   }
 
@@ -142,10 +165,10 @@ export function TaskRow({
               </div>
             </div>
           ) : (
-            <form className="task-editor-form" onSubmit={saveTitle}>
+            <form className="task-editor-form" onSubmit={saveTask}>
               <div>
                 <p className="section-kicker">Task details</p>
-                <h2 id={titleId}>Keep the wording useful</h2>
+                <h2 id={titleId}>Keep the task useful</h2>
               </div>
 
               {onRename !== undefined ? (
@@ -157,6 +180,38 @@ export function TaskRow({
                     maxLength={280}
                     autoFocus
                   />
+                </label>
+              ) : null}
+
+              {onEstimateChange !== undefined ? (
+                <label className="task-editor-field">
+                  <span>Estimate</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min="1"
+                    max={24 * 60}
+                    value={draftEstimate}
+                    aria-label="Estimate"
+                    aria-describedby={estimateHelpId}
+                    aria-invalid={!estimateIsValid}
+                    placeholder="No estimate"
+                    onChange={(event) =>
+                      setDraftEstimate(event.currentTarget.value)
+                    }
+                  />
+                  <small
+                    id={estimateHelpId}
+                    className={
+                      estimateIsValid
+                        ? "task-editor-field-help"
+                        : "task-editor-field-help is-error"
+                    }
+                  >
+                    {estimateIsValid
+                      ? "Optional minutes · used to prefill Focus, never scored."
+                      : "Enter a whole number from 1 to 1440 minutes."}
+                  </small>
                 </label>
               ) : null}
 
@@ -178,11 +233,14 @@ export function TaskRow({
                 >
                   Cancel
                 </button>
-                {onRename !== undefined ? (
+                {onRename !== undefined || onEstimateChange !== undefined ? (
                   <button
                     type="submit"
                     className="task-editor-primary"
-                    disabled={!draftTitle.trim()}
+                    disabled={
+                      (onRename !== undefined && !draftTitle.trim()) ||
+                      !estimateIsValid
+                    }
                   >
                     Save changes
                   </button>

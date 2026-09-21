@@ -547,6 +547,17 @@ export function App({ store = dayDockStore }: AppProps) {
     store.dispatch({ type: "task/renamed", taskId, title });
   }
 
+  function changeTaskEstimate(
+    taskId: string,
+    estimateMinutes: number | null,
+  ) {
+    store.dispatch({
+      type: "task/estimateChanged",
+      taskId,
+      estimateMinutes,
+    });
+  }
+
   function removeTask(taskId: string) {
     const task = state.tasks[taskId];
     if (!task) return;
@@ -1075,6 +1086,7 @@ export function App({ store = dayDockStore }: AppProps) {
                   onRemoveFromTop3={removeFromTop3}
                   onComplete={completeTask}
                   onRename={renameTask}
+                  onEstimateChange={changeTaskEstimate}
                   onRemove={removeTask}
                   onStartFocus={startFocus}
                 />
@@ -1098,6 +1110,7 @@ export function App({ store = dayDockStore }: AppProps) {
                   onSchedule={scheduleTask}
                   onComplete={completeTask}
                   onRename={renameTask}
+                  onEstimateChange={changeTaskEstimate}
                   onRemove={removeTask}
                 />
               </Activity>

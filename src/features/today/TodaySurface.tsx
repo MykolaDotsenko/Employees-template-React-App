@@ -43,6 +43,10 @@ interface TodaySurfaceProps {
   onRemoveFromTop3: (taskId: string) => void;
   onComplete: (taskId: string) => void;
   onRename: (taskId: string, title: string) => void;
+  onEstimateChange: (
+    taskId: string,
+    estimateMinutes: number | null,
+  ) => void;
   onRemove: (taskId: string) => void;
   onStartFocus: (taskId: string, durationMinutes: number) => void;
 }
@@ -74,6 +78,7 @@ export function TodaySurface({
   onRemoveFromTop3,
   onComplete,
   onRename,
+  onEstimateChange,
   onRemove,
   onStartFocus,
 }: TodaySurfaceProps) {
@@ -261,6 +266,7 @@ export function TodaySurface({
                     revealedTaskId === task.id ? revealToken : undefined
                   }
                   onRename={onRename}
+                  onEstimateChange={onEstimateChange}
                   onRemove={onRemove}
                   leading={<span className="priority-index">{index + 1}</span>}
                   actions={
@@ -324,6 +330,7 @@ export function TodaySurface({
                       revealedTaskId === task.id ? revealToken : undefined
                     }
                     onRename={onRename}
+                    onEstimateChange={onEstimateChange}
                     onRemove={onRemove}
                     actions={
                       <>

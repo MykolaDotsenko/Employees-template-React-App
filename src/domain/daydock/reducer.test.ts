@@ -395,6 +395,36 @@ describe("dayDockReducer", () => {
     expect(state.focus.history[0]?.endedAt).toBe("2026-09-19T10:20:00.000Z");
   });
 
+  it("updates and clears optional task estimates while rejecting invalid values", () => {
+    let state = dayDockReducer(createInitialDayDockState(), {
+      type: "task/captured",
+      task: task("estimate-me", "today"),
+    });
+
+    state = dayDockReducer(state, {
+      type: "task/estimateChanged",
+      taskId: "estimate-me",
+      estimateMinutes: 90,
+    });
+
+    expect(state.tasks["estimate-me"]?.estimateMinutes).toBe(90);
+
+    const invalid = dayDockReducer(state, {
+      type: "task/estimateChanged",
+      taskId: "estimate-me",
+      estimateMinutes: 1_441,
+    });
+    expect(invalid).toBe(state);
+
+    state = dayDockReducer(state, {
+      type: "task/estimateChanged",
+      taskId: "estimate-me",
+      estimateMinutes: null,
+    });
+
+    expect(state.tasks["estimate-me"]?.estimateMinutes).toBeNull();
+  });
+
   it("removes an open task without leaving Top 3 or focus-history ghosts", () => {
     let state = dayDockReducer(createInitialDayDockState(), {
       type: "task/captured",
