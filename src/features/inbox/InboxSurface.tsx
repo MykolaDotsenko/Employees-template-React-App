@@ -18,7 +18,10 @@ interface InboxSurfaceProps {
   ) => void;
   onComplete: (taskId: string) => void;
   onRename: (taskId: string, title: string) => void;
-  onEstimateChange: (taskId: string, estimateMinutes: number | null) => void;
+  onEstimateChange: (
+    taskId: string,
+    estimateMinutes: number | null,
+  ) => void;
   onRemove: (taskId: string) => void;
 }
 
