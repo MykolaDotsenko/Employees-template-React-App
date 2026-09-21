@@ -2732,6 +2732,10 @@
     line-height: 1.45;
   }
 
+  .task-editor-field-help.is-error {
+    color: oklch(48% 0.14 30);
+  }
+
   .task-remove-confirmation > p:not(.section-kicker) {
     color: var(--color-text-soft);
     font-size: 0.8rem;
