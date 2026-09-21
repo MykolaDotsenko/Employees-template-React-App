@@ -46,6 +46,14 @@ export function StartDayPanel({
     manualFocusRoomMinutes ??
     suggestedFocusRoomMinutes ??
     150;
+  const focusRoomOptions = Array.from(
+    new Set([
+      ...FOCUS_ROOM_OPTIONS,
+      ...(suggestedFocusRoomMinutes === null
+        ? []
+        : [suggestedFocusRoomMinutes]),
+    ]),
+  ).sort((left, right) => left - right);
 
   if (alreadyStarted) {
     return (
@@ -111,7 +119,7 @@ export function StartDayPanel({
               setManualFocusRoomMinutes(Number(event.currentTarget.value));
             }
           >
-            {FOCUS_ROOM_OPTIONS.map((minutes) => (
+            {focusRoomOptions.map((minutes) => (
               <option key={minutes} value={minutes}>
                 {formatMinutes(minutes)}
               </option>
