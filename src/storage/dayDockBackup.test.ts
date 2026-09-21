@@ -37,6 +37,11 @@ function workspace(): DayDockState {
   };
   state.taskOrder.push("a");
 
+  state.workday = {
+    startHour: 8.5,
+    endHour: 17.5,
+  };
+
   state.focus.history.push({
     id: "focus-a",
     taskId: "a",
@@ -76,6 +81,10 @@ describe("DayDock portable backups", () => {
     expect(backup?.state.people.anna?.name).toBe("Anna");
     expect(backup?.state.tasks.a?.title).toBe("Review mobile flow");
     expect(backup?.state.tasks.a?.personId).toBe("anna");
+    expect(backup?.state.workday).toEqual({
+      startHour: 8.5,
+      endHour: 17.5,
+    });
   });
 
   it("rejects malformed, foreign and structurally invalid backups", () => {
@@ -152,7 +161,7 @@ describe("DayDock portable backups", () => {
     });
   });
 
-  it("restores a v5 backup with notifications disabled by default", () => {
+  it("restores a v5 backup into the current schema with notifications disabled by default", () => {
     const current = workspace();
     const { notifications, workday, ...v5Data } = current;
     void notifications;
