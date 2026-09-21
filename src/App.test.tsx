@@ -876,7 +876,13 @@ describe("DayDock core daily flow", () => {
     expect(
       screen.getByRole("combobox", { name: "Focus duration" }),
     ).toHaveValue("90");
-    expect(screen.getByText("90 min")).toBeInTheDocument();
+    const estimatedTaskRow = screen
+      .getByText("Write architecture notes", { selector: "strong" })
+      .closest("li");
+    expect(estimatedTaskRow).not.toBeNull();
+    expect(
+      within(estimatedTaskRow as HTMLElement).getByText("90 min"),
+    ).toBeInTheDocument();
 
     await user.click(
       screen.getByRole("button", {
