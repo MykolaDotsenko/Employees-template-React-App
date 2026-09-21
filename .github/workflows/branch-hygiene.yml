@@ -81,9 +81,17 @@ jobs:
               continue
             fi
 
+            if [ "${DRY_RUN}" = "true" ]; then
+              echo "[dry-run] Would delete merged PR branch ${branch} at verified head ${current_sha}."
+              dry_run_candidates=$((dry_run_candidates + 1))
+              continue
+            fi
+
             echo "Deleting merged PR branch ${branch} at verified head ${current_sha}."
 
-            if gh api               --method DELETE               "repos/${GH_REPOSITORY}/git/refs/heads/${branch}"; then
+            if gh api \
+              --method DELETE \
+              "repos/${GH_REPOSITORY}/git/refs/heads/${branch}"; then
               deleted=$((deleted + 1))
             else
               echo "::warning::Could not delete verified merged branch ${branch}."
