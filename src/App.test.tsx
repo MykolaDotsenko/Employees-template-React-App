@@ -887,7 +887,14 @@ describe("DayDock core daily flow", () => {
     expect(
       screen.getByRole("combobox", { name: "Focus duration" }),
     ).toHaveValue("90");
-    const estimatedTaskRow = screen
+    const prioritiesSection = screen
+      .getByRole("heading", { name: "What matters today" })
+      .closest("section");
+    expect(prioritiesSection).not.toBeNull();
+
+    const estimatedTaskRow = within(
+      prioritiesSection as HTMLElement,
+    )
       .getByText("Write architecture notes", { selector: "strong" })
       .closest("li");
     expect(estimatedTaskRow).not.toBeNull();
@@ -1012,7 +1019,9 @@ describe("DayDock core daily flow", () => {
 
     expect(store.getSnapshot().tasks["editable-task"]).toBeUndefined();
     expect(
-      screen.queryByText("Publish release announcement"),
+      screen.queryByRole("button", {
+        name: "Edit or remove Publish release announcement",
+      }),
     ).not.toBeInTheDocument();
 
     const undoRegion = screen.getByRole("region", { name: "Undo removal" });
