@@ -111,7 +111,7 @@ describe("DayDock persistence", () => {
     expect(upgraded.schemaVersion).toBe(DAYDOCK_SCHEMA_VERSION);
   });
 
-  it("migrates schema v5 to v6 with notifications disabled by default", () => {
+  it("migrates schema v5 to the current schema with notifications disabled by default", () => {
     const storage = new MemoryStorage();
     const state = createInitialDayDockState();
     const { notifications, workday, ...v5Data } = state;
@@ -240,6 +240,31 @@ describe("DayDock persistence", () => {
 
     expect(result.source).toBe("migrated");
     expect(result.state.tasks.a?.title).toBe("Task a");
+  });
+
+  it("rejects current workday settings that are not on a 30-minute boundary", () => {
+    const storage = new MemoryStorage();
+    const state = createInitialDayDockState();
+
+    storage.setItem(
+      DAYDOCK_STORAGE_KEY,
+      JSON.stringify({
+        schemaVersion: DAYDOCK_SCHEMA_VERSION,
+        updatedAt: "2026-09-20T10:00:00.000Z",
+        data: {
+          ...state,
+          workday: {
+            startHour: 8.25,
+            endHour: 17.5,
+          },
+        },
+      }),
+    );
+
+    const result = loadDayDockWorkspace(storage);
+
+    expect(result.source).toBe("recovered");
+    expect(result.state).toEqual(createInitialDayDockState());
   });
 
   it("normalizes ordering, Top 3 and broken person references", () => {
