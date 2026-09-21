@@ -459,6 +459,7 @@ jobs:
           grep -q "DayDock getting started" visual-smoke/dom.html
           grep -q "Ship DayDock release" visual-smoke/mature-dom.html
           grep -q "Top 3" visual-smoke/mature-dom.html
+          grep -q "Do now" visual-smoke/mature-dom.html
           grep -q "Calendar context" visual-smoke/mature-dom.html
           grep -q 'class="calendar-context-details"' visual-smoke/mature-dom.html
 
