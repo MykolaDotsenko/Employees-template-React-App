@@ -120,8 +120,15 @@ describe("DayDock portable backups", () => {
 
   it("restores a pre-calendar schema backup with an empty calendar", () => {
     const current = createInitialDayDockState();
-    const { calendar, ...v4Data } = current;
+    const {
+      calendar,
+      notifications,
+      workday,
+      ...v4Data
+    } = current;
     void calendar;
+    void notifications;
+    void workday;
 
     const parsed = parseDayDockBackup(
       JSON.stringify({
