@@ -459,6 +459,22 @@ describe("dayDockReducer", () => {
       type: "top3/added",
       taskId: "new-current",
     });
+    state = dayDockReducer(state, {
+      type: "focus/started",
+      session: {
+        id: "focus-new-current",
+        taskId: "new-current",
+        startedAt: "2026-09-19T11:00:00.000Z",
+        durationMinutes: 25,
+        pausedAt: null,
+        accumulatedPauseMs: 0,
+      },
+    });
+    state = dayDockReducer(state, {
+      type: "focus/finished",
+      endedAt: "2026-09-19T11:25:00.000Z",
+      outcome: "completed",
+    });
 
     state = dayDockReducer(state, {
       type: "task/restored",
@@ -470,8 +486,11 @@ describe("dayDockReducer", () => {
 
     expect(state.tasks["restore-me"]).toBeDefined();
     expect(state.top3).toEqual(["new-current", "restore-me"]);
-    expect(state.focus.history).toHaveLength(1);
-    expect(state.focus.history[0]?.taskId).toBe("restore-me");
+    expect(state.focus.history).toHaveLength(2);
+    expect(state.focus.history.map((session) => session.taskId)).toEqual([
+      "restore-me",
+      "new-current",
+    ]);
   });
 
   it("does not remove completed work or the task in an active focus session", () => {
