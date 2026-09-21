@@ -192,6 +192,36 @@ describe("dayDockReducer", () => {
     expect(selectTop3(state).map((item) => item.id)).toEqual(["a", "b", "c"]);
   });
 
+  it("promotes an existing Top 3 task without duplicating or losing priorities", () => {
+    let state = createInitialDayDockState();
+
+    for (const id of ["a", "b", "c"]) {
+      state = dayDockReducer(state, {
+        type: "task/captured",
+        task: task(id, "today"),
+      });
+      state = dayDockReducer(state, {
+        type: "top3/added",
+        taskId: id,
+      });
+    }
+
+    const promoted = dayDockReducer(state, {
+      type: "top3/promoted",
+      taskId: "b",
+    });
+
+    expect(promoted.top3).toEqual(["b", "a", "c"]);
+    expect(new Set(promoted.top3).size).toBe(3);
+
+    expect(
+      dayDockReducer(promoted, {
+        type: "top3/promoted",
+        taskId: "missing",
+      }),
+    ).toBe(promoted);
+  });
+
   it("only lets today tasks enter Top 3", () => {
     const state = dayDockReducer(createInitialDayDockState(), {
       type: "task/captured",
