@@ -251,7 +251,7 @@ export function dayDockReducer(
       if (
         !isDateKey(plan.dateKey) ||
         !Number.isInteger(plan.focusRoomMinutes) ||
-        plan.focusRoomMinutes < 30 ||
+        plan.focusRoomMinutes < 0 ||
         plan.focusRoomMinutes > 480 ||
         parseTime(plan.startedAt) <= 0
       ) {
