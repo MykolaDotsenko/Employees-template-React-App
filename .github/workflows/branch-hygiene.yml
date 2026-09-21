@@ -49,12 +49,12 @@ jobs:
             fi
 
             candidate_key="${branch}"$'\t'"${merged_head_sha}"
-            if [ -n "${seen_candidates[${candidate_key}]:-}" ]; then
+            if [[ ${seen_candidates[$candidate_key]+_} ]]; then
               continue
             fi
             seen_candidates["${candidate_key}"]=1
 
-            if [ -n "${open_branches[${branch}]:-}" ]; then
+            if [[ ${open_branches[$branch]+_} ]]; then
               echo "Preserving ${branch}: it currently has an open pull request."
               preserved_open=$((preserved_open + 1))
               continue
