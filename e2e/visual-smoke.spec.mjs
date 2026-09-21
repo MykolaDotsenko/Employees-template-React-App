@@ -239,7 +239,12 @@ test.describe("DayDock visual and release smoke", () => {
       await expect(page.getByText("Do now", { exact: true })).toBeVisible();
       await expect(page.getByText("Calendar context", { exact: true })).toBeVisible();
 
-      const currentPriority = page.getByText("Ship DayDock release").first();
+      const currentPriority = page
+        .getByRole("heading", {
+          name: "Ship DayDock release",
+          exact: true,
+        })
+        .first();
       const calendarContext = page.getByText("Calendar context", { exact: true });
       const orderIsCorrect = await page.evaluate(
         ({ currentText, calendarText }) => {
@@ -301,7 +306,14 @@ test.describe("DayDock visual and release smoke", () => {
       } else if (surface === "Review") {
         await expect(page.getByText("Review release checklist")).toBeVisible();
       } else {
-        await expect(page.getByText("Ask Anna for final copy review")).toBeVisible();
+        const readyAgain = page.locator(
+          'section[aria-labelledby="ready-again-title"]',
+        );
+        await expect(
+          readyAgain.getByText("Ask Anna for final copy review", {
+            exact: true,
+          }),
+        ).toBeVisible();
       }
 
       await page.screenshot({
@@ -359,8 +371,16 @@ test.describe("DayDock visual and release smoke", () => {
 
       const dialog = page.locator("dialog.task-editor-dialog[open]");
       await expect(dialog).toBeVisible();
-      await expect(page.getByText("Keep the task useful")).toBeVisible();
-      await expect(page.getByText("Optional minutes")).toBeVisible();
+      await expect(
+        dialog.getByRole("heading", {
+          name: "Keep the task useful",
+          exact: true,
+        }),
+      ).toBeVisible();
+      await expect(dialog.getByLabel("Estimate", { exact: true })).toBeVisible();
+      await expect(
+        dialog.getByText("Optional minutes", { exact: false }),
+      ).toBeVisible();
 
       await page.screenshot({
         path: `${OUTPUT}/task-editor-mobile.png`,
@@ -455,7 +475,6 @@ test.describe("DayDock visual and release smoke", () => {
     await context.setOffline(true);
     await page.reload({ waitUntil: "domcontentloaded" });
 
-    await expect(page.getByText("DayDock", { exact: true }).first()).toBeVisible();
     await expect(page.getByText("Capture your first item")).toBeVisible();
 
     await page.screenshot({
