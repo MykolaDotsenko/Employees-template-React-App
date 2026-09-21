@@ -37,6 +37,7 @@ interface TodaySurfaceProps {
   onOpenPeople: () => void;
   onStartDay: (focusRoomMinutes: number) => void;
   onAddToTop3: (taskId: string) => void;
+  onPromoteTop3: (taskId: string) => void;
   onRemoveFromTop3: (taskId: string) => void;
   onComplete: (taskId: string) => void;
   onRename: (taskId: string, title: string) => void;
@@ -65,6 +66,7 @@ export function TodaySurface({
   onOpenPeople,
   onStartDay,
   onAddToTop3,
+  onPromoteTop3,
   onRemoveFromTop3,
   onComplete,
   onRename,
@@ -256,6 +258,16 @@ export function TodaySurface({
                   leading={<span className="priority-index">{index + 1}</span>}
                   actions={
                     <>
+                      {index > 0 ? (
+                        <button
+                          type="button"
+                          className="text-action"
+                          aria-label={`Make ${task.title} the current priority`}
+                          onClick={() => onPromoteTop3(task.id)}
+                        >
+                          Do now
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         className="text-action"
