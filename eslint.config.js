@@ -10,7 +10,15 @@ const typedTypeScriptConfigs = tseslint.configs.recommendedTypeChecked.map((conf
 }));
 
 export default tseslint.config(
-  { ignores: ["dist", "coverage"] },
+  {
+    ignores: [
+      "dist",
+      "coverage",
+      "playwright-report",
+      "test-results",
+      "visual-smoke",
+    ],
+  },
   js.configs.recommended,
   ...typedTypeScriptConfigs,
   {
@@ -35,6 +43,15 @@ export default tseslint.config(
   },
   {
     files: ["**/*.test.{ts,tsx}", "src/test/**/*.ts"],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+  },
+  {
+    files: ["playwright.config.mjs", "e2e/**/*.mjs", "scripts/**/*.mjs"],
     languageOptions: {
       globals: {
         ...globals.browser,
