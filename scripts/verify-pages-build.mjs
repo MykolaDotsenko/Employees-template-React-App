@@ -1,5 +1,6 @@
 import { readFile, readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
+import process from "node:process";
 import { fileURLToPath, URL } from "node:url";
 
 const EXPECTED_BASE = "/daydock/";
