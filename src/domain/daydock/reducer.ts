@@ -17,6 +17,28 @@ function removeId(ids: readonly string[], id: string): string[] {
   return ids.filter((candidate) => candidate !== id);
 }
 
+function insertIdAt(
+  ids: readonly string[],
+  id: string,
+  requestedIndex: number,
+): string[] {
+  const withoutId = removeId(ids, id);
+  const index = Math.max(0, Math.min(withoutId.length, requestedIndex));
+
+  return [
+    ...withoutId.slice(0, index),
+    id,
+    ...withoutId.slice(index),
+  ];
+}
+
+function sameIds(left: readonly string[], right: readonly string[]): boolean {
+  return (
+    left.length === right.length &&
+    left.every((id, index) => id === right[index])
+  );
+}
+
 function parseTime(value: string): number {
   const parsed = Date.parse(value);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -337,6 +359,85 @@ export function dayDockReducer(
       };
     }
 
+    case "task/restored": {
+      const title = action.task.title.trim();
+
+      if (
+        !title ||
+        action.task.status === "done" ||
+        action.task.completedAt !== null ||
+        state.tasks[action.task.id] ||
+        !Number.isInteger(action.orderIndex) ||
+        action.orderIndex < 0 ||
+        !isDateKey(action.task.deferUntil) ||
+        (action.task.recurrence !== null &&
+          !isDateKey(action.task.recurrence.anchorDate)) ||
+        (action.task.status === "later" &&
+          action.task.recurrence !== null &&
+          action.task.deferUntil === null)
+      ) {
+        return state;
+      }
+
+      const task: Task = {
+        ...action.task,
+        title,
+        personId:
+          action.task.personId !== null && state.people[action.task.personId]
+            ? action.task.personId
+            : null,
+      };
+
+      const expectedTop3AfterRemoval = action.top3Before.filter(
+        (taskId) => taskId !== task.id,
+      );
+      let top3 = state.top3;
+
+      if (
+        task.status === "today" &&
+        action.top3Before.includes(task.id) &&
+        !state.top3.includes(task.id) &&
+        state.top3.length < 3
+      ) {
+        top3 = sameIds(state.top3, expectedTop3AfterRemoval)
+          ? action.top3Before.filter(
+              (taskId) => taskId === task.id || Boolean(state.tasks[taskId]),
+            )
+          : [...state.top3, task.id];
+      }
+
+      const currentHistoryIds = new Set(
+        state.focus.history.map((session) => session.id),
+      );
+      const expectedHistoryAfterRemoval = action.focusHistoryBefore.filter(
+        (session) => session.taskId !== task.id,
+      );
+      const restoredHistory = action.focusHistoryBefore.filter(
+        (session) =>
+          session.taskId === task.id && !currentHistoryIds.has(session.id),
+      );
+      const history = sameIds(
+        state.focus.history.map((session) => session.id),
+        expectedHistoryAfterRemoval.map((session) => session.id),
+      )
+        ? action.focusHistoryBefore
+        : [...state.focus.history, ...restoredHistory];
+
+      return {
+        ...state,
+        tasks: {
+          ...state.tasks,
+          [task.id]: task,
+        },
+        taskOrder: insertIdAt(state.taskOrder, task.id, action.orderIndex),
+        top3,
+        focus: {
+          ...state.focus,
+          history,
+        },
+      };
+    }
+
     case "task/moved": {
       const current = state.tasks[action.taskId];
       if (
@@ -613,6 +714,55 @@ export function dayDockReducer(
         ...state,
         people,
         personOrder: removeId(state.personOrder, action.personId),
+        tasks,
+      };
+    }
+
+    case "person/restored": {
+      const name = action.person.name.trim();
+      const context = action.person.context.trim();
+
+      if (
+        !name ||
+        name.length > 120 ||
+        context.length > 2_000 ||
+        state.people[action.person.id] ||
+        !Number.isInteger(action.orderIndex) ||
+        action.orderIndex < 0 ||
+        !isDateKey(action.person.nextFollowUpDate)
+      ) {
+        return state;
+      }
+
+      const person: Person = {
+        ...action.person,
+        name,
+        context,
+      };
+      let tasks = state.tasks;
+
+      for (const taskId of action.linkedTaskIds) {
+        const task = tasks[taskId];
+        if (!task || task.personId !== null) continue;
+
+        if (tasks === state.tasks) tasks = { ...state.tasks };
+        tasks[taskId] = {
+          ...task,
+          personId: person.id,
+        };
+      }
+
+      return {
+        ...state,
+        people: {
+          ...state.people,
+          [person.id]: person,
+        },
+        personOrder: insertIdAt(
+          state.personOrder,
+          person.id,
+          action.orderIndex,
+        ),
         tasks,
       };
     }
