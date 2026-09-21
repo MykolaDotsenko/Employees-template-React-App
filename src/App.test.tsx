@@ -863,9 +863,20 @@ describe("DayDock core daily flow", () => {
     );
 
     const editor = screen.getByRole("dialog", {
-      name: "Keep the wording useful",
+      name: "Keep the task useful",
     });
     const estimate = within(editor).getByLabelText("Estimate");
+    await user.clear(estimate);
+    await user.type(estimate, "1441");
+
+    expect(estimate).toHaveAttribute("aria-invalid", "true");
+    expect(
+      within(editor).getByText("Enter a whole number from 1 to 1440 minutes."),
+    ).toBeInTheDocument();
+    expect(
+      within(editor).getByRole("button", { name: "Save changes" }),
+    ).toBeDisabled();
+
     await user.clear(estimate);
     await user.type(estimate, "90");
     await user.click(
@@ -890,7 +901,7 @@ describe("DayDock core daily flow", () => {
       }),
     );
     const clearedEditor = screen.getByRole("dialog", {
-      name: "Keep the wording useful",
+      name: "Keep the task useful",
     });
     const clearedEstimate = within(clearedEditor).getByLabelText("Estimate");
     await user.clear(clearedEstimate);
@@ -964,7 +975,7 @@ describe("DayDock core daily flow", () => {
     );
 
     const editor = screen.getByRole("dialog", {
-      name: "Keep the wording useful",
+      name: "Keep the task useful",
     });
     const title = within(editor).getByLabelText("Task title");
     await user.clear(title);
@@ -986,7 +997,7 @@ describe("DayDock core daily flow", () => {
       }),
     );
     const updatedEditor = screen.getByRole("dialog", {
-      name: "Keep the wording useful",
+      name: "Keep the task useful",
     });
     await user.click(
       within(updatedEditor).getByRole("button", { name: "Remove…" }),
@@ -1026,7 +1037,7 @@ describe("DayDock core daily flow", () => {
       }),
     );
     const restoredEditor = screen.getByRole("dialog", {
-      name: "Keep the wording useful",
+      name: "Keep the task useful",
     });
     await user.click(
       within(restoredEditor).getByRole("button", { name: "Remove…" }),
