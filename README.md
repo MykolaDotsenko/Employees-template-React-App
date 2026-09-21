@@ -6,7 +6,7 @@ DayDock helps knowledge workers capture commitments, choose a small set of outco
 
 **Capture → Decide → Focus → Follow up → Review**
 
-[**Live demo**](https://mykoladotsenko.github.io/daydock/) · [Architecture](./ARCHITECTURE.md) · [UX flow](./docs/UX_FLOW.md) · [Design system](./docs/DESIGN_SYSTEM.md) · [Release QA](./docs/RELEASE_QA.md)
+[**Live demo**](https://mykoladotsenko.github.io/daydock/) · [v1.0.0 release](https://github.com/MykolaDotsenko/daydock/releases/tag/v1.0.0) · [Architecture](./ARCHITECTURE.md) · [UX flow](./docs/UX_FLOW.md) · [Release QA](./docs/RELEASE_QA.md)
 
 ![Quality](https://github.com/MykolaDotsenko/daydock/actions/workflows/quality.yml/badge.svg)
 ![Visual Smoke](https://github.com/MykolaDotsenko/daydock/actions/workflows/visual-smoke.yml/badge.svg)
@@ -15,6 +15,25 @@ DayDock helps knowledge workers capture commitments, choose a small set of outco
 ![DayDock Today view showing the current Now outcome, Focus controls, and Top 3 priorities](./docs/assets/daydock-today.webp)
 
 <sub>Current mature Today workspace · promoted from a green release-smoke run.</sub>
+
+## Product proof
+
+The views below come from the same production build exercised by DayDock's Playwright release smoke. They are kept intentionally small in the repository and are promoted only after the corresponding browser scenarios pass.
+
+<table>
+  <tr>
+    <td width="38%" valign="top">
+      <strong>Mobile Today</strong><br />
+      <sub>Now, Focus controls, Top 3, and mobile navigation at 390px.</sub><br /><br />
+      <img src="./docs/assets/daydock-mobile.webp" width="280" alt="DayDock mobile Today view showing the current outcome, Focus controls, Top 3 priorities, and bottom navigation" />
+    </td>
+    <td width="62%" valign="top">
+      <strong>Focus Mode</strong><br />
+      <sub>A protected task session with timestamp-derived timing, pause/resume, and completion controls.</sub><br /><br />
+      <img src="./docs/assets/daydock-focus.webp" width="800" alt="DayDock Focus Mode showing a paused focus session for Ship DayDock release" />
+    </td>
+  </tr>
+</table>
 
 ## Why DayDock exists
 
