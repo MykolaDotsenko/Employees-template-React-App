@@ -12,7 +12,7 @@ interface PeopleSurfaceProps {
   tasksByPerson: Record<string, Task[]>;
   todayKey: string;
   revealedPersonId: string | null;
-  revealToken?: number;
+  revealToken?: number | undefined;
   onAddPerson: (
     name: string,
     context: string,
