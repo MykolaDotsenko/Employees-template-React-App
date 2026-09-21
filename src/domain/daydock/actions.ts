@@ -24,7 +24,11 @@ export type DayDockAction =
   | { type: "day/started"; plan: DayPlan }
   | { type: "task/captured"; task: Task }
   | { type: "task/renamed"; taskId: string; title: string }
-  | { type: "task/estimateChanged"; taskId: string; estimateMinutes: number | null }
+  | {
+      type: "task/estimateChanged";
+      taskId: string;
+      estimateMinutes: number | null;
+    }
   | { type: "task/removed"; taskId: string }
   | {
       type: "task/restored";
