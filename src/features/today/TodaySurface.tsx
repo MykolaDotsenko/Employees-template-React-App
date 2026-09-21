@@ -327,6 +327,7 @@ export function TodaySurface({
                       revealedTaskId === task.id ? revealToken : undefined
                     }
                     onRename={onRename}
+                    onEstimateChange={onEstimateChange}
                     onRemove={onRemove}
                     actions={
                       <>
