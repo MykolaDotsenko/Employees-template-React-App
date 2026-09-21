@@ -121,8 +121,8 @@ export function TaskRow({
               <p className="section-kicker">Remove task</p>
               <h2 id={titleId}>Remove “{task.title}”?</h2>
               <p>
-                This clears the task and any focus history attached to it. This
-                action cannot be undone.
+                This clears the task and any focus history attached to it. You
+                can undo immediately after removal.
               </p>
               <div className="task-editor-actions">
                 <button
